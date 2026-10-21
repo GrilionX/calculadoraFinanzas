@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Mi sueldo</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                font-family: system-ui, sans-serif;
+                background-color: #f4f6fb;
+                color: #1b2430;
+                margin: 0;
+            }
+            label {
+                display: block;
+                margin-top: 40px;
+                margin-bottom: 4px;
+                color: #5b6675;
+                font-size: 0.9rem;
+            }
+            select,
+            input {
+                width: 100%;
+                font: inherit;
+                padding: 10px;
+                border: 1px solid #d9dfe8;
+                border-radius: 25px;
+            }
+            main {
+                max-width: 640px;
+                margin: 0 auto;
+                padding: 16px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .tarjeta {
+                background-color: #ffffff;
+                border: 1px solid #d9dfe8;
+                border-radius: 14px;
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            h2 {
+                font-size: 1.1rem;
+                margin-top: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>Mi sueldo y mi reparto</h1>
+            <section class="tarjeta">
+                <h2>Mi sueldo</h2>
+                <div>
+                    <label for="frecuencia">Cada cuanto</label>
+                    <select id="frecuencia">
+                        <option value="semanal">Semanal</option>
+                        <option value="cada2semanas">Cada dos semanas</option>
+                        <option value="quincenal">Quincena</option>
+                        <option value="mensual">Mensual</option>
+                    </select>
+                </div>
+                <div>
+                    <p>Escribiste: <strong id="eco"></strong></p>
+                    <label for="monto">Monto de cada pago</label>
+                    <input id="monto" type="number" min="0" step="0.01" placeholder="Por ejemplo 9300">
+                </div>
+            </section>
+            <section class="tarjeta">
+                <h2>Mi reparto</h2>
+                <p>Mi dinero se dividira en las siguientes categorias</p>
+                <ul>
+                    <li>Gastos basicos</li>
+                    <li>Ocio</li>
+                    <li>Ahorro</li>
+                    <li>Deudas</li>
+                    <li>Inversiones</li>
+                </ul>
+            </section>
+        </main>
+        <script>
+            const campoMonto = document.getElementById("monto");
+            const eco = document.getElementById("eco");
+
+            function mostrarMonto(){
+                eco.textContent = campoMonto.value;
+            }
+
+            campoMonto.addEventListener("input", mostrarMonto);
+        </script>
+    </body>
+</html>
