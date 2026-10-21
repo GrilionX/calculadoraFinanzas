@@ -69,6 +69,15 @@
                     <label for="monto">Monto de cada pago</label>
                     <input id="monto" type="number" min="0" step="0.01" placeholder="Por ejemplo 9300">
                 </div>
+
+                <ul>
+                    <!-- CORREGIDO: faltaba la comilla de cierre del id y sobraba la "x" -->
+                    <li>Semanal: <strong id="eq-semanal"></strong></li>
+                    <li>Cada dos semanas: <strong id="eq-cada2semanas"></strong></li>
+                    <li>Quincenal: <strong id="eq-quincenal"></strong></li>
+                    <li>Mensual: <strong id="eq-mensual"></strong></li>
+                    <li>Anual: <strong id="eq-anual"></strong></li>
+                </ul>
             </section>
             <section class="tarjeta">
                 <h2>Mi reparto</h2>
@@ -83,14 +92,58 @@
             </section>
         </main>
         <script>
+
+            const PAGOS_POR_ANIO = {
+                semanal: 52,
+                cada2semanas: 26,
+                quincenal: 24,
+                mensual: 12
+            };
+
+            const formatoMoneda = new Intl.NumberFormat("es-MX", {style: "currency", currency: "MXN"});
+
             const campoMonto = document.getElementById("monto");
             const eco = document.getElementById("eco");
+            const campoFrecuencia = document.getElementById("frecuencia");
 
             function mostrarMonto(){
                 eco.textContent = campoMonto.value;
             }
 
+            function leerMonto(){
+                const numero = Number(campoMonto.value);
+                if (numero < 0 || Number.isNaN(numero)){
+                    return 0;
+                }
+                return numero;
+            }
+
+            function calcularEquivalentes(frecuencia, monto) {
+                const anual = monto * PAGOS_POR_ANIO[frecuencia];
+                return{
+                    semanal: anual/52,
+                    cada2semanas: anual/26,
+                    quincenal: anual/24,
+                    mensual: anual/12,
+                    anual: anual
+                };
+            }
+
+            function mostrarEquivalentes(){
+                const frecuencia = campoFrecuencia.value;
+                const monto = leerMonto();
+                const eq = calcularEquivalentes(frecuencia, monto);
+
+                document.getElementById("eq-semanal").textContent = formatoMoneda.format(eq.semanal);
+                document.getElementById("eq-cada2semanas").textContent = formatoMoneda.format(eq.cada2semanas);
+                document.getElementById("eq-quincenal").textContent = formatoMoneda.format(eq.quincenal);
+                document.getElementById("eq-mensual").textContent = formatoMoneda.format(eq.mensual);
+                document.getElementById("eq-anual").textContent = formatoMoneda.format(eq.anual);
+            }
+
             campoMonto.addEventListener("input", mostrarMonto);
+
+            mostrarEquivalentes();
         </script>
     </body>
 </html>
