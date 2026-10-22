@@ -1,43 +1,50 @@
 * {
-                box-sizing: border-box;
-            }
-            body {
-                font-family: system-ui, sans-serif;
-                background-color: #f4f6fb;
-                color: #1b2430;
-                margin: 0;
-            }
-            label {
-                display: block;
-                margin-top: 40px;
-                margin-bottom: 4px;
-                color: #5b6675;
-                font-size: 0.9rem;
-            }
-            select,
-            input {
-                width: 100%;
-                font: inherit;
-                padding: 10px;
-                border: 1px solid #d9dfe8;
-                border-radius: 25px;
-            }
-            main {
-                max-width: 640px;
-                margin: 0 auto;
-                padding: 16px;
-            }
-            h1 {
-                font-size: 1.5rem;
-            }
-            .tarjeta {
-                background-color: #ffffff;
-                border: 1px solid #d9dfe8;
-                border-radius: 14px;
-                padding: 16px;
-                margin-bottom: 16px;
-            }
-            h2 {
-                font-size: 1.1rem;
-                margin-top: 0;
-            }
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    background-color: #f4f6fb;
+    color: #1b2430;
+    margin: 0;
+}
+
+label {
+    display: block;
+    margin-top: 40px;
+    margin-bottom: 4px;
+    color: #5b6675;
+    font-size: 0.9rem;
+}
+
+select,
+input {
+    width: 100%;
+    font: inherit;
+    padding: 10px;
+    border: 1px solid #d9dfe8;
+    border-radius: 25px;
+}
+
+main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+h1 {
+    font-size: 1.5rem;
+}
+
+.tarjeta {
+    background-color: #ffffff;
+    border: 1px solid #d9dfe8;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+h2 {
+    font-size: 1.1rem;
+    margin-top: 0;
+}
