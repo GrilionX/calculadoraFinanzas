@@ -35,14 +35,29 @@
             </section>
             <section class="tarjeta">
                 <h2>Mi reparto</h2>
-                <p>Mi dinero se dividira en las siguientes categorias</p>
-                <ul>
-                    <li>Gastos basicos</li>
-                    <li>Ocio</li>
-                    <li>Ahorro</li>
-                    <li>Deudas</li>
-                    <li>Inversiones</li>
-                </ul>
+                <div class = "tabla-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>%</th>
+                                <th>Por semana</th>
+                                <th>Por quincena</th>
+                                <th>Por mes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="false-reparto"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Total</td>
+                                <td id="tot-pct"></td>
+                                <td id="tot-semana"></td>
+                                <td id="tot-quincena"></td>
+                                <td id="tot-mes"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </section>
         </main>
         <script src="app.js"></script>

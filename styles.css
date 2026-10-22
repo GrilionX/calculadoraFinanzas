@@ -48,3 +48,37 @@ h2 {
     font-size: 1.1rem;
     margin-top: 0;
 }
+
+.tabla-scroll{
+    overflow-x: auto;
+}
+
+table{
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td{
+    padding: 8px 6px;
+    text-align: right;
+    white-space: nowrap;
+    border-bottom: 1px solid #d9dfe8;
+}
+
+th:first-child,
+td:first-child{
+    text-align: left;
+    white-space: normal;
+}
+
+td input{
+    width: 70px;
+    text-align: right;
+    padding: 6px;
+}
+
+tfoot td{
+    font-weight: bold;
+    border-bottom: 0;
+}

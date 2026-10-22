@@ -5,6 +5,30 @@ const PAGOS_POR_ANIO = {
     mensual: 12
 };
 
+const categorias = [
+    {id: "basicos", nombre: "Gastos basicos", porcentaje: 55},
+    {id: "ocio", nombre: "Ocio", porcentaje: 5},
+    {id: "deudas", nombre: "Deudas", porcentaje: 25},
+    {id: "ahorro", nombre: "Ahorro", porcentaje: 15},
+    {id: "inversion", nombre: "Inversion", porcentaje: 0}
+]
+
+const cuerpoTabla = document.getElementById("filas-reparto");
+
+function construirTabla(){
+    for (const cat of categorias) {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td>${cat.nombre}</td>
+            <td><input id="pct-${cat.id}" type="number" min="0" max="100" step="any" value="${cat.porcentaje}"></td>
+            <td id="sem-${cat.id}"></td>
+            <td id="qui-${cat.id}"></td>
+            <td id="mes-${cat.id}"></td>
+        `;
+        cuerpoTabla.appendChild(fila);
+    }
+}
+
 const formatoMoneda = new Intl.NumberFormat("es-MX", {style: "currency", currency: "MXN"});
 
 const campoMonto = document.getElementById("monto");
@@ -30,6 +54,21 @@ function calcularEquivalentes(frecuencia, monto) {
     };
 }
 
+function calcularReparto(eq){
+    const resultado = [];
+    for (const cat of categorias){
+        const fraccion = cat.porcentaje/100;
+        resultado.push({
+            id: cat.id,
+            porcentaje: cat.porcentaje,
+            semana: eq.semanal * fraccion,
+            quincena: eq.quincena * fraccion,
+            mes: eq.mes * fraccion
+        });
+    }
+    return resultado;
+}
+
 function mostrarEquivalentes(){
     console.log("recalculando");
     const frecuencia = campoFrecuencia.value;
@@ -47,3 +86,4 @@ campoMonto.addEventListener("input", mostrarEquivalentes);
 campoFrecuencia.addEventListener("change", mostrarEquivalentes);
 
 mostrarEquivalentes();
+construirTabla();
