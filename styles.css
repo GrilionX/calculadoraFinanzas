@@ -83,13 +83,13 @@ tfoot td {
     border-bottom: 0;
 }
 
-td input[type="text"]{
+td input[type="text"] {
     width: 100%;
     min-width: 120px;
     text-align: left;
 }
 
-.boton-borrar{
+.boton-borrar {
     border: 0;
     background: none;
     color: #c62828;
@@ -98,7 +98,8 @@ td input[type="text"]{
     padding: 4px 8px;
 }
 
-#agregar-categoria{
+#agregar-categoria,
+#restablecer {
     margin-top: 12px;
     font: inherit;
     color: #1f6feb;
@@ -107,4 +108,18 @@ td input[type="text"]{
     border-radius: 25px;
     padding: 8px 16px;
     cursor: pointer;
+}
+
+.aviso {
+    margin: 12px 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.aviso.ok {
+    color: #1a7f37;
+}
+
+.aviso.error {
+    color: #c62828;
 }
