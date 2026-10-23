@@ -49,17 +49,17 @@ h2 {
     margin-top: 0;
 }
 
-.tabla-scroll{
+.tabla-scroll {
     overflow-x: auto;
 }
 
-table{
+table {
     width: 100%;
     border-collapse: collapse;
 }
 
 th,
-td{
+td {
     padding: 8px 6px;
     text-align: right;
     white-space: nowrap;
@@ -67,18 +67,44 @@ td{
 }
 
 th:first-child,
-td:first-child{
+td:first-child {
     text-align: left;
     white-space: normal;
 }
 
-td input{
+td input {
     width: 70px;
     text-align: right;
     padding: 6px;
 }
 
-tfoot td{
+tfoot td {
     font-weight: bold;
     border-bottom: 0;
+}
+
+td input[type="text"]{
+    width: 100%;
+    min-width: 120px;
+    text-align: left;
+}
+
+.boton-borrar{
+    border: 0;
+    background: none;
+    color: #c62828;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+#agregar-categoria{
+    margin-top: 12px;
+    font: inherit;
+    color: #1f6feb;
+    background: none;
+    border: 1px solid #1f6feb;
+    border-radius: 25px;
+    padding: 8px 16px;
+    cursor: pointer;
 }

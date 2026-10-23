@@ -35,7 +35,7 @@
             </section>
             <section class="tarjeta">
                 <h2>Mi reparto</h2>
-                <div class = "tabla-scroll">
+                <div class="tabla-scroll">
                     <table>
                         <thead>
                             <tr>
@@ -45,8 +45,9 @@
                                 <th>Por quincena</th>
                                 <th>Por mes</th>
                             </tr>
+                            <th></th>
                         </thead>
-                        <tbody id="false-reparto"></tbody>
+                        <tbody id="filas-reparto"></tbody>
                         <tfoot>
                             <tr>
                                 <td>Total</td>
@@ -55,9 +56,11 @@
                                 <td id="tot-quincena"></td>
                                 <td id="tot-mes"></td>
                             </tr>
+                            <td></td>
                         </tfoot>
                     </table>
                 </div>
+                <button id ="agregar-categoria" type="button">+ Agregar Categoria</button>
             </section>
         </main>
         <script src="app.js"></script>
