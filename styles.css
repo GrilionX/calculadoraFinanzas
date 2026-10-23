@@ -96,6 +96,8 @@ td input[type="text"] {
     font-size: 1.1rem;
     cursor: pointer;
     padding: 4px 8px;
+    min-width: 44px;
+    min-height: 44-px;
 }
 
 #agregar-categoria,
@@ -107,6 +109,7 @@ td input[type="text"] {
     border: 1px solid #1f6feb;
     border-radius: 25px;
     padding: 8px 16px;
+    min-height: 44px;
     cursor: pointer;
 }
 

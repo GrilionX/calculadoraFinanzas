@@ -170,7 +170,7 @@ function crearFila(cat){
     // Esta plantilla NO lleva datos de la persona, solo la estructura
     fila.innerHTML = `
         <td><input class="campo-nombre" type="text" placeholder="Nombre" aria-label="Nombre de la categoría"></td>
-        <td><input class="campo-pct" type="number" min="0" max="100" step="any" aria-label="Porcentaje"></td>
+        <td><input class="campo-pct" type="number" inputmode="decimal" min="0" max="100" step="any" aria-label="Porcentaje"></td>
         <td class="c-semana"></td>
         <td class="c-quincena"></td>
         <td class="c-mes"></td>
