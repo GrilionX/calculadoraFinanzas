@@ -36,11 +36,16 @@ const CLAVE_GUARDADO = "finanzas-personal-v1";
 const formatoMoneda = new Intl.NumberFormat("es-MX", {style: "currency", currency: "MXN"});
 
 // Una copia independiente de las categorías iniciales
+function copiar(datos){
+    return JSON.parse(JSON.stringify(datos));
+}
+
 function copiarCategoriasIniciales(){
-    return JSON.parse(JSON.stringify(CATEGORIAS_INICIALES));
+    return copiar(CATEGORIAS_INICIALES);
 }
 
 let categorias = copiarCategoriasIniciales();
+let otrosIngresos = copiar(EXTRAS_INICIALES);
 
 // ----- Elementos de la página -----
 const campoMonto = document.getElementById("monto");
@@ -48,6 +53,8 @@ const campoFrecuencia = document.getElementById("frecuencia");
 const cuerpoTabla = document.getElementById("filas-reparto");
 const botonAgregar = document.getElementById("agregar-categoria");
 const botonRestablecer = document.getElementById("restablecer");
+const cuerpoExtras = document.getElementById("filas-extras");
+const botonAgregarExtra = document.getElementById("agregar-extra");
 
 // ----- Leer lo que escribe la persona -----
 function leerNumero(texto){
@@ -86,6 +93,15 @@ function calcularReparto(eq){
         });
     }
     return resultado;
+}
+
+function calcularExtra(extra){
+    const pagos = FRECUENCIAS_EXTRA[extra.frecuencia].pagosAlAnio;
+    const anual = extra.monto * pagos;
+    return{
+        anual: anual,
+        mensual: anual / 12
+    };
 }
 
 function sumaPorcentajes(){
@@ -214,6 +230,70 @@ function crearFila(cat){
     });
 
     return fila;
+}
+
+function crearFilaExtra(extra){
+    const fila = document.createElement("tr");
+    //Plantilla de datos
+    fila.innerHTML = `
+        <td><input class="extra-nombre" type="text" placeholder="Nombre" aria-label="Nombre del ingreso"></td>
+        <td><input class="extra-monto" type="number" inputmode="decimal" min="0" step="0.01" aria-label="Monto"></td>
+        <td><select class="extra-frecuencia" aria-label="Cada cuánto"></select></td>
+        <td class="c-extra-mes"></td>
+        <td class="c-extra-anio"></td>
+        <td><button class="boton-borrar" type="button" aria-label="Eliminar ingreso">✕</button></td>
+    `;
+
+    const nombreExtra = fila.querySelector(".extra-nombre");
+    const montoExtra =  fila.querySelector(".extra-monto");
+    const frecuenciaExtra = fila.querySelector(".extra-frecuencia");
+    const botonBorrar = fila.querySelector(".boton-borrar");
+
+    //Opcion de frecuencia 
+    for (const clave in FRECUENCIAS_EXTRA){
+        const Opcion = document.createElement("option");
+        Opcion.value = clave;
+        Opcion.textContent = frecuenciaExtra[clave].texto;
+        frecuenciaExtra.appendChild(Opcion);
+    }
+
+    nombreExtra.value = extra.nombre;
+    montoExtra.value = extra.monto;
+    frecuenciaExtra.value = extra.frecuencia;
+
+    nombreExtra.addEventListener("input", function(){
+        extra.nombre = nombreExtra.value;
+    });
+
+    montoExtra.addEventListener("input", function(){
+        extra.monto = leerNumero(montoExtra.value);
+        mostrarExtras();
+    });
+
+    frecuenciaExtra.addEventListener("change", function(){
+        extra.frecuencia = frecuenciaExtra.value;
+        mostrarExtras();
+    });
+
+    botonBorrar.addEventListener("click", function(){
+        eliminarExtra(extra);
+    });
+
+    return fila;
+}
+
+function construirTablasExtras(){
+    cuerpoExtras.innerHTML = "";
+    for (const extra of otrosIngresos){
+        cuerpoExtras.appendChild(crearFilaExtra(extra));
+    }
+}
+
+function agregarExtra(){
+    otrosIngresos.push({ nombre: "", monto: 0, frecuencia: "mensual" });
+    construirTablasExtras();
+    mostrarExtras();
+    cuerpoExtras.lastElementChild.querySelector(".extra-nombre").focus();
 }
 
 function construirTabla(){

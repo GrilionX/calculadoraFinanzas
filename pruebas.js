@@ -53,6 +53,14 @@ function ejecutarPruebas(){
     eq = calcularEquivalentes("mensual", 0);
     comprobar("0 de sueldo: anual", eq.anual, 0);
 
+    let extra = calcularExtra({nombre: "Prueba", monto: 10000, frecuencia: "anual" });
+    comprobar("10,000 una vez al año: por mes", extra.mensual, 833.33);
+    extra = calcularExtra({nombre: "prueba", monto: 500, frecuencia: "Semanal "});
+    comprobar("500 cada semana: por año", extra.anual, 26000);
+    comprobar("500 cada semana: por mes", extra.mensual, 2166.67);
+    extra = calcularExtra({ nombre: "Prueba", monto: 3000, frecuencia: "trimestral" });
+    comprobar("3,000 cada 3 meses: por mes", extra.mensual, 1000);
+
     categorias = respaldo;
 
     if(fallos === 0){
