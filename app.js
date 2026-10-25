@@ -16,6 +16,21 @@ const CATEGORIAS_INICIALES = [
     { nombre: "Inversiones", porcentaje: 0 }
 ];
 
+const FRECUENCIAS_EXTRA = {
+    semanal: { texto: "Cada semana", pagosAlAnio: 52 },
+    cada2semanas: { texto: "Cada dos semanas", pagosAlAnio: 26 },
+    quincenal: { texto: "Cada quincena", pagosAlAnio: 24 },
+    mensual: { texto: "Cada mes", pagosAlAnio: 12 },
+    trimestral: { texto: "Cada 3 meses", pagosAlAnio: 4 },
+    semestral: { texto: "Cada 6 meses", pagosAlAnio: 2 },
+    anual: { texto: "Una vez al año", pagosAlAnio: 1 }
+}
+
+const EXTRAS_INICIALES = [
+    { nombre: "Aguinaldo", monto: 0, frecuencia: "anual" },
+    { nombre: "Propinas", monto: 0, frecuencia: "semanal" }
+]
+
 const CLAVE_GUARDADO = "finanzas-personal-v1";
 
 const formatoMoneda = new Intl.NumberFormat("es-MX", {style: "currency", currency: "MXN"});

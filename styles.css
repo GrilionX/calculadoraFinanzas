@@ -101,6 +101,7 @@ td input[type="text"] {
 }
 
 #agregar-categoria,
+#agregar-extra,
 #restablecer {
     margin-top: 12px;
     font: inherit;
@@ -126,3 +127,20 @@ td input[type="text"] {
 .aviso.error {
     color: #c62828;
 }
+
+.ayuda{
+    margin-top: 0;
+    font-size: 0.9rem;
+    color: #5b6675;
+}
+
+.extra-monto{
+    width: 100px;
+}
+
+td select{
+    width: auto;
+    padding: 6px;
+    border-radius: 12px;
+}
+
