@@ -34,10 +34,8 @@
                 </ul>
             </section>
             <section class="tarjeta">
-
-            <section class="tarjeta">
                 <h2>Otros ingresos</h2>
-                <p class="ayuda">Aguinaldo, bonos, propinas...</p>
+                <p class="ayuda">Aguinaldo, bonos, propinas, utilidades... Escribe lo que esperas recibir.</p>
                 <div class="tabla-scroll">
                     <table>
                         <thead>
@@ -63,19 +61,21 @@
                         </tfoot>
                     </table>
                 </div>
+                <button id="agregar-extra" type="button">+ Agregar ingreso</button>
             </section>
+            <section class="tarjeta">
                 <h2>Mi reparto</h2>
                 <div class="tabla-scroll">
                     <table>
                         <thead>
                             <tr>
-                                <th>Categoria</th>
+                                <th>Categoría</th>
                                 <th>%</th>
                                 <th>Por semana</th>
                                 <th>Por quincena</th>
                                 <th>Por mes</th>
+                                <th></th>
                             </tr>
-                            <th></th>
                         </thead>
                         <tbody id="filas-reparto"></tbody>
                         <tfoot>
@@ -85,15 +85,16 @@
                                 <td id="tot-semana"></td>
                                 <td id="tot-quincena"></td>
                                 <td id="tot-mes"></td>
+                                <td></td>
                             </tr>
-                            <td></td>
                         </tfoot>
                     </table>
                 </div>
                 <p id="aviso" class="aviso" role="status"></p>
-                <button id ="agregar-categoria" type="button">+ Agregar Categoria</button>
+                <button id="agregar-categoria" type="button">+ Agregar categoría</button>
             </section>
             <button id="restablecer" type="button">Volver a los valores iniciales</button>
+            
         </main>
         <script src="app.js"></script>
         <script src="pruebas.js"></script>

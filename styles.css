@@ -97,7 +97,7 @@ td input[type="text"] {
     cursor: pointer;
     padding: 4px 8px;
     min-width: 44px;
-    min-height: 44-px;
+    min-height: 44px;
 }
 
 #agregar-categoria,
@@ -128,17 +128,23 @@ td input[type="text"] {
     color: #c62828;
 }
 
-.ayuda{
+.nota {
+    font-size: 0.85rem;
+    color: #5b6675;
+    margin-bottom: 24px;
+}
+
+.ayuda {
     margin-top: 0;
     font-size: 0.9rem;
     color: #5b6675;
 }
 
-.extra-monto{
+.extra-monto {
     width: 100px;
 }
 
-td select{
+td select {
     width: auto;
     padding: 6px;
     border-radius: 12px;
