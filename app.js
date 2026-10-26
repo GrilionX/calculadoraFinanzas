@@ -6,15 +6,32 @@ const PAGOS_POR_ANIO = {
 };
 
 const CATEGORIAS_INICIALES = [
-    { nombre: "Gastos básicos", porcentaje: 55 },
-    { nombre: "Ocio", porcentaje: 5 },
-    { nombre: "Deudas", porcentaje: 25 },
-    { nombre: "Ahorro", porcentaje: 15 },
-    { nombre: "Inversiones", porcentaje: 0 }
+    { id: "basicos", nombre: "Gastos básicos", porcentaje: 55 },
+    { id: "ocio", nombre: "Ocio", porcentaje: 5 },
+    { id: "deudas", nombre: "Deudas", porcentaje: 25 },
+    { id: "ahorro", nombre: "Ahorro", porcentaje: 15 },
+    { id: "inversiones", nombre: "Inversiones", porcentaje: 0 }
 ];
+
+function idsDe(lista){
+    const ids = [];
+    for (const elemento of lista){
+        ids.push(elemento.id);
+    }
+    return ids;
+}
+
+function generarId(usados){
+    let id = "c" + Date.now().toString(36) +  Math.floor(Math.random() * 1000).toString(36);
+    while (usados.includes(id)){
+        id = id + "x";
+    }
+    return id;
+}
 
 // Para otros ingresos: cada frecuencia con su texto y cuántos pagos hay al año
 const FRECUENCIAS_EXTRA = {
+    diaria: { texto: "Cada día", pagosAlAnio: 52, usaDias: true },
     semanal: { texto: "Cada semana", pagosAlAnio: 52 },
     cada2semanas: { texto: "Cada dos semanas", pagosAlAnio: 26 },
     quincenal: { texto: "Cada quincena", pagosAlAnio: 24 },
@@ -29,9 +46,18 @@ const EXTRAS_INICIALES = [
     { nombre: "Propinas", monto: 0, frecuencia: "semanal" }
 ];
 
+const PERIODOS = {
+    semanal: "Por semana",
+    cada2semanas: "Cada dos semanas",
+    quincenal: "Por quincena",
+    mensual: "Por mes"
+};
+
 const CLAVE_GUARDADO = "finanzas-personal-v1";
 
 const formatoMoneda = new Intl.NumberFormat("es-MX", {style: "currency", currency: "MXN"});
+
+
 
 // Una copia independiente de cualquier lista u objeto
 function copiar(datos){
@@ -65,6 +91,11 @@ function leerNumero(texto){
 
 function leerMonto(){
     return leerNumero(campoMonto.value);
+}
+
+function leerDias(texto){
+    const dias = Math.round(leerNumero(texto));
+    return Math.min(7, Math.max(1, dias));
 }
 
 // ----- Cálculos -----
@@ -369,6 +400,7 @@ function agregarCategoria(){
     construirTabla();
     actualizarPantalla();
     cuerpoTabla.lastElementChild.querySelector(".campo-nombre").focus();
+    categorias.push({ id: generarId(idsDe(categorias)), nombre: "", porcentaje: 0});
 }
 
 function eliminarCategoria(cat){
