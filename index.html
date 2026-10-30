@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <title>Mi sueldo</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="estilos.css">
     </head>
     <body>
         <main>
@@ -35,25 +35,45 @@
             </section>
             <section class="tarjeta">
                 <h2>Otros ingresos</h2>
-                <p class="ayuda">Aguinaldo, bonos, propinas... Se calculan aparte. Solo se suman a tu reparto si marcas "Sumar a mi reparto" y eliges a dónde van.</p>
-                <div id="lista-extras"></div>
-                <p class="resumen">Todos tus otros ingresos: <strong id="extras-total"></strong><br>Los que sumas a tu reparto: <strong id="extras-sumados"></strong></p>
+                <p class="ayuda">Aguinaldo, bonos, propinas, utilidades... Escribe lo que esperas recibir.</p>
+                <div class="tabla-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Monto</th>
+                                <th>Cada cuánto</th>
+                                <th>Por mes</th>
+                                <th>Por año</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="filas-extras"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Total</td>
+                                <td></td>
+                                <td></td>
+                                <td id="extras-mes"></td>
+                                <td id="extras-anio"></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
                 <button id="agregar-extra" type="button">+ Agregar ingreso</button>
             </section>
             <section class="tarjeta">
                 <h2>Mi reparto</h2>
-                <label for="periodo">Ver cantidades por</label>
-                <select id="periodo"></select>
-                <p id="resumen-ingreso" class="resumen"></p>
                 <div class="tabla-scroll">
                     <table>
                         <thead>
                             <tr>
                                 <th>Categoría</th>
                                 <th>%</th>
-                                <th>Del sueldo</th>
-                                <th>De otros ingresos</th>
-                                <th>Total</th>
+                                <th>Por semana</th>
+                                <th>Por quincena</th>
+                                <th>Por mes</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -62,9 +82,9 @@
                             <tr>
                                 <td>Total</td>
                                 <td id="tot-pct"></td>
-                                <td id="tot-sueldo"></td>
-                                <td id="tot-extras"></td>
-                                <td id="tot-total"></td>
+                                <td id="tot-semana"></td>
+                                <td id="tot-quincena"></td>
+                                <td id="tot-mes"></td>
                                 <td></td>
                             </tr>
                         </tfoot>
