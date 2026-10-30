@@ -37,8 +37,8 @@ const FRECUENCIAS_EXTRA = {
 };
 
 const EXTRAS_INICIALES = [
-    { nombre: "Aguinaldo", monto: 0, frecuencia: "anual", diasPorSemana: 5, sumar: false, destinos: [] },
-    { nombre: "Propinas", monto: 0, frecuencia: "diaria", diasPorSemana: 5, sumar: false, destinos: [] }
+    { nombre: "Aguinaldo", monto: 0, modo: "golpe", frecuencia: "anual", diasPorSemana: 5, semana: 8, repetir: 52, sumar: false, destinos: [] },
+    { nombre: "Propinas", monto: 0, modo: "promedio", frecuencia: "diaria", diasPorSemana: 5, semana: 1, repetir: 0, sumar: false, destinos: [] }
 ];
 
 const CLAVE_GUARDADO = "finanzas-personal-v1";
@@ -80,10 +80,15 @@ function leerMonto(){
     return leerNumero(campoMonto.value);
 }
 
+
+function leerEntero(texto, minimo, maximo){
+    const numero = Math.round(leerNumero(texto));
+    return Math.min(maximo, Math.max(minimo, numero));
+}
+
 // Los días a la semana van de 1 a 7
 function leerDias(texto){
-    const dias = Math.round(leerNumero(texto));
-    return Math.min(7, Math.max(1, dias));
+    return leerEntero(texto, 1, 7);
 }
 
 // ----- Identificadores de las categorías -----
@@ -138,6 +143,26 @@ function multiplicar(eq, factor){
     return resultado;
 }
 
+function esDeGolpe (extra){
+    return extra.modo === "golpe";
+}
+
+function montoDeGolpe(extra, semana){
+    if (semana < extra.semana){
+        return 0;
+    }
+    if (extra.repetir === 0){
+        if (semana === extra.semana){
+            return extra.monto;
+        }
+        return 0;
+    }
+    if((semana - extra.semana) % extra.repetir === 0){
+        return extra.monto;
+    }
+    return 0;
+}
+
 function sumarEq(a, b){
     const resultado = {};
     for (const clave of CLAVES_PERIODO) {
@@ -186,8 +211,7 @@ function calcularReparto(eqSueldo){
 
     for (const extra of otrosIngresos) {
         const validos = destinosValidos(extra);
-        if (extra.sumar && validos.length > 0) {
-            // Partes iguales entre los destinos elegidos
+        if (extra.sumar && !esDeGolpe(extra) && validos.length > 0) {
             const parte = multiplicar(calcularExtra(extra), 1 / validos.length);
             for (const fila of filas) {
                 if (validos.includes(fila.id)) {
@@ -198,6 +222,54 @@ function calcularReparto(eqSueldo){
     }
 
     return filas;
+}
+
+function calcularCalendario(eqSueldo, cantidadSemanas){
+    const repartoSemanal = calcularReparto(eqSueldo);
+    const semanas = [];
+    const porCategoria = [];
+
+    let promedioPorSemana =  0;
+    for (const fila of repartoSemanal){
+        promedioPorSemana += filas.extra.semanal;
+        porCategoria.push({
+            id: fila.id,
+            sueldo: fila.sueldo.semanal * cantidadSemanas,
+            promediados: fila.extras.semanal * cantidadSemanas,
+            deGolpe: 0
+        });
+    }
+    for (let semana = 1; semana <= cantidadSemanas; semana++){
+        let deGolpe = 0;
+        const llegan = [];
+
+        for (const extra of otrosIngresos){
+            const validos = destinosValidos(extra);
+            if(extra.sumar && esDeGolpe(extra) && validos.length > 0){
+                const monto = montoDeGolpe(extra, semana)
+                if (monto > 0){
+                    deGolpe += monto;
+                    llegan.push({ nombre: extra.nombre, monto: monto });
+                    for (const categoria of porCategoria){
+                        if (validos.includes(categoria.id)){
+                            categoria.deGolpe += monto/validos.length;
+                        }
+                    }
+                }
+            }
+        }
+
+        semanas.push({
+            semana: semana, 
+            sueldo: eqSueldo.semanal,
+            promediados: promedioPorSemana,
+            deGolpe: deGolpe,
+            total: eqSueldo.semanal + promedioPorSemana + deGolpe,
+            llegan: llegan
+        });
+    }
+
+    return { semana: semanas, porCategoria: porCategoria };
 }
 
 function sumaPorcentajes(){
