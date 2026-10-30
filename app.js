@@ -1,9 +1,22 @@
+// app.js: lo que hace la página
+
+// ----- Datos -----
 const PAGOS_POR_ANIO = {
     semanal: 52,
     cada2semanas: 26,
     quincenal: 24,
     mensual: 12
 };
+
+// Los periodos en que se pueden ver las cantidades
+const PERIODOS = {
+    semanal: "Por semana",
+    cada2semanas: "Cada dos semanas",
+    quincenal: "Por quincena",
+    mensual: "Por mes"
+};
+
+const CLAVES_PERIODO = ["semanal", "cada2semanas", "quincenal", "mensual", "anual"];
 
 const CATEGORIAS_INICIALES = [
     { id: "basicos", nombre: "Gastos básicos", porcentaje: 55 },
@@ -13,36 +26,22 @@ const CATEGORIAS_INICIALES = [
     { id: "inversiones", nombre: "Inversiones", porcentaje: 0 }
 ];
 
-function idsDe(lista){
-    const ids = [];
-    for (const elemento of lista){
-        ids.push(elemento.id);
-    }
-    return ids;
-}
-
-function guardarId(usados){
-    let id = "c" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
-    while(usados.includes(id)){
-        id = id + "x";
-    }
-    return id;
-}
-
-// Para otros ingresos: cada frecuencia con su texto y cuántos pagos hay al año
+// Para otros ingresos: cada frecuencia con su texto y cuántos pagos hay al año.
+// "usaDias" significa que se multiplica por los días a la semana que se recibe.
 const FRECUENCIAS_EXTRA = {
-    semanal: { texto: "Cada semana", pagosAlAnio: 52 },
-    cada2semanas: { texto: "Cada dos semanas", pagosAlAnio: 26 },
-    quincenal: { texto: "Cada quincena", pagosAlAnio: 24 },
-    mensual: { texto: "Cada mes", pagosAlAnio: 12 },
-    trimestral: { texto: "Cada 3 meses", pagosAlAnio: 4 },
-    semestral: { texto: "Cada 6 meses", pagosAlAnio: 2 },
-    anual: { texto: "Una vez al año", pagosAlAnio: 1 }
+    diaria: { texto: "Cada día", pagosAlAnio: 52, usaDias: true },
+    semanal: { texto: "Cada semana", pagosAlAnio: 52, usaDias: false },
+    cada2semanas: { texto: "Cada dos semanas", pagosAlAnio: 26, usaDias: false },
+    quincenal: { texto: "Cada quincena", pagosAlAnio: 24, usaDias: false },
+    mensual: { texto: "Cada mes", pagosAlAnio: 12, usaDias: false },
+    trimestral: { texto: "Cada 3 meses", pagosAlAnio: 4, usaDias: false },
+    semestral: { texto: "Cada 6 meses", pagosAlAnio: 2, usaDias: false },
+    anual: { texto: "Una vez al año", pagosAlAnio: 1, usaDias: false }
 };
 
 const EXTRAS_INICIALES = [
-    { nombre: "Aguinaldo", monto: 0, frecuencia: "anual" },
-    { nombre: "Propinas", monto: 0, frecuencia: "semanal" }
+    { nombre: "Aguinaldo", monto: 0, frecuencia: "anual", diasPorSemana: 5, sumar: false, destinos: [] },
+    { nombre: "Propinas", monto: 0, frecuencia: "diaria", diasPorSemana: 5, sumar: false, destinos: [] }
 ];
 
 const CLAVE_GUARDADO = "finanzas-personal-v1";
@@ -64,11 +63,12 @@ let otrosIngresos = copiar(EXTRAS_INICIALES);
 // ----- Elementos de la página -----
 const campoMonto = document.getElementById("monto");
 const campoFrecuencia = document.getElementById("frecuencia");
+const campoPeriodo = document.getElementById("periodo");
 const cuerpoTabla = document.getElementById("filas-reparto");
+const listaExtras = document.getElementById("lista-extras");
 const botonAgregar = document.getElementById("agregar-categoria");
-const botonRestablecer = document.getElementById("restablecer");
-const cuerpoExtras = document.getElementById("filas-extras");
 const botonAgregarExtra = document.getElementById("agregar-extra");
+const botonRestablecer = document.getElementById("restablecer");
 
 // ----- Leer lo que escribe la persona -----
 function leerNumero(texto){
@@ -83,40 +83,124 @@ function leerMonto(){
     return leerNumero(campoMonto.value);
 }
 
+// Los días a la semana van de 1 a 7
+function leerDias(texto){
+    const dias = Math.round(leerNumero(texto));
+    return Math.min(7, Math.max(1, dias));
+}
+
+// ----- Identificadores de las categorías -----
+function idsDe(lista){
+    const ids = [];
+    for (const elemento of lista) {
+        ids.push(elemento.id);
+    }
+    return ids;
+}
+
+// Inventa un id que no esté en la lista de usados
+function generarId(usados){
+    let id = "c" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
+    while (usados.includes(id)) {
+        id = id + "x";
+    }
+    return id;
+}
+
 // ----- Cálculos -----
-function calcularEquivalentes(frecuencia, monto) {
-    const anual = monto * PAGOS_POR_ANIO[frecuencia];
-    return{
-        semanal: anual/52,
-        cada2semanas: anual/26,
-        quincenal: anual/24,
-        mensual: anual/12,
+// A partir de cuánto es al año, saca todos los equivalentes
+function desdeAnual(anual){
+    return {
+        semanal: anual / 52,
+        cada2semanas: anual / 26,
+        quincenal: anual / 24,
+        mensual: anual / 12,
         anual: anual
     };
 }
 
-function calcularReparto(eq){
-    const resultado = [];
-    for (const cat of categorias) {
-        const fraccion = cat.porcentaje / 100;
-        resultado.push({
-            porcentaje: cat.porcentaje,
-            semana: eq.semanal * fraccion,
-            quincena: eq.quincenal * fraccion,
-            mes: eq.mensual * fraccion
-        });
+function calcularEquivalentes(frecuencia, monto) {
+    return desdeAnual(monto * PAGOS_POR_ANIO[frecuencia]);
+}
+
+// Cuánto representa un ingreso extra en cada periodo
+function calcularExtra(extra){
+    const frecuencia = FRECUENCIAS_EXTRA[extra.frecuencia];
+    let pagos = frecuencia.pagosAlAnio;
+    if (frecuencia.usaDias) {
+        pagos = pagos * extra.diasPorSemana;
+    }
+    return desdeAnual(extra.monto * pagos);
+}
+
+function multiplicar(eq, factor){
+    const resultado = {};
+    for (const clave of CLAVES_PERIODO) {
+        resultado[clave] = eq[clave] * factor;
     }
     return resultado;
 }
 
-// Cuánto representa un ingreso extra por año y por mes
-function calcularExtra(extra){
-    const pagos = FRECUENCIAS_EXTRA[extra.frecuencia].pagosAlAnio;
-    const anual = extra.monto * pagos;
-    return {
-        anual: anual,
-        mensual: anual / 12
-    };
+function sumarEq(a, b){
+    const resultado = {};
+    for (const clave of CLAVES_PERIODO) {
+        resultado[clave] = a[clave] + b[clave];
+    }
+    return resultado;
+}
+
+// Los destinos de un extra que todavía existen como categoría
+function destinosValidos(extra){
+    const validos = [];
+    for (const cat of categorias) {
+        if (extra.destinos.includes(cat.id)) {
+            validos.push(cat.id);
+        }
+    }
+    return validos;
+}
+
+// Nombres de los extras que se suman pero no tienen a dónde ir
+function extrasSinDestino(){
+    const nombres = [];
+    for (const extra of otrosIngresos) {
+        if (extra.sumar && destinosValidos(extra).length === 0) {
+            if (extra.nombre.trim() === "") {
+                nombres.push("(sin nombre)");
+            } else {
+                nombres.push(extra.nombre);
+            }
+        }
+    }
+    return nombres;
+}
+
+// Reparte el sueldo por porcentajes y, aparte, los extras que se suman a sus destinos
+function calcularReparto(eqSueldo){
+    const filas = [];
+    for (const cat of categorias) {
+        filas.push({
+            id: cat.id,
+            porcentaje: cat.porcentaje,
+            sueldo: multiplicar(eqSueldo, cat.porcentaje / 100),
+            extras: desdeAnual(0)
+        });
+    }
+
+    for (const extra of otrosIngresos) {
+        const validos = destinosValidos(extra);
+        if (extra.sumar && validos.length > 0) {
+            // Partes iguales entre los destinos elegidos
+            const parte = multiplicar(calcularExtra(extra), 1 / validos.length);
+            for (const fila of filas) {
+                if (validos.includes(fila.id)) {
+                    fila.extras = sumarEq(fila.extras, parte);
+                }
+            }
+        }
+    }
+
+    return filas;
 }
 
 function sumaPorcentajes(){
@@ -154,6 +238,11 @@ function revisarReparto(){
         }
     }
 
+    const sinDestino = extrasSinDestino();
+    if (sinDestino.length > 0) {
+        problemas.push("Se suman a tu reparto pero no tienen destino: " + sinDestino.join(", ") + ".");
+    }
+
     return problemas;
 }
 
@@ -162,6 +251,7 @@ function guardar(){
     const datos = {
         frecuencia: campoFrecuencia.value,
         monto: campoMonto.value,
+        periodo: campoPeriodo.value,
         categorias: categorias,
         otrosIngresos: otrosIngresos
     };
@@ -179,20 +269,27 @@ function limpiarCategorias(lista){
         return null;
     }
     const limpias = [];
+    const usados = [];
     for (const c of lista) {
         if (typeof c === "object" && c !== null) {
             let nombre = "";
             if (typeof c.nombre === "string") {
                 nombre = c.nombre;
             }
-            limpias.push({ nombre: nombre, porcentaje: leerNumero(c.porcentaje) });
+            // Cada categoría necesita un id único; si no lo trae o está repetido, se le da uno nuevo
+            let id = c.id;
+            if (typeof id !== "string" || id === "" || usados.includes(id)) {
+                id = generarId(usados);
+            }
+            usados.push(id);
+            limpias.push({ id: id, nombre: nombre, porcentaje: leerNumero(c.porcentaje) });
         }
     }
     return limpias;
 }
 
-// Lo mismo para la lista de otros ingresos
-function limpiarExtras(lista){
+// Lo mismo para los otros ingresos. "idsValidos" son las categorías que existen.
+function limpiarExtras(lista, idsValidos){
     if (!Array.isArray(lista)) {
         return null;
     }
@@ -207,7 +304,26 @@ function limpiarExtras(lista){
             if (Object.keys(FRECUENCIAS_EXTRA).includes(e.frecuencia)) {
                 frecuencia = e.frecuencia;
             }
-            limpios.push({ nombre: nombre, monto: leerNumero(e.monto), frecuencia: frecuencia });
+            let dias = 5;
+            if (e.diasPorSemana !== undefined) {
+                dias = leerDias(e.diasPorSemana);
+            }
+            const destinos = [];
+            if (Array.isArray(e.destinos)) {
+                for (const id of e.destinos) {
+                    if (idsValidos.includes(id) && !destinos.includes(id)) {
+                        destinos.push(id);
+                    }
+                }
+            }
+            limpios.push({
+                nombre: nombre,
+                monto: leerNumero(e.monto),
+                frecuencia: frecuencia,
+                diasPorSemana: dias,
+                sumar: e.sumar === true,
+                destinos: destinos
+            });
         }
     }
     return limpios;
@@ -226,13 +342,20 @@ function cargar(){
 
         // Primero se revisa todo; después se aplica
         const categoriasLimpias = limpiarCategorias(datos.categorias);
-        const extrasLimpios = limpiarExtras(datos.otrosIngresos);
+        let idsValidos = idsDe(categorias);
+        if (categoriasLimpias !== null) {
+            idsValidos = idsDe(categoriasLimpias);
+        }
+        const extrasLimpios = limpiarExtras(datos.otrosIngresos, idsValidos);
 
         if (Object.keys(PAGOS_POR_ANIO).includes(datos.frecuencia)) {
             campoFrecuencia.value = datos.frecuencia;
         }
         if (typeof datos.monto === "string") {
             campoMonto.value = datos.monto;
+        }
+        if (Object.keys(PERIODOS).includes(datos.periodo)) {
+            campoPeriodo.value = datos.periodo;
         }
         if (categoriasLimpias !== null) {
             categorias = categoriasLimpias;
@@ -245,16 +368,16 @@ function cargar(){
     }
 }
 
-// ----- Pantalla -----
+// ----- Pantalla: categorías -----
 function crearFila(cat){
     const fila = document.createElement("tr");
     // Esta plantilla NO lleva datos de la persona, solo la estructura
     fila.innerHTML = `
         <td><input class="campo-nombre" type="text" placeholder="Nombre" aria-label="Nombre de la categoría"></td>
         <td><input class="campo-pct" type="number" inputmode="decimal" min="0" max="100" step="any" aria-label="Porcentaje"></td>
-        <td class="c-semana"></td>
-        <td class="c-quincena"></td>
-        <td class="c-mes"></td>
+        <td class="c-sueldo"></td>
+        <td class="c-extras"></td>
+        <td class="c-total"></td>
         <td><button class="boton-borrar" type="button" aria-label="Eliminar categoría">✕</button></td>
     `;
 
@@ -268,8 +391,8 @@ function crearFila(cat){
 
     campoNombre.addEventListener("input", function () {
         cat.nombre = campoNombre.value;
-        mostrarAviso();
-        guardar();
+        construirExtras();      // los destinos muestran el nombre de la categoría
+        actualizarPantalla();
     });
     campoPct.addEventListener("input", function () {
         cat.porcentaje = leerNumero(campoPct.value);
@@ -282,22 +405,71 @@ function crearFila(cat){
     return fila;
 }
 
-function crearFilaExtra(extra){
-    const fila = document.createElement("tr");
-    // Plantilla sin datos de la persona; el selector se llena después
-    fila.innerHTML = `
-        <td><input class="extra-nombre" type="text" placeholder="Nombre" aria-label="Nombre del ingreso"></td>
-        <td><input class="extra-monto" type="number" inputmode="decimal" min="0" step="0.01" aria-label="Monto"></td>
-        <td><select class="extra-frecuencia" aria-label="Cada cuánto"></select></td>
-        <td class="c-extra-mes"></td>
-        <td class="c-extra-anio"></td>
-        <td><button class="boton-borrar" type="button" aria-label="Eliminar ingreso">✕</button></td>
+function construirTabla(){
+    cuerpoTabla.innerHTML = "";
+    for (const cat of categorias) {
+        cuerpoTabla.appendChild(crearFila(cat));
+    }
+}
+
+function agregarCategoria(){
+    categorias.push({ id: generarId(idsDe(categorias)), nombre: "", porcentaje: 0 });
+    construirTabla();
+    construirExtras();
+    actualizarPantalla();
+    cuerpoTabla.lastElementChild.querySelector(".campo-nombre").focus();
+}
+
+// Quita una categoría de los destinos de todos los extras
+function quitarDestino(id){
+    for (const extra of otrosIngresos) {
+        const posicion = extra.destinos.indexOf(id);
+        if (posicion !== -1) {
+            extra.destinos.splice(posicion, 1);
+        }
+    }
+}
+
+function eliminarCategoria(cat){
+    quitarDestino(cat.id);
+    const posicion = categorias.indexOf(cat);
+    categorias.splice(posicion, 1);
+    construirTabla();
+    construirExtras();
+    actualizarPantalla();
+}
+
+// ----- Pantalla: otros ingresos -----
+function crearTarjetaExtra(extra){
+    const tarjeta = document.createElement("div");
+    tarjeta.className = "extra";
+    // Plantilla sin datos de la persona; selector y destinos se llenan después
+    tarjeta.innerHTML = `
+        <div class="extra-fila">
+            <input class="extra-nombre" type="text" placeholder="Nombre" aria-label="Nombre del ingreso">
+            <button class="boton-borrar" type="button" aria-label="Eliminar ingreso">✕</button>
+        </div>
+        <div class="extra-fila">
+            <label>Monto <input class="extra-monto" type="number" inputmode="decimal" min="0" step="0.01"></label>
+            <select class="extra-frecuencia" aria-label="Cada cuánto"></select>
+            <label class="caja-dias">Días por semana <input class="extra-dias" type="number" inputmode="numeric" min="1" max="7" step="1"></label>
+        </div>
+        <label><input class="extra-sumar" type="checkbox"> Sumar a mi reparto</label>
+        <div class="destinos">
+            <span>Va a:</span>
+            <span class="lista-destinos"></span>
+        </div>
+        <p class="extra-resultado"></p>
     `;
 
-    const nombreExtra = fila.querySelector(".extra-nombre");
-    const montoExtra = fila.querySelector(".extra-monto");
-    const frecuenciaExtra = fila.querySelector(".extra-frecuencia");
-    const botonBorrar = fila.querySelector(".boton-borrar");
+    const nombreExtra = tarjeta.querySelector(".extra-nombre");
+    const montoExtra = tarjeta.querySelector(".extra-monto");
+    const frecuenciaExtra = tarjeta.querySelector(".extra-frecuencia");
+    const cajaDias = tarjeta.querySelector(".caja-dias");
+    const diasExtra = tarjeta.querySelector(".extra-dias");
+    const sumarExtra = tarjeta.querySelector(".extra-sumar");
+    const listaDestinos = tarjeta.querySelector(".lista-destinos");
+    const botonBorrar = tarjeta.querySelector(".boton-borrar");
 
     // Una opción por cada frecuencia de la tabla FRECUENCIAS_EXTRA
     for (const clave in FRECUENCIAS_EXTRA) {
@@ -307,106 +479,120 @@ function crearFilaExtra(extra){
         frecuenciaExtra.appendChild(opcion);
     }
 
+    // Una casilla por cada categoría
+    for (const cat of categorias) {
+        const etiqueta = document.createElement("label");
+        const casilla = document.createElement("input");
+        casilla.type = "checkbox";
+        casilla.checked = extra.destinos.includes(cat.id);
+        casilla.addEventListener("change", function () {
+            if (casilla.checked) {
+                if (!extra.destinos.includes(cat.id)) {
+                    extra.destinos.push(cat.id);
+                }
+            } else {
+                const posicion = extra.destinos.indexOf(cat.id);
+                if (posicion !== -1) {
+                    extra.destinos.splice(posicion, 1);
+                }
+            }
+            actualizarPantalla();
+        });
+        etiqueta.appendChild(casilla);
+        let nombre = cat.nombre;
+        if (nombre.trim() === "") {
+            nombre = "(sin nombre)";
+        }
+        etiqueta.appendChild(document.createTextNode(" " + nombre));
+        listaDestinos.appendChild(etiqueta);
+    }
+
+    // Los datos de la persona se ponen como valor, nunca como HTML
     nombreExtra.value = extra.nombre;
     montoExtra.value = extra.monto;
     frecuenciaExtra.value = extra.frecuencia;
+    diasExtra.value = extra.diasPorSemana;
+    sumarExtra.checked = extra.sumar;
+    cajaDias.hidden = !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
 
     nombreExtra.addEventListener("input", function () {
         extra.nombre = nombreExtra.value;
-        guardar();
+        actualizarPantalla();
     });
     montoExtra.addEventListener("input", function () {
         extra.monto = leerNumero(montoExtra.value);
-        actualizarExtras();
+        actualizarPantalla();
     });
     frecuenciaExtra.addEventListener("change", function () {
         extra.frecuencia = frecuenciaExtra.value;
-        actualizarExtras();
+        cajaDias.hidden = !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
+        actualizarPantalla();
+    });
+    diasExtra.addEventListener("input", function () {
+        extra.diasPorSemana = leerDias(diasExtra.value);
+        actualizarPantalla();
+    });
+    sumarExtra.addEventListener("change", function () {
+        extra.sumar = sumarExtra.checked;
+        actualizarPantalla();
     });
     botonBorrar.addEventListener("click", function () {
         eliminarExtra(extra);
     });
 
-    return fila;
+    return tarjeta;
 }
 
-function construirTablaExtras(){
-    cuerpoExtras.innerHTML = "";
+function construirExtras(){
+    listaExtras.innerHTML = "";
     for (const extra of otrosIngresos) {
-        cuerpoExtras.appendChild(crearFilaExtra(extra));
+        listaExtras.appendChild(crearTarjetaExtra(extra));
     }
 }
 
 function agregarExtra(){
-    otrosIngresos.push({ nombre: "", monto: 0, frecuencia: "mensual" });
-    construirTablaExtras();
-    actualizarExtras();
-    cuerpoExtras.lastElementChild.querySelector(".extra-nombre").focus();
+    otrosIngresos.push({ nombre: "", monto: 0, frecuencia: "mensual", diasPorSemana: 5, sumar: false, destinos: [] });
+    construirExtras();
+    actualizarPantalla();
+    listaExtras.lastElementChild.querySelector(".extra-nombre").focus();
 }
 
 function eliminarExtra(extra){
     const posicion = otrosIngresos.indexOf(extra);
     otrosIngresos.splice(posicion, 1);
-    construirTablaExtras();
-    actualizarExtras();
+    construirExtras();
+    actualizarPantalla();
 }
 
 function mostrarExtras(){
-    let totalMes = 0;
-    let totalAnio = 0;
+    const periodo = campoPeriodo.value;
+    const textoPeriodo = PERIODOS[periodo].toLowerCase();
+    let totalTodos = 0;
+    let totalSumados = 0;
 
     for (let i = 0; i < otrosIngresos.length; i++) {
-        const calculo = calcularExtra(otrosIngresos[i]);
-        const filaHtml = cuerpoExtras.rows[i];
-        filaHtml.querySelector(".c-extra-mes").textContent = formatoMoneda.format(calculo.mensual);
-        filaHtml.querySelector(".c-extra-anio").textContent = formatoMoneda.format(calculo.anual);
-        totalMes += calculo.mensual;
-        totalAnio += calculo.anual;
+        const extra = otrosIngresos[i];
+        const calculo = calcularExtra(extra);
+        const tieneDestino = destinosValidos(extra).length > 0;
+
+        let mensaje = formatoMoneda.format(calculo[periodo]) + " " + textoPeriodo + " · " +
+            formatoMoneda.format(calculo.anual) + " al año";
+        if (extra.sumar && !tieneDestino) {
+            mensaje += " · Elige a dónde va";
+        }
+        listaExtras.children[i].querySelector(".extra-resultado").textContent = mensaje;
+
+        totalTodos += calculo[periodo];
+        if (extra.sumar && tieneDestino) {
+            totalSumados += calculo[periodo];
+        }
     }
 
-    document.getElementById("extras-mes").textContent = formatoMoneda.format(totalMes);
-    document.getElementById("extras-anio").textContent = formatoMoneda.format(totalAnio);
+    document.getElementById("extras-total").textContent = formatoMoneda.format(totalTodos) + " " + textoPeriodo;
+    document.getElementById("extras-sumados").textContent = formatoMoneda.format(totalSumados) + " " + textoPeriodo;
 }
 
-function actualizarExtras(){
-    mostrarExtras();
-    guardar();
-}
-
-function construirTabla(){
-    cuerpoTabla.innerHTML = "";
-    for (const cat of categorias) {
-        cuerpoTabla.appendChild(crearFila(cat));
-    }
-}
-
-function agregarCategoria(){
-    categorias.push({ nombre: "", porcentaje: 0 });
-    construirTabla();
-    actualizarPantalla();
-    cuerpoTabla.lastElementChild.querySelector(".campo-nombre").focus();
-}
-
-function eliminarCategoria(cat){
-    const posicion = categorias.indexOf(cat);
-    categorias.splice(posicion, 1);
-    construirTabla();
-    actualizarPantalla();
-}
-
-function restablecer(){
-    if (confirm("¿Volver a los valores iniciales? Se perderán tus cambios.")) {
-        categorias = copiarCategoriasIniciales();
-        campoFrecuencia.value = "mensual";
-        campoMonto.value = "";
-        otrosIngresos = copiar(EXTRAS_INICIALES);
-        construirTabla();
-        construirTablaExtras();
-        actualizarPantalla();
-        mostrarExtras();
-    }
-}
-
+// ----- Pantalla: sueldo y reparto -----
 function mostrarEquivalentes(eq){
     document.getElementById("eq-semanal").textContent = formatoMoneda.format(eq.semanal);
     document.getElementById("eq-cada2semanas").textContent = formatoMoneda.format(eq.cada2semanas);
@@ -416,26 +602,30 @@ function mostrarEquivalentes(eq){
 }
 
 function mostrarReparto(eq){
+    const periodo = campoPeriodo.value;
     const filas = calcularReparto(eq);
-    let totalSemana = 0;
-    let totalQuincena = 0;
-    let totalMes = 0;
+    let totalSueldo = 0;
+    let totalExtras = 0;
 
     for (let i = 0; i < filas.length; i++) {
-        const datos = filas[i];
+        const sueldo = filas[i].sueldo[periodo];
+        const extras = filas[i].extras[periodo];
         const filaHtml = cuerpoTabla.rows[i];
-        filaHtml.querySelector(".c-semana").textContent = formatoMoneda.format(datos.semana);
-        filaHtml.querySelector(".c-quincena").textContent = formatoMoneda.format(datos.quincena);
-        filaHtml.querySelector(".c-mes").textContent = formatoMoneda.format(datos.mes);
-        totalSemana += datos.semana;
-        totalQuincena += datos.quincena;
-        totalMes += datos.mes;
+        filaHtml.querySelector(".c-sueldo").textContent = formatoMoneda.format(sueldo);
+        filaHtml.querySelector(".c-extras").textContent = formatoMoneda.format(extras);
+        filaHtml.querySelector(".c-total").textContent = formatoMoneda.format(sueldo + extras);
+        totalSueldo += sueldo;
+        totalExtras += extras;
     }
 
     document.getElementById("tot-pct").textContent = sumaPorcentajes() + "%";
-    document.getElementById("tot-semana").textContent = formatoMoneda.format(totalSemana);
-    document.getElementById("tot-quincena").textContent = formatoMoneda.format(totalQuincena);
-    document.getElementById("tot-mes").textContent = formatoMoneda.format(totalMes);
+    document.getElementById("tot-sueldo").textContent = formatoMoneda.format(totalSueldo);
+    document.getElementById("tot-extras").textContent = formatoMoneda.format(totalExtras);
+    document.getElementById("tot-total").textContent = formatoMoneda.format(totalSueldo + totalExtras);
+
+    document.getElementById("resumen-ingreso").textContent =
+        "Sueldo " + formatoMoneda.format(eq[periodo]) + " + otros ingresos " + formatoMoneda.format(totalExtras) +
+        " = " + formatoMoneda.format(eq[periodo] + totalExtras) + " (" + PERIODOS[periodo].toLowerCase() + ")";
 }
 
 function mostrarAviso(){
@@ -450,23 +640,49 @@ function mostrarAviso(){
     }
 }
 
+// Se llama cada vez que algo cambia: calcula, dibuja y guarda
 function actualizarPantalla(){
     const eq = calcularEquivalentes(campoFrecuencia.value, leerMonto());
     mostrarEquivalentes(eq);
     mostrarReparto(eq);
+    mostrarExtras();
     mostrarAviso();
     guardar();
+}
+
+function llenarSelectorPeriodo(){
+    for (const clave in PERIODOS) {
+        const opcion = document.createElement("option");
+        opcion.value = clave;
+        opcion.textContent = PERIODOS[clave];
+        campoPeriodo.appendChild(opcion);
+    }
+}
+
+function restablecer(){
+    if (confirm("¿Volver a los valores iniciales? Se perderán tus cambios.")) {
+        categorias = copiarCategoriasIniciales();
+        otrosIngresos = copiar(EXTRAS_INICIALES);
+        campoFrecuencia.value = "mensual";
+        campoMonto.value = "";
+        campoPeriodo.value = "semanal";
+        construirTabla();
+        construirExtras();
+        actualizarPantalla();
+    }
 }
 
 // ----- Eventos y arranque -----
 campoMonto.addEventListener("input", actualizarPantalla);
 campoFrecuencia.addEventListener("change", actualizarPantalla);
+campoPeriodo.addEventListener("change", actualizarPantalla);
 botonAgregar.addEventListener("click", agregarCategoria);
 botonAgregarExtra.addEventListener("click", agregarExtra);
 botonRestablecer.addEventListener("click", restablecer);
 
+llenarSelectorPeriodo();
+campoPeriodo.value = "semanal";
 cargar();
 construirTabla();
-construirTablaExtras();
+construirExtras();
 actualizarPantalla();
-mostrarExtras();

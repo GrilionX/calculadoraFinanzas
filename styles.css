@@ -142,12 +142,75 @@ td input[type="text"] {
     color: #5b6675;
 }
 
-.extra-monto {
-    width: 100px;
+/* El atributo hidden debe ganar siempre */
+[hidden] {
+    display: none !important;
 }
 
-td select {
-    width: auto;
-    padding: 6px;
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+}
+
+.resumen {
+    font-size: 0.9rem;
+    margin: 12px 0;
+}
+
+/* Tarjetas de otros ingresos */
+.extra {
+    border: 1px solid #d9dfe8;
     border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.extra-fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.extra label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.9rem;
+    color: #1b2430;
+}
+
+.extra input[type="text"] {
+    flex: 1;
+    min-width: 140px;
+}
+
+.extra select {
+    width: auto;
+}
+
+.extra-monto {
+    width: 110px;
+}
+
+.extra-dias {
+    width: 64px;
+}
+
+.destinos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.extra-resultado {
+    margin: 8px 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
