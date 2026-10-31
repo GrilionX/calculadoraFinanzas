@@ -43,7 +43,6 @@ const CLAVE_GUARDADO = "finanzas-personal-v1";
 
 const formatoMoneda = new Intl.NumberFormat("es-MX", {style: "currency", currency: "MXN"});
 
-// Una copia independiente de cualquier lista u objeto
 function copiar(datos){
     return JSON.parse(JSON.stringify(datos));
 }
@@ -59,13 +58,20 @@ let otrosIngresos = copiar(EXTRAS_INICIALES);
 const campoMonto = document.getElementById("monto");
 const campoFrecuencia = document.getElementById("frecuencia");
 const campoPeriodo = document.getElementById("periodo");
+const campoSemanas = document.getElementById("semanas-mostrar");
+const cuerpoCalendario = document.getElementById("filas-calendario");
+const cuerpoResumenCategorias = document.getElementById("filas-resumen-categorias");
+const botonExportar = document.getElementById("exportar-copia");
+const botonImportar = document.getElementById("importar-copia");
+const campoArchivo = document.getElementById("archivo-copia");
+const mensajeCopia = document.getElementById("mensaje-copia");
 const cuerpoTabla = document.getElementById("filas-reparto");
 const listaExtras = document.getElementById("lista-extras");
 const botonAgregar = document.getElementById("agregar-categoria");
 const botonAgregarExtra = document.getElementById("agregar-extra");
 const botonRestablecer = document.getElementById("restablecer");
 
-//Leer lo que escribe el usuario
+//Leer lo que el usuario escribe
 function leerNumero(texto){
     const numero = Number(texto);
     if (numero < 0 || Number.isNaN(numero)){
@@ -103,6 +109,7 @@ function generarId(usados){
     return id;
 }
 
+//Calculos
 function desdeAnual(anual){
     return {
         semanal: anual / 52,
@@ -126,32 +133,32 @@ function calcularExtra(extra){
     return desdeAnual(extra.monto * pagos);
 }
 
+function esDeGolpe(extra){
+    return extra.modo === "golpe";
+}
+
+function montoDeGolpe(extra, semana){
+    if (semana < extra.semana) {
+        return 0;
+    }
+    if (extra.repetir === 0) {
+        if (semana === extra.semana) {
+            return extra.monto;
+        }
+        return 0;
+    }
+    if ((semana - extra.semana) % extra.repetir === 0) {
+        return extra.monto;
+    }
+    return 0;
+}
+
 function multiplicar(eq, factor){
     const resultado = {};
     for (const clave of CLAVES_PERIODO) {
         resultado[clave] = eq[clave] * factor;
     }
     return resultado;
-}
-
-function esDeGolpe(extra){
-    return extra.modo === "golpe";
-}
-
-function montoDeGolpe(extra, semana){
-    if (semana < extra.semana){
-        return 0;
-    }
-    if (extra.repetir === 0){
-        if(semana === extra.semana){
-            return extra.monto;
-        }
-        return 0;
-    }
-    if ((semana-extra.semana) % extra.repetir === 0){
-        return extra.monto
-    }
-    return 0;
 }
 
 function sumarEq(a, b){
@@ -186,7 +193,6 @@ function extrasSinDestino(){
     return nombres;
 }
 
-// Reparte el sueldo
 function calcularReparto(eqSueldo){
     const filas = [];
     for (const cat of categorias) {
@@ -200,7 +206,7 @@ function calcularReparto(eqSueldo){
 
     for (const extra of otrosIngresos) {
         const validos = destinosValidos(extra);
-        if (extra.sumar && !esDeGolpe(extra) && validos.length > 0){
+        if (extra.sumar && !esDeGolpe(extra) && validos.length > 0) {
             const parte = multiplicar(calcularExtra(extra), 1 / validos.length);
             for (const fila of filas) {
                 if (validos.includes(fila.id)) {
@@ -219,7 +225,7 @@ function calcularCalendario(eqSueldo, cantidadSemanas){
     const porCategoria = [];
 
     let promediadosPorSemana = 0;
-    for (const fila of repartoSemanal){
+    for (const fila of repartoSemanal) {
         promediadosPorSemana += fila.extras.semanal;
         porCategoria.push({
             id: fila.id,
@@ -229,34 +235,37 @@ function calcularCalendario(eqSueldo, cantidadSemanas){
         });
     }
 
-    for (let semana = 1; semana <= cantidadSemanas; semana++){
+    for (let semana = 1; semana <= cantidadSemanas; semana++) {
         let deGolpe = 0;
         const llegan = [];
 
-        for (const extra of otrosIngresos){
+        for (const extra of otrosIngresos) {
             const validos = destinosValidos(extra);
-            if(extra.sumar && esDeGolpe(extra) && validos.length > 0){
-                deGolpe += monto;
-                llegan.push({ nombre: extra.nombre, monto: monto })
-                for (const categoria of porCategoria){
-                    if (validos.includes(categoria.id)){
-                        categoria.deGolpe += monto/validos.length;
+            if (extra.sumar && esDeGolpe(extra) && validos.length > 0) {
+                const monto = montoDeGolpe(extra, semana);
+                if (monto > 0) {
+                    deGolpe += monto;
+                    llegan.push({ nombre: extra.nombre, monto: monto });
+                    for (const categoria of porCategoria) {
+                        if (validos.includes(categoria.id)) {
+                            categoria.deGolpe += monto / validos.length;
+                        }
                     }
                 }
             }
         }
+
+        semanas.push({
+            semana: semana,
+            sueldo: eqSueldo.semanal,
+            promediados: promediadosPorSemana,
+            deGolpe: deGolpe,
+            total: eqSueldo.semanal + promediadosPorSemana + deGolpe,
+            llegan: llegan
+        });
     }
 
-    semanas.push({
-        semana: semana,
-        sueldo: eqSueldo.semanal,
-        promediados: promediadosPorSemana,
-        deGolpe: deGolpe,
-        total: eqSueldo + promediadosPorSemana + deGolpe,
-        llegan: llegan
-    });
-
-    return { semana: semanas, porCategoria: porCategoria };
+    return { semanas: semanas, porCategoria: porCategoria };
 }
 
 function sumaPorcentajes(){
@@ -303,16 +312,20 @@ function revisarReparto(){
 }
 
 //Guardar y cargar
-function guardar(){
-    const datos = {
+function construirPaquete(){
+    return {
         frecuencia: campoFrecuencia.value,
         monto: campoMonto.value,
         periodo: campoPeriodo.value,
+        semanasMostrar: campoSemanas.value,
         categorias: categorias,
         otrosIngresos: otrosIngresos
     };
+}
+
+function guardar(){
     try {
-        localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos));
+        localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(construirPaquete()));
     } catch (error) {
         console.warn("No se pudo guardar:", error);
     }
@@ -341,7 +354,6 @@ function limpiarCategorias(lista){
     return limpias;
 }
 
-//Categorias que existen
 function limpiarExtras(lista, idsValidos){
     if (!Array.isArray(lista)) {
         return null;
@@ -352,6 +364,10 @@ function limpiarExtras(lista, idsValidos){
             let nombre = "";
             if (typeof e.nombre === "string") {
                 nombre = e.nombre;
+            }
+            let modo = "promedio";
+            if (e.modo === "golpe") {
+                modo = "golpe";
             }
             let frecuencia = "mensual";
             if (Object.keys(FRECUENCIAS_EXTRA).includes(e.frecuencia)) {
@@ -372,8 +388,11 @@ function limpiarExtras(lista, idsValidos){
             limpios.push({
                 nombre: nombre,
                 monto: leerNumero(e.monto),
+                modo: modo,
                 frecuencia: frecuencia,
                 diasPorSemana: dias,
+                semana: leerEntero(e.semana, 1, 520),
+                repetir: leerEntero(e.repetir, 0, 520),
                 sumar: e.sumar === true,
                 destinos: destinos
             });
@@ -382,48 +401,130 @@ function limpiarExtras(lista, idsValidos){
     return limpios;
 }
 
+function aplicarDatos(datos){
+    if (typeof datos !== "object" || datos === null) {
+        return false;
+    }
+
+    const categoriasLimpias = limpiarCategorias(datos.categorias);
+    let idsValidos = idsDe(CATEGORIAS_INICIALES);
+    if (categoriasLimpias !== null) {
+        idsValidos = idsDe(categoriasLimpias);
+    }
+    const extrasLimpios = limpiarExtras(datos.otrosIngresos, idsValidos);
+
+    campoFrecuencia.value = "mensual";
+    campoMonto.value = "";
+    campoPeriodo.value = "semanal";
+    campoSemanas.value = 26;
+    categorias = copiarCategoriasIniciales();
+    otrosIngresos = copiar(EXTRAS_INICIALES);
+
+    if (Object.keys(PAGOS_POR_ANIO).includes(datos.frecuencia)) {
+        campoFrecuencia.value = datos.frecuencia;
+    }
+    if (typeof datos.monto === "string") {
+        campoMonto.value = datos.monto;
+    }
+    if (Object.keys(PERIODOS).includes(datos.periodo)) {
+        campoPeriodo.value = datos.periodo;
+    }
+    if (typeof datos.semanasMostrar === "string") {
+        campoSemanas.value = datos.semanasMostrar;
+    }
+    if (categoriasLimpias !== null) {
+        categorias = categoriasLimpias;
+    }
+    if (extrasLimpios !== null) {
+        otrosIngresos = extrasLimpios;
+    }
+    return true;
+}
+
 function cargar(){
     try {
         const texto = localStorage.getItem(CLAVE_GUARDADO);
         if (texto === null) {
             return; // no hay nada guardado todavía
         }
-        const datos = JSON.parse(texto);
-        if (typeof datos !== "object" || datos === null) {
-            return;
-        }
-
-        const categoriasLimpias = limpiarCategorias(datos.categorias);
-        let idsValidos = idsDe(categorias);
-        if (categoriasLimpias !== null) {
-            idsValidos = idsDe(categoriasLimpias);
-        }
-        const extrasLimpios = limpiarExtras(datos.otrosIngresos, idsValidos);
-
-        if (Object.keys(PAGOS_POR_ANIO).includes(datos.frecuencia)) {
-            campoFrecuencia.value = datos.frecuencia;
-        }
-        if (typeof datos.monto === "string") {
-            campoMonto.value = datos.monto;
-        }
-        if (Object.keys(PERIODOS).includes(datos.periodo)) {
-            campoPeriodo.value = datos.periodo;
-        }
-        if (categoriasLimpias !== null) {
-            categorias = categoriasLimpias;
-        }
-        if (extrasLimpios !== null) {
-            otrosIngresos = extrasLimpios;
-        }
+        aplicarDatos(JSON.parse(texto));
     } catch (error) {
         console.warn("No se pudo cargar lo guardado:", error);
     }
 }
 
-//Categorias
+//Copia de seguridad
+function mostrarMensajeCopia(texto, esError){
+    mensajeCopia.textContent = texto;
+    if (esError) {
+        mensajeCopia.className = "aviso error";
+    } else {
+        mensajeCopia.className = "aviso ok";
+    }
+}
+
+function esCopiaValida(contenido){
+    return typeof contenido === "object" &&
+        contenido !== null &&
+        contenido.app === "finanzas-personal" &&
+        typeof contenido.datos === "object" &&
+        contenido.datos !== null &&
+        !Array.isArray(contenido.datos);
+}
+
+function exportarCopia(){
+    const copia = { app: "finanzas-personal", version: 1, datos: construirPaquete() };
+    const texto = JSON.stringify(copia, null, 2);
+
+    const archivo = new Blob([texto], { type: "application/json" });
+    const direccion = URL.createObjectURL(archivo);
+    const enlace = document.createElement("a");
+    enlace.href = direccion;
+    enlace.download = "copia-finanzas.json";
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    setTimeout(function () {
+        URL.revokeObjectURL(direccion);
+    }, 1000);
+
+    mostrarMensajeCopia("Copia descargada ✔ Guárdala en un lugar seguro.", false);
+}
+
+function importarCopia(archivo){
+    if (archivo.size > 500000) {
+        mostrarMensajeCopia("Ese archivo es demasiado grande para ser una copia de esta herramienta.", true);
+        return;
+    }
+
+    const lector = new FileReader();
+    lector.onload = function () {
+        try {
+            const contenido = JSON.parse(lector.result);
+            if (!esCopiaValida(contenido)) {
+                mostrarMensajeCopia("Ese archivo no parece una copia de esta herramienta.", true);
+                return;
+            }
+            if (!confirm("Cargar esta copia reemplazará lo que tienes ahora. ¿Continuar?")) {
+                return;
+            }
+            aplicarDatos(contenido.datos);
+            construirTabla();
+            construirExtras();
+            actualizarPantalla();
+            mostrarMensajeCopia("Copia cargada ✔", false);
+        } catch (error) {
+            mostrarMensajeCopia("No se pudo leer el archivo. ¿Es una copia de esta herramienta?", true);
+        }
+    };
+    lector.onerror = function () {
+        mostrarMensajeCopia("No se pudo abrir el archivo.", true);
+    };
+    lector.readAsText(archivo);
+}
+
 function crearFila(cat){
     const fila = document.createElement("tr");
-    // Esta plantilla NO lleva datos de la persona, solo la estructura
     fila.innerHTML = `
         <td><input class="campo-nombre" type="text" placeholder="Nombre" aria-label="Nombre de la categoría"></td>
         <td><input class="campo-pct" type="number" inputmode="decimal" min="0" max="100" step="any" aria-label="Porcentaje"></td>
@@ -437,13 +538,12 @@ function crearFila(cat){
     const campoPct = fila.querySelector(".campo-pct");
     const botonBorrar = fila.querySelector(".boton-borrar");
 
-    // Los datos de la persona se ponen como valor, nunca como HTML
     campoNombre.value = cat.nombre;
     campoPct.value = cat.porcentaje;
 
     campoNombre.addEventListener("input", function () {
         cat.nombre = campoNombre.value;
-        construirExtras();      // los destinos muestran el nombre de la categoría
+        construirExtras();      
         actualizarPantalla();
     });
     campoPct.addEventListener("input", function () {
@@ -472,7 +572,6 @@ function agregarCategoria(){
     cuerpoTabla.lastElementChild.querySelector(".campo-nombre").focus();
 }
 
-// Quita una categoría de los destinos de todos los extras
 function quitarDestino(id){
     for (const extra of otrosIngresos) {
         const posicion = extra.destinos.indexOf(id);
@@ -491,11 +590,9 @@ function eliminarCategoria(cat){
     actualizarPantalla();
 }
 
-// Otros ingresos   
 function crearTarjetaExtra(extra){
     const tarjeta = document.createElement("div");
     tarjeta.className = "extra";
-    // Plantilla sin datos de la persona; selector y destinos se llenan después
     tarjeta.innerHTML = `
         <div class="extra-fila">
             <input class="extra-nombre" type="text" placeholder="Nombre" aria-label="Nombre del ingreso">
@@ -503,8 +600,16 @@ function crearTarjetaExtra(extra){
         </div>
         <div class="extra-fila">
             <label>Monto <input class="extra-monto" type="number" inputmode="decimal" min="0" step="0.01"></label>
+            <select class="extra-modo" aria-label="Cómo lo cuento">
+                <option value="promedio">Promediado</option>
+                <option value="golpe">Llega de golpe</option>
+            </select>
+        </div>
+        <div class="extra-fila">
             <select class="extra-frecuencia" aria-label="Cada cuánto"></select>
             <label class="caja-dias">Días por semana <input class="extra-dias" type="number" inputmode="numeric" min="1" max="7" step="1"></label>
+            <label class="caja-golpe">En la semana <input class="extra-semana" type="number" inputmode="numeric" min="1" max="520" step="1"></label>
+            <label class="caja-golpe">Se repite cada <input class="extra-repetir" type="number" inputmode="numeric" min="0" max="520" step="1"> semanas (0 = una vez)</label>
         </div>
         <label><input class="extra-sumar" type="checkbox"> Sumar a mi reparto</label>
         <div class="destinos">
@@ -516,18 +621,17 @@ function crearTarjetaExtra(extra){
 
     const nombreExtra = tarjeta.querySelector(".extra-nombre");
     const montoExtra = tarjeta.querySelector(".extra-monto");
+    const modoExtra = tarjeta.querySelector(".extra-modo");
     const frecuenciaExtra = tarjeta.querySelector(".extra-frecuencia");
     const cajaDias = tarjeta.querySelector(".caja-dias");
     const diasExtra = tarjeta.querySelector(".extra-dias");
+    const cajasGolpe = tarjeta.querySelectorAll(".caja-golpe");
+    const semanaExtra = tarjeta.querySelector(".extra-semana");
+    const repetirExtra = tarjeta.querySelector(".extra-repetir");
     const sumarExtra = tarjeta.querySelector(".extra-sumar");
     const listaDestinos = tarjeta.querySelector(".lista-destinos");
     const botonBorrar = tarjeta.querySelector(".boton-borrar");
-    const modoExtra = tarjeta.querySelector(".extra-modo");
-    const cajasGolpe = tarjeta.querySelectorAll(".caja-golpe");
-    const semanaExtra = tarjeta.querySelector(".extra.semana");
-    const repetirExtra = tarjeta.querySelector(".extra-repetir");
 
-    // Una opción por cada frecuencia de la tabla FRECUENCIAS_EXTRA
     for (const clave in FRECUENCIAS_EXTRA) {
         const opcion = document.createElement("option");
         opcion.value = clave;
@@ -535,7 +639,6 @@ function crearTarjetaExtra(extra){
         frecuenciaExtra.appendChild(opcion);
     }
 
-    // Una casilla por cada categoría
     for (const cat of categorias) {
         const etiqueta = document.createElement("label");
         const casilla = document.createElement("input");
@@ -563,23 +666,23 @@ function crearTarjetaExtra(extra){
         listaDestinos.appendChild(etiqueta);
     }
 
-    //Los datos como valor
     nombreExtra.value = extra.nombre;
     montoExtra.value = extra.monto;
+    modoExtra.value = extra.modo;
     frecuenciaExtra.value = extra.frecuencia;
     diasExtra.value = extra.diasPorSemana;
+    semanaExtra.value = extra.semana;
+    repetirExtra.value = extra.repetir;
     sumarExtra.checked = extra.sumar;
-    //cajaDias.hidden = !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
 
     function ajustarCampos(){
-        const golpe = esDeGolpe(esDeGolpe);
+        const golpe = esDeGolpe(extra);
         frecuenciaExtra.hidden = golpe;
         cajaDias.hidden = golpe || !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
-        for (const caja of cajasGolpe){
+        for (const caja of cajasGolpe) {
             caja.hidden = !golpe;
         }
     }
-
     ajustarCampos();
 
     nombreExtra.addEventListener("input", function () {
@@ -588,6 +691,10 @@ function crearTarjetaExtra(extra){
     });
     montoExtra.addEventListener("input", function () {
         extra.monto = leerNumero(montoExtra.value);
+        actualizarPantalla();
+    });
+    modoExtra.addEventListener("change", function () {
+        extra.modo = modoExtra.value;
         ajustarCampos();
         actualizarPantalla();
     });
@@ -596,17 +703,14 @@ function crearTarjetaExtra(extra){
         ajustarCampos();
         actualizarPantalla();
     });
-
-    semanaExtra.addEventListener("input", function(){
+    semanaExtra.addEventListener("input", function () {
         extra.semana = leerEntero(semanaExtra.value, 1, 520);
-        actualizarPantalla
+        actualizarPantalla();
     });
-
-    repetirExtra.addEventListener("input", function(){
+    repetirExtra.addEventListener("input", function () {
         extra.repetir = leerEntero(repetirExtra.value, 0, 520);
         actualizarPantalla();
-    })
-
+    });
     diasExtra.addEventListener("input", function () {
         extra.diasPorSemana = leerDias(diasExtra.value);
         actualizarPantalla();
@@ -681,7 +785,67 @@ function mostrarExtras(){
     document.getElementById("extras-sumados").textContent = formatoMoneda.format(totalSumados) + " " + textoPeriodo;
 }
 
-//Sueldo y reparto
+function agregarCelda(fila, texto){
+    const celda = document.createElement("td");
+    celda.textContent = texto;
+    fila.appendChild(celda);
+}
+
+function mostrarCalendario(eq){
+    const cantidad = leerEntero(campoSemanas.value, 1, 156);
+    const calendario = calcularCalendario(eq, cantidad);
+    let totalSueldo = 0;
+    let totalPromediados = 0;
+    let totalDeGolpe = 0;
+
+    cuerpoCalendario.innerHTML = "";
+    for (const s of calendario.semanas) {
+        const fila = document.createElement("tr");
+        const textos = [];
+        for (const l of s.llegan) {
+            let nombre = l.nombre;
+            if (nombre.trim() === "") {
+                nombre = "(sin nombre)";
+            }
+            textos.push(nombre + " " + formatoMoneda.format(l.monto));
+        }
+        agregarCelda(fila, String(s.semana));
+        agregarCelda(fila, formatoMoneda.format(s.sueldo));
+        agregarCelda(fila, formatoMoneda.format(s.promediados));
+        agregarCelda(fila, formatoMoneda.format(s.deGolpe));
+        agregarCelda(fila, formatoMoneda.format(s.total));
+        agregarCelda(fila, textos.join(", "));
+        if (s.llegan.length > 0) {
+            fila.className = "con-golpe";
+        }
+        cuerpoCalendario.appendChild(fila);
+        totalSueldo += s.sueldo;
+        totalPromediados += s.promediados;
+        totalDeGolpe += s.deGolpe;
+    }
+
+    document.getElementById("cal-sueldo").textContent = formatoMoneda.format(totalSueldo);
+    document.getElementById("cal-promediados").textContent = formatoMoneda.format(totalPromediados);
+    document.getElementById("cal-golpe").textContent = formatoMoneda.format(totalDeGolpe);
+    document.getElementById("cal-total").textContent = formatoMoneda.format(totalSueldo + totalPromediados + totalDeGolpe);
+
+    cuerpoResumenCategorias.innerHTML = "";
+    for (let i = 0; i < calendario.porCategoria.length; i++) {
+        const c = calendario.porCategoria[i];
+        const fila = document.createElement("tr");
+        let nombre = categorias[i].nombre;
+        if (nombre.trim() === "") {
+            nombre = "(sin nombre)";
+        }
+        agregarCelda(fila, nombre);
+        agregarCelda(fila, formatoMoneda.format(c.sueldo));
+        agregarCelda(fila, formatoMoneda.format(c.promediados));
+        agregarCelda(fila, formatoMoneda.format(c.deGolpe));
+        agregarCelda(fila, formatoMoneda.format(c.sueldo + c.promediados + c.deGolpe));
+        cuerpoResumenCategorias.appendChild(fila);
+    }
+}
+
 function mostrarEquivalentes(eq){
     document.getElementById("eq-semanal").textContent = formatoMoneda.format(eq.semanal);
     document.getElementById("eq-cada2semanas").textContent = formatoMoneda.format(eq.cada2semanas);
@@ -729,12 +893,12 @@ function mostrarAviso(){
     }
 }
 
-// Se llama cada vez que algo cambia: calcula, dibuja y guarda
 function actualizarPantalla(){
     const eq = calcularEquivalentes(campoFrecuencia.value, leerMonto());
     mostrarEquivalentes(eq);
     mostrarReparto(eq);
     mostrarExtras();
+    mostrarCalendario(eq);
     mostrarAviso();
     guardar();
 }
@@ -755,19 +919,32 @@ function restablecer(){
         campoFrecuencia.value = "mensual";
         campoMonto.value = "";
         campoPeriodo.value = "semanal";
+        campoSemanas.value = 26;
         construirTabla();
         construirExtras();
         actualizarPantalla();
     }
 }
 
-//Eventos y arranque
+// Eventos y arranques
 campoMonto.addEventListener("input", actualizarPantalla);
 campoFrecuencia.addEventListener("change", actualizarPantalla);
 campoPeriodo.addEventListener("change", actualizarPantalla);
+campoSemanas.addEventListener("input", actualizarPantalla);
 botonAgregar.addEventListener("click", agregarCategoria);
 botonAgregarExtra.addEventListener("click", agregarExtra);
 botonRestablecer.addEventListener("click", restablecer);
+botonExportar.addEventListener("click", exportarCopia);
+botonImportar.addEventListener("click", function () {
+    campoArchivo.click();
+});
+campoArchivo.addEventListener("change", function () {
+    const archivo = campoArchivo.files[0];
+    if (archivo) {
+        importarCopia(archivo);
+    }
+    campoArchivo.value = "";
+});
 
 llenarSelectorPeriodo();
 campoPeriodo.value = "semanal";

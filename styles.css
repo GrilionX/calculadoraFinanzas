@@ -102,6 +102,8 @@ td input[type="text"] {
 
 #agregar-categoria,
 #agregar-extra,
+#exportar-copia,
+#importar-copia,
 #restablecer {
     margin-top: 12px;
     font: inherit;
@@ -140,7 +142,6 @@ td input[type="text"] {
     color: #5b6675;
 }
 
-/* El atributo hidden debe ganar siempre */
 [hidden] {
     display: none !important;
 }
@@ -213,7 +214,22 @@ input[type="checkbox"] {
     font-weight: 600;
 }
 
+h3 {
+    font-size: 1rem;
+    margin: 20px 0 8px;
+}
+
+.con-golpe {
+    background-color: #fff6dd;
+}
+
 .extra-semana,
 .extra-repetir {
     width: 70px;
+}
+
+.fila-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }

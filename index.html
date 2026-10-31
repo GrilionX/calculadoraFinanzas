@@ -9,10 +9,8 @@
     <body>
         <main>
             <h1>Mi sueldo y mi reparto</h1>
-
             <section class="tarjeta">
                 <h2>Mi sueldo</h2>
-
                 <div>
                     <label for="frecuencia">Cada cuanto</label>
                     <select id="frecuencia">
@@ -22,7 +20,6 @@
                         <option value="mensual" selected>Mensual</option>
                     </select>
                 </div>
-
                 <div>
                     <label for="monto">Monto de cada pago</label>
                     <input id="monto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Por ejemplo 9300">
@@ -36,39 +33,18 @@
                     <li>Anual: <strong id="eq-anual"></strong></li>
                 </ul>
             </section>
-
             <section class="tarjeta">
                 <h2>Otros ingresos</h2>
-
-                <p class="ayuda">
-                    Aguinaldo, bonos, propinas... Se calculan aparte.
-                    Solo se suman a tu reparto si marcas "Sumar a mi reparto"
-                    y eliges a dónde van.
-                </p>
-
+                <p class="ayuda">Aguinaldo, bonos, propinas... Se calculan aparte. Solo se suman a tu reparto si marcas "Sumar a mi reparto" y eliges a dónde van.</p>
                 <div id="lista-extras"></div>
-
-                <p class="resumen">
-                    Todos tus otros ingresos:
-                    <strong id="extras-total"></strong>
-                    <br>
-                    Los que sumas a tu reparto:
-                    <strong id="extras-sumados"></strong>
-                </p>
-
-                <button id="agregar-extra" type="button">
-                    + Agregar ingreso
-                </button>
+                <p class="resumen">Todos tus ingresos promediados: <strong id="extras-total"></strong><br>Los que sumas a tu reparto: <strong id="extras-sumados"></strong></p>
+                <button id="agregar-extra" type="button">+ Agregar ingreso</button>
             </section>
-
             <section class="tarjeta">
                 <h2>Mi reparto</h2>
-
                 <label for="periodo">Ver cantidades por</label>
                 <select id="periodo"></select>
-
                 <p id="resumen-ingreso" class="resumen"></p>
-
                 <div class="tabla-scroll">
                     <table>
                         <thead>
@@ -81,9 +57,7 @@
                                 <th></th>
                             </tr>
                         </thead>
-
                         <tbody id="filas-reparto"></tbody>
-
                         <tfoot>
                             <tr>
                                 <td>Total</td>
@@ -96,58 +70,68 @@
                         </tfoot>
                     </table>
                 </div>
-
                 <p id="aviso" class="aviso" role="status"></p>
-
-                <button id="agregar-categoria" type="button">
-                    + Agregar categoría
-                </button>
+                <button id="agregar-categoria" type="button">+ Agregar categoría</button>
             </section>
-
-            <button id="restablecer" type="button">
-                Volver a los valores iniciales
-            </button>
-
-            <p class="nota">
-                Esta herramienta hace estimaciones para planear.
-                No es asesoría financiera.
-            </p>
+            <section class="tarjeta">
+                <h2>Mis próximas semanas</h2>
+                <p class="ayuda">Semana 1 es esta semana. Aquí ves semana por semana lo que entra, incluidos los ingresos que llegan de golpe.</p>
+                <label for="semanas-mostrar">¿Cuántas semanas quieres ver?</label>
+                <input id="semanas-mostrar" type="number" inputmode="numeric" min="1" max="156" step="1" value="26">
+                <div class="tabla-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Semana</th>
+                                <th>Sueldo</th>
+                                <th>Promediados</th>
+                                <th>De golpe</th>
+                                <th>Total</th>
+                                <th>Llega</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filas-calendario"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Total</td>
+                                <td id="cal-sueldo"></td>
+                                <td id="cal-promediados"></td>
+                                <td id="cal-golpe"></td>
+                                <td id="cal-total"></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <h3>Lo que le toca a cada categoría en esas semanas</h3>
+                <div class="tabla-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Del sueldo</th>
+                                <th>Promediados</th>
+                                <th>De golpe</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filas-resumen-categorias"></tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="tarjeta">
+                <h2>Copia de seguridad</h2>
+                <p class="ayuda">Tus datos solo viven en este navegador. Descarga una copia para no perderlos o para pasarlos a otro aparato. El archivo contiene tus datos personales: guárdalo en un lugar seguro y no lo compartas.</p>
+                <div class="fila-botones">
+                    <button id="exportar-copia" type="button">Descargar copia</button>
+                    <button id="importar-copia" type="button">Cargar copia</button>
+                </div>
+                <input id="archivo-copia" type="file" accept=".json,application/json" hidden>
+                <p id="mensaje-copia" class="aviso" role="status"></p>
+            </section>
+            <button id="restablecer" type="button">Volver a los valores iniciales</button>
+            <p class="nota">Esta herramienta hace estimaciones para planear. No es asesoría financiera.</p>
         </main>
-
-        <template id="plantilla-extra">
-            <div class="extra-fila">
-                <label>
-                    Monto
-                    <input class="extra-monto" type="number" inputmode="decimal" min="0" step="0.01">
-                </label>
-
-                <select class="extra-modo" aria-label="Cómo lo cuento">
-                    <option value="promedio">Promediado</option>
-                    <option value="golpe">Llega de golpe</option>
-                </select>
-            </div>
-
-            <div class="extra-fila">
-                <select class="extra-frecuencia" aria-label="Cada cuánto"></select>
-
-                <label class="caja-dias">
-                    Días por semana
-                    <input class="extra-dias" type="number" inputmode="numeric" min="1" max="7" step="1">
-                </label>
-
-                <label class="caja-golpe">
-                    En la semana
-                    <input class="extra-semana" type="number" inputmode="numeric" min="1" max="520" step="1">
-                </label>
-
-                <label class="caja-golpe">
-                    Se repite cada
-                    <input class="extra-repetir" type="number" inputmode="numeric" min="0" max="520" step="1">
-                    semanas (0 = una vez)
-                </label>
-            </div>
-        </template>
-
         <script src="app.js"></script>
         <script src="pruebas.js"></script>
     </body>

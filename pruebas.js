@@ -4,7 +4,6 @@ function casiIgual(a, b){
 
 let fallos = 0;
 
-// Para comparar números
 function comprobar(nombre, obtenido, esperado){
     if (casiIgual(obtenido, esperado)) {
         console.log("✔ " + nombre);
@@ -31,7 +30,7 @@ function ejecutarPruebas(){
     categorias = copiarCategoriasIniciales();    // uso los iniciales para probar
     otrosIngresos = [];
 
-    // ----- Sueldo -----
+    //Sueldo
     let eq = calcularEquivalentes("mensual", 9377);
     comprobar("9,377 mensual: semanal", eq.semanal, 2163.92);
     comprobar("9,377 mensual: cada dos semanas", eq.cada2semanas, 4327.85);
@@ -43,7 +42,6 @@ function ejecutarPruebas(){
     comprobar("Deudas por semana", reparto[2].sueldo.semanal, 540.98);
     comprobar("Ahorro por mes", reparto[3].sueldo.mensual, 1406.55);
 
-    // El reparto completo debe sumar el sueldo
     let suma = 0;
     for (const fila of reparto) {
         suma += fila.sueldo.semanal;
@@ -67,7 +65,6 @@ function ejecutarPruebas(){
     eq = calcularEquivalentes("mensual", 0);
     comprobar("0 de sueldo: anual", eq.anual, 0);
 
-    // ----- Otros ingresos: cuánto son -----
     let extra = calcularExtra({ nombre: "Prueba", monto: 10000, frecuencia: "anual", diasPorSemana: 5 });
     comprobar("10,000 una vez al año: por mes", extra.mensual, 833.33);
     extra = calcularExtra({ nombre: "Prueba", monto: 500, frecuencia: "semanal", diasPorSemana: 5 });
@@ -76,7 +73,6 @@ function ejecutarPruebas(){
     extra = calcularExtra({ nombre: "Prueba", monto: 3000, frecuencia: "trimestral", diasPorSemana: 5 });
     comprobar("3,000 cada 3 meses: por mes", extra.mensual, 1000);
 
-    // Propinas de 150 al día, 6 días a la semana
     extra = calcularExtra({ nombre: "Propinas", monto: 150, frecuencia: "diaria", diasPorSemana: 6 });
     comprobar("Propinas diarias: por semana", extra.semanal, 900);
     comprobar("Propinas diarias: cada dos semanas", extra.cada2semanas, 1800);
@@ -84,7 +80,6 @@ function ejecutarPruebas(){
     comprobar("Propinas diarias: por mes", extra.mensual, 3900);
     comprobar("Propinas diarias: por año", extra.anual, 46800);
 
-    // ----- Otros ingresos: a dónde van -----
     eq = calcularEquivalentes("mensual", 9377);
     otrosIngresos = [{ nombre: "Propinas", monto: 150, frecuencia: "diaria", diasPorSemana: 6, sumar: true, destinos: ["ocio", "ahorro"] }];
     let r = calcularReparto(eq);
@@ -114,7 +109,6 @@ function ejecutarPruebas(){
     quitarDestino("ocio");
     comprobar("Quitar una categoría la saca de los destinos", otrosIngresos[0].destinos.length, 1);
 
-    // ----- Revisión de datos que vienen de fuera (lo guardado) -----
     const cats = limpiarCategorias([
         { nombre: 5, porcentaje: "abc" },
         null,
@@ -148,7 +142,70 @@ function ejecutarPruebas(){
     comprobarIgual("limpiarExtras: conserva sumar verdadero", limpios[1].sumar, true);
     comprobarIgual("limpiarExtras: sin lista devuelve null", limpiarExtras(undefined, []), null);
 
-    categorias = respaldoCategorias;             // devuelvo tus datos como estaban
+    const aguinaldo = { nombre: "Aguinaldo", monto: 10000, modo: "golpe", semana: 8, repetir: 52, sumar: true, destinos: ["ahorro"] };
+    comprobar("Aguinaldo: antes de su semana no llega nada", montoDeGolpe(aguinaldo, 7), 0);
+    comprobar("Aguinaldo: en su semana llega completo", montoDeGolpe(aguinaldo, 8), 10000);
+    comprobar("Aguinaldo: la semana siguiente no llega nada", montoDeGolpe(aguinaldo, 9), 0);
+    comprobar("Aguinaldo: se repite un año después", montoDeGolpe(aguinaldo, 60), 10000);
+    comprobar("Aguinaldo: una semana antes de repetirse no llega", montoDeGolpe(aguinaldo, 59), 0);
+    const unaVez = { nombre: "Bono", monto: 5000, modo: "golpe", semana: 8, repetir: 0, sumar: true, destinos: ["ahorro"] };
+    comprobar("Una sola vez: llega en su semana", montoDeGolpe(unaVez, 8), 5000);
+    comprobar("Una sola vez: no se repite", montoDeGolpe(unaVez, 60), 0);
+    const trimestral = { nombre: "Bono", monto: 3000, modo: "golpe", semana: 13, repetir: 13, sumar: true, destinos: ["deudas"] };
+    comprobar("Cada 13 semanas: llega en la 26", montoDeGolpe(trimestral, 26), 3000);
+    comprobar("Cada 13 semanas: no llega en la 20", montoDeGolpe(trimestral, 20), 0);
+
+    eq = calcularEquivalentes("mensual", 9377);
+    otrosIngresos = [aguinaldo, trimestral];
+    let cal = calcularCalendario(eq, 26);
+    comprobar("Calendario: tiene 26 semanas", cal.semanas.length, 26);
+    comprobar("Calendario: semana normal, solo sueldo", cal.semanas[0].total, 2163.92);
+    comprobar("Calendario: la semana 8 trae el aguinaldo", cal.semanas[7].deGolpe, 10000);
+    comprobar("Calendario: la semana 8 suma sueldo y aguinaldo", cal.semanas[7].total, 12163.92);
+    comprobar("Calendario: el bono llega en la semana 13", cal.semanas[12].deGolpe, 3000);
+    comprobar("Calendario: el bono llega otra vez en la 26", cal.semanas[25].deGolpe, 3000);
+    comprobar("Calendario: Ahorro recibe el aguinaldo", cal.porCategoria[3].deGolpe, 10000);
+    comprobar("Calendario: Deudas recibe los dos bonos", cal.porCategoria[2].deGolpe, 6000);
+    comprobar("Calendario: Ocio no recibe nada de golpe", cal.porCategoria[1].deGolpe, 0);
+
+    aguinaldo.sumar = false;
+    cal = calcularCalendario(eq, 26);
+    comprobar("Calendario: sin marcar 'sumar', no llega", cal.semanas[7].deGolpe, 0);
+    aguinaldo.sumar = true;
+    aguinaldo.destinos = ["ahorro", "ocio"];
+    cal = calcularCalendario(eq, 26);
+    comprobar("Calendario: dos destinos, partes iguales", cal.porCategoria[1].deGolpe, 5000);
+
+    r = calcularReparto(eq);
+    comprobar("De golpe no se promedia en el reparto", r[3].extras.semanal, 0);
+
+    const golpeLimpio = limpiarExtras([
+        { nombre: "A", modo: "hola", semana: 0, repetir: -4 },
+        { nombre: "B", modo: "golpe", semana: 99999, repetir: 3.6 }
+    ], []);
+    comprobarIgual("limpiarExtras: un modo inválido queda en promedio", golpeLimpio[0].modo, "promedio");
+    comprobar("limpiarExtras: la semana mínima es 1", golpeLimpio[0].semana, 1);
+    comprobar("limpiarExtras: repetir no puede ser negativo", golpeLimpio[0].repetir, 0);
+    comprobarIgual("limpiarExtras: conserva el modo golpe", golpeLimpio[1].modo, "golpe");
+    comprobar("limpiarExtras: la semana máxima es 520", golpeLimpio[1].semana, 520);
+    comprobar("limpiarExtras: repetir se redondea", golpeLimpio[1].repetir, 4);
+
+    //Copia de seguridad
+    comprobarIgual("Una copia válida se reconoce", esCopiaValida({ app: "finanzas-personal", version: 1, datos: {} }), true);
+    comprobarIgual("Otra aplicación no se acepta", esCopiaValida({ app: "otra", datos: {} }), false);
+    comprobarIgual("null no se acepta", esCopiaValida(null), false);
+    comprobarIgual("Un texto suelto no se acepta", esCopiaValida("hola"), false);
+    comprobarIgual("Sin datos no se acepta", esCopiaValida({ app: "finanzas-personal" }), false);
+    comprobarIgual("Datos como lista no se aceptan", esCopiaValida({ app: "finanzas-personal", datos: [] }), false);
+
+    const paquete = construirPaquete();
+    comprobarIgual("El paquete trae las categorías", Array.isArray(paquete.categorias), true);
+    comprobarIgual("El paquete trae los otros ingresos", Array.isArray(paquete.otrosIngresos), true);
+    const vuelta = limpiarCategorias(JSON.parse(JSON.stringify(paquete)).categorias);
+    comprobar("Guardar y volver a leer conserva las categorías", vuelta.length, categorias.length);
+    comprobarIgual("Guardar y volver a leer conserva los ids", vuelta[0].id, categorias[0].id);
+
+    categorias = respaldoCategorias;
     otrosIngresos = respaldoExtras;
 
     if (fallos === 0) {
