@@ -525,7 +525,7 @@ function crearTarjetaExtra(extra){
     const modoExtra = tarjeta.querySelector(".extra-modo");
     const cajasGolpe = tarjeta.querySelectorAll(".caja-golpe");
     const semanaExtra = tarjeta.querySelector(".extra.semana");
-    const repetirExtar = tarjeta.querySelector(".extra-repetir");
+    const repetirExtra = tarjeta.querySelector(".extra-repetir");
 
     // Una opción por cada frecuencia de la tabla FRECUENCIAS_EXTRA
     for (const clave in FRECUENCIAS_EXTRA) {
@@ -588,13 +588,25 @@ function crearTarjetaExtra(extra){
     });
     montoExtra.addEventListener("input", function () {
         extra.monto = leerNumero(montoExtra.value);
+        ajustarCampos();
         actualizarPantalla();
     });
     frecuenciaExtra.addEventListener("change", function () {
         extra.frecuencia = frecuenciaExtra.value;
-        cajaDias.hidden = !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
+        ajustarCampos();
         actualizarPantalla();
     });
+
+    semanaExtra.addEventListener("input", function(){
+        extra.semana = leerEntero(semanaExtra.value, 1, 520);
+        actualizarPantalla
+    });
+
+    repetirExtra.addEventListener("input", function(){
+        extra.repetir = leerEntero(repetirExtra.value, 0, 520);
+        actualizarPantalla();
+    })
+
     diasExtra.addEventListener("input", function () {
         extra.diasPorSemana = leerDias(diasExtra.value);
         actualizarPantalla();
@@ -618,7 +630,7 @@ function construirExtras(){
 }
 
 function agregarExtra(){
-    otrosIngresos.push({ nombre: "", monto: 0, frecuencia: "mensual", diasPorSemana: 5, sumar: false, destinos: [] });
+    otrosIngresos.push({ nombre: "", monto: 0, modo: "promedio", frecuencia: "mensual", diasPorSemana: 5, semana: 1, repetir: 0, sumar: false, destinos: [] });
     construirExtras();
     actualizarPantalla();
     listaExtras.lastElementChild.querySelector(".extra-nombre").focus();
@@ -639,20 +651,30 @@ function mostrarExtras(){
 
     for (let i = 0; i < otrosIngresos.length; i++) {
         const extra = otrosIngresos[i];
-        const calculo = calcularExtra(extra);
         const tieneDestino = destinosValidos(extra).length > 0;
+        let mensaje = "";
 
-        let mensaje = formatoMoneda.format(calculo[periodo]) + " " + textoPeriodo + " · " +
-            formatoMoneda.format(calculo.anual) + " al año";
+        if (esDeGolpe(extra)) {
+            mensaje = formatoMoneda.format(extra.monto) + " llegan de golpe en la semana " + extra.semana;
+            if (extra.repetir > 0) {
+                mensaje += " y cada " + extra.repetir + " semanas";
+            } else {
+                mensaje += " (una sola vez)";
+            }
+        } else {
+            const calculo = calcularExtra(extra);
+            mensaje = formatoMoneda.format(calculo[periodo]) + " " + textoPeriodo + " · " +
+                formatoMoneda.format(calculo.anual) + " al año";
+            totalTodos += calculo[periodo];
+            if (extra.sumar && tieneDestino) {
+                totalSumados += calculo[periodo];
+            }
+        }
+
         if (extra.sumar && !tieneDestino) {
             mensaje += " · Elige a dónde va";
         }
         listaExtras.children[i].querySelector(".extra-resultado").textContent = mensaje;
-
-        totalTodos += calculo[periodo];
-        if (extra.sumar && tieneDestino) {
-            totalSumados += calculo[periodo];
-        }
     }
 
     document.getElementById("extras-total").textContent = formatoMoneda.format(totalTodos) + " " + textoPeriodo;
