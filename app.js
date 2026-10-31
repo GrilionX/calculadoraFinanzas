@@ -200,7 +200,7 @@ function calcularReparto(eqSueldo){
 
     for (const extra of otrosIngresos) {
         const validos = destinosValidos(extra);
-        if (extra.sumar && validos.length > 0) {
+        if (extra.sumar && !esDeGolpe(extra) && validos.length > 0){
             const parte = multiplicar(calcularExtra(extra), 1 / validos.length);
             for (const fila of filas) {
                 if (validos.includes(fila.id)) {
@@ -211,6 +211,52 @@ function calcularReparto(eqSueldo){
     }
 
     return filas;
+}
+
+function calcularCalendario(eqSueldo, cantidadSemanas){
+    const repartoSemanal = calcularReparto(eqSueldo);
+    const semanas = [];
+    const porCategoria = [];
+
+    let promediadosPorSemana = 0;
+    for (const fila of repartoSemanal){
+        promediadosPorSemana += fila.extras.semanal;
+        porCategoria.push({
+            id: fila.id,
+            sueldo: fila.sueldo.semanal * cantidadSemanas,
+            promediados: fila.extras.semanal * cantidadSemanas,
+            deGolpe: 0
+        });
+    }
+
+    for (let semana = 1; semana <= cantidadSemanas; semana++){
+        let deGolpe = 0;
+        const llegan = [];
+
+        for (const extra of otrosIngresos){
+            const validos = destinosValidos(extra);
+            if(extra.sumar && esDeGolpe(extra) && validos.length > 0){
+                deGolpe += monto;
+                llegan.push({ nombre: extra.nombre, monto: monto })
+                for (const categoria of porCategoria){
+                    if (validos.includes(categoria.id)){
+                        categoria.deGolpe += monto/validos.length;
+                    }
+                }
+            }
+        }
+    }
+
+    semanas.push({
+        semana: semana,
+        sueldo: eqSueldo.semanal,
+        promediados: promediadosPorSemana,
+        deGolpe: deGolpe,
+        total: eqSueldo + promediadosPorSemana + deGolpe,
+        llegan: llegan
+    });
+
+    return { semana: semanas, porCategoria: porCategoria };
 }
 
 function sumaPorcentajes(){
