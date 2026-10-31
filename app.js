@@ -522,6 +522,10 @@ function crearTarjetaExtra(extra){
     const sumarExtra = tarjeta.querySelector(".extra-sumar");
     const listaDestinos = tarjeta.querySelector(".lista-destinos");
     const botonBorrar = tarjeta.querySelector(".boton-borrar");
+    const modoExtra = tarjeta.querySelector(".extra-modo");
+    const cajasGolpe = tarjeta.querySelectorAll(".caja-golpe");
+    const semanaExtra = tarjeta.querySelector(".extra.semana");
+    const repetirExtar = tarjeta.querySelector(".extra-repetir");
 
     // Una opción por cada frecuencia de la tabla FRECUENCIAS_EXTRA
     for (const clave in FRECUENCIAS_EXTRA) {
