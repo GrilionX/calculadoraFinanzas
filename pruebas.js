@@ -1,8 +1,3 @@
-// pruebas.js: comprueba que los cálculos den lo mismo que tu Excel.
-// Se ejecuta desde la consola con:  ejecutarPruebas()
-
-// Los decimales no se comparan con === (0.1 + 0.2 da 0.30000000000000004).
-// Por eso se acepta una diferencia de menos de medio centavo.
 function casiIgual(a, b){
     return Math.abs(a - b) < 0.005;
 }

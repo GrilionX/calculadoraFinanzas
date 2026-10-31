@@ -1,6 +1,4 @@
-// app.js: lo que hace la página
-
-// ----- Datos -----
+//Datos
 const PAGOS_POR_ANIO = {
     semanal: 52,
     cada2semanas: 26,
@@ -8,7 +6,6 @@ const PAGOS_POR_ANIO = {
     mensual: 12
 };
 
-// Los periodos en que se pueden ver las cantidades
 const PERIODOS = {
     semanal: "Por semana",
     cada2semanas: "Cada dos semanas",
@@ -26,8 +23,6 @@ const CATEGORIAS_INICIALES = [
     { id: "inversiones", nombre: "Inversiones", porcentaje: 0 }
 ];
 
-// Para otros ingresos: cada frecuencia con su texto y cuántos pagos hay al año.
-// "usaDias" significa que se multiplica por los días a la semana que se recibe.
 const FRECUENCIAS_EXTRA = {
     diaria: { texto: "Cada día", pagosAlAnio: 52, usaDias: true },
     semanal: { texto: "Cada semana", pagosAlAnio: 52, usaDias: false },
@@ -40,8 +35,8 @@ const FRECUENCIAS_EXTRA = {
 };
 
 const EXTRAS_INICIALES = [
-    { nombre: "Aguinaldo", monto: 0, frecuencia: "anual", diasPorSemana: 5, sumar: false, destinos: [] },
-    { nombre: "Propinas", monto: 0, frecuencia: "diaria", diasPorSemana: 5, sumar: false, destinos: [] }
+    { nombre: "Aguinaldo", monto: 0, modo: "golpe", frecuencia: "anual", diasPorSemana: 5, semana: 8, repetir: 52, sumar: false, destinos: [] },
+    { nombre: "Propinas", monto: 0, modo: "promedio", frecuencia: "diaria", diasPorSemana: 5, semana: 1, repetir: 0, sumar: false, destinos: [] }
 ];
 
 const CLAVE_GUARDADO = "finanzas-personal-v1";
@@ -60,7 +55,7 @@ function copiarCategoriasIniciales(){
 let categorias = copiarCategoriasIniciales();
 let otrosIngresos = copiar(EXTRAS_INICIALES);
 
-// ----- Elementos de la página -----
+//Elementos
 const campoMonto = document.getElementById("monto");
 const campoFrecuencia = document.getElementById("frecuencia");
 const campoPeriodo = document.getElementById("periodo");
@@ -70,7 +65,7 @@ const botonAgregar = document.getElementById("agregar-categoria");
 const botonAgregarExtra = document.getElementById("agregar-extra");
 const botonRestablecer = document.getElementById("restablecer");
 
-// ----- Leer lo que escribe la persona -----
+//Leer lo que escribe el usuario
 function leerNumero(texto){
     const numero = Number(texto);
     if (numero < 0 || Number.isNaN(numero)){
@@ -83,13 +78,15 @@ function leerMonto(){
     return leerNumero(campoMonto.value);
 }
 
-// Los días a la semana van de 1 a 7
-function leerDias(texto){
-    const dias = Math.round(leerNumero(texto));
-    return Math.min(7, Math.max(1, dias));
+function leerEntero(texto, minimo, maximo){
+    const numero = Math.round(leerNumero(texto));
+    return Math.min(maximo, Math.max(minimo, numero));
 }
 
-// ----- Identificadores de las categorías -----
+function leerDias(texto){
+    return leerEntero(texto, 1, 7);
+}
+
 function idsDe(lista){
     const ids = [];
     for (const elemento of lista) {
@@ -98,7 +95,6 @@ function idsDe(lista){
     return ids;
 }
 
-// Inventa un id que no esté en la lista de usados
 function generarId(usados){
     let id = "c" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
     while (usados.includes(id)) {
@@ -107,8 +103,6 @@ function generarId(usados){
     return id;
 }
 
-// ----- Cálculos -----
-// A partir de cuánto es al año, saca todos los equivalentes
 function desdeAnual(anual){
     return {
         semanal: anual / 52,
@@ -123,7 +117,6 @@ function calcularEquivalentes(frecuencia, monto) {
     return desdeAnual(monto * PAGOS_POR_ANIO[frecuencia]);
 }
 
-// Cuánto representa un ingreso extra en cada periodo
 function calcularExtra(extra){
     const frecuencia = FRECUENCIAS_EXTRA[extra.frecuencia];
     let pagos = frecuencia.pagosAlAnio;
@@ -141,6 +134,26 @@ function multiplicar(eq, factor){
     return resultado;
 }
 
+function esDeGolpe(extra){
+    return extra.modo === "golpe";
+}
+
+function montoDeGolpe(extra, semana){
+    if (semana < extra.semana){
+        return 0;
+    }
+    if (extra.repetir === 0){
+        if(semana === extra.semana){
+            return extra.monto;
+        }
+        return 0;
+    }
+    if ((semana-extra.semana) % extra.repetir === 0){
+        return extra.monto
+    }
+    return 0;
+}
+
 function sumarEq(a, b){
     const resultado = {};
     for (const clave of CLAVES_PERIODO) {
@@ -149,7 +162,6 @@ function sumarEq(a, b){
     return resultado;
 }
 
-// Los destinos de un extra que todavía existen como categoría
 function destinosValidos(extra){
     const validos = [];
     for (const cat of categorias) {
@@ -160,7 +172,6 @@ function destinosValidos(extra){
     return validos;
 }
 
-// Nombres de los extras que se suman pero no tienen a dónde ir
 function extrasSinDestino(){
     const nombres = [];
     for (const extra of otrosIngresos) {
@@ -175,7 +186,7 @@ function extrasSinDestino(){
     return nombres;
 }
 
-// Reparte el sueldo por porcentajes y, aparte, los extras que se suman a sus destinos
+// Reparte el sueldo
 function calcularReparto(eqSueldo){
     const filas = [];
     for (const cat of categorias) {
@@ -190,7 +201,6 @@ function calcularReparto(eqSueldo){
     for (const extra of otrosIngresos) {
         const validos = destinosValidos(extra);
         if (extra.sumar && validos.length > 0) {
-            // Partes iguales entre los destinos elegidos
             const parte = multiplicar(calcularExtra(extra), 1 / validos.length);
             for (const fila of filas) {
                 if (validos.includes(fila.id)) {
@@ -246,7 +256,7 @@ function revisarReparto(){
     return problemas;
 }
 
-// ----- Guardar y cargar (en tu navegador; nada se envía a internet) -----
+//Guardar y cargar
 function guardar(){
     const datos = {
         frecuencia: campoFrecuencia.value,
@@ -262,8 +272,6 @@ function guardar(){
     }
 }
 
-// Revisa una lista de categorías que viene de fuera. Devuelve una lista limpia,
-// o null si no hay una lista que revisar.
 function limpiarCategorias(lista){
     if (!Array.isArray(lista)) {
         return null;
@@ -276,7 +284,6 @@ function limpiarCategorias(lista){
             if (typeof c.nombre === "string") {
                 nombre = c.nombre;
             }
-            // Cada categoría necesita un id único; si no lo trae o está repetido, se le da uno nuevo
             let id = c.id;
             if (typeof id !== "string" || id === "" || usados.includes(id)) {
                 id = generarId(usados);
@@ -288,7 +295,7 @@ function limpiarCategorias(lista){
     return limpias;
 }
 
-// Lo mismo para los otros ingresos. "idsValidos" son las categorías que existen.
+//Categorias que existen
 function limpiarExtras(lista, idsValidos){
     if (!Array.isArray(lista)) {
         return null;
@@ -340,7 +347,6 @@ function cargar(){
             return;
         }
 
-        // Primero se revisa todo; después se aplica
         const categoriasLimpias = limpiarCategorias(datos.categorias);
         let idsValidos = idsDe(categorias);
         if (categoriasLimpias !== null) {
@@ -368,7 +374,7 @@ function cargar(){
     }
 }
 
-// ----- Pantalla: categorías -----
+//Categorias
 function crearFila(cat){
     const fila = document.createElement("tr");
     // Esta plantilla NO lleva datos de la persona, solo la estructura
@@ -439,7 +445,7 @@ function eliminarCategoria(cat){
     actualizarPantalla();
 }
 
-// ----- Pantalla: otros ingresos -----
+// Otros ingresos   
 function crearTarjetaExtra(extra){
     const tarjeta = document.createElement("div");
     tarjeta.className = "extra";
@@ -507,7 +513,7 @@ function crearTarjetaExtra(extra){
         listaDestinos.appendChild(etiqueta);
     }
 
-    // Los datos de la persona se ponen como valor, nunca como HTML
+    //Los datos como valor
     nombreExtra.value = extra.nombre;
     montoExtra.value = extra.monto;
     frecuenciaExtra.value = extra.frecuencia;
@@ -592,7 +598,7 @@ function mostrarExtras(){
     document.getElementById("extras-sumados").textContent = formatoMoneda.format(totalSumados) + " " + textoPeriodo;
 }
 
-// ----- Pantalla: sueldo y reparto -----
+//Sueldo y reparto
 function mostrarEquivalentes(eq){
     document.getElementById("eq-semanal").textContent = formatoMoneda.format(eq.semanal);
     document.getElementById("eq-cada2semanas").textContent = formatoMoneda.format(eq.cada2semanas);
@@ -672,7 +678,7 @@ function restablecer(){
     }
 }
 
-// ----- Eventos y arranque -----
+//Eventos y arranque
 campoMonto.addEventListener("input", actualizarPantalla);
 campoFrecuencia.addEventListener("change", actualizarPantalla);
 campoPeriodo.addEventListener("change", actualizarPantalla);
