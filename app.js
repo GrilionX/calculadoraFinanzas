@@ -569,7 +569,18 @@ function crearTarjetaExtra(extra){
     frecuenciaExtra.value = extra.frecuencia;
     diasExtra.value = extra.diasPorSemana;
     sumarExtra.checked = extra.sumar;
-    cajaDias.hidden = !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
+    //cajaDias.hidden = !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
+
+    function ajustarCampos(){
+        const golpe = esDeGolpe(esDeGolpe);
+        frecuenciaExtra.hidden = golpe;
+        cajaDias.hidden = golpe || !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
+        for (const caja of cajasGolpe){
+            caja.hidden = !golpe;
+        }
+    }
+
+    ajustarCampos();
 
     nombreExtra.addEventListener("input", function () {
         extra.nombre = nombreExtra.value;
