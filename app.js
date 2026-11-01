@@ -70,6 +70,10 @@ const listaExtras = document.getElementById("lista-extras");
 const botonAgregar = document.getElementById("agregar-categoria");
 const botonAgregarExtra = document.getElementById("agregar-extra");
 const botonRestablecer = document.getElementById("restablecer");
+const botonReparto = document.getElementById("boton-reparto");
+const botonAhorro = document.getElementById("boton-ahorro");
+const vistaReparto = document.getElementById("vista-reparto");
+const vistaAhorro = document.getElementById("vista-ahorro");
 
 //Leer lo que el usuario escribe
 function leerNumero(texto){
@@ -926,6 +930,16 @@ function restablecer(){
     }
 }
 
+function cambiarVista(nombreVista){
+    const mostrarAhorro = nombreVista === "ahorro";
+
+    vistaReparto.hidden = mostrarAhorro;
+    vistaAhorro.hidden = !mostrarAhorro;
+
+    botonReparto.setAttribute("aria-pressed", String(!mostrarAhorro));
+    botonAhorro.setAttribute("aria-pressed", String(mostrarAhorro));
+}
+
 // Eventos y arranques
 campoMonto.addEventListener("input", actualizarPantalla);
 campoFrecuencia.addEventListener("change", actualizarPantalla);
@@ -935,15 +949,25 @@ botonAgregar.addEventListener("click", agregarCategoria);
 botonAgregarExtra.addEventListener("click", agregarExtra);
 botonRestablecer.addEventListener("click", restablecer);
 botonExportar.addEventListener("click", exportarCopia);
+
 botonImportar.addEventListener("click", function () {
     campoArchivo.click();
 });
+
 campoArchivo.addEventListener("change", function () {
     const archivo = campoArchivo.files[0];
     if (archivo) {
         importarCopia(archivo);
     }
     campoArchivo.value = "";
+});
+
+botonReparto.addEventListener("click", function(){
+    cambiarVista("reparto");
+});
+
+botonAhorro.addEventListener("click", function(){
+    cambiarVista("ahorro");
 });
 
 llenarSelectorPeriodo();

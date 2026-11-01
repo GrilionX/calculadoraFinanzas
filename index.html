@@ -9,6 +9,18 @@
     <body>
         <main>
             <h1>Mi sueldo y mi reparto</h1>
+            <nav class = "navegacion-vistas", aria-label="Secciones de finanzas">
+                <button id="boton-reparto" type = "button"
+                aria-controls="vista-reparto" aria-pressed="true">
+                    Reparto
+                </button>
+                <button id="boton-ahorro" type="button"
+                aria-controls="vista-ahorro" aria-pressed="false">
+                    Ahorro
+                </button>
+            </nav>
+
+            <div id="vista-reparto">
             <section class="tarjeta">
                 <h2>Mi sueldo</h2>
                 <div>
@@ -119,6 +131,16 @@
                     </table>
                 </div>
             </section>
+            </div>
+
+            <section id="vista-ahorro" class="tarjeta" hidden
+                    aria-labelledby="titulo-ahorro">
+                <h2 id="titulo-ahorro">Mi ahorro</h2>
+            <p class="ayuda">
+                Aqui se registra las aportaciones y los retiros para conocer el ahorro acumulado
+            </p>
+            </section>
+
             <section class="tarjeta">
                 <h2>Copia de seguridad</h2>
                 <p class="ayuda">Tus datos solo viven en este navegador. Descarga una copia para no perderlos o para pasarlos a otro aparato. El archivo contiene tus datos personales: guárdalo en un lugar seguro y no lo compartas.</p>

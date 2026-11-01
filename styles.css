@@ -233,3 +233,35 @@ h3 {
     flex-wrap: wrap;
     gap: 8px;
 }
+
+.navegacion-vistas{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.navegacion-vistas button{
+    font: inherit;
+    padding: 10px 16px;
+    min-height: 44px;
+    border: 1px solid #1f6feb;
+    border-radius: 25px;
+    background-color: #ffffff;
+    color: #1f6feb;
+    cursor: pointer;
+}
+
+.navegacion-vistas button[aria-pressed="true"]{
+    background-color: #1f6feb;
+    color: #ffffff;
+}
+
+.navegacion-vistas button:focus-visible{
+    outline: 3px solid #1b2430;
+    outline-offset: 3px;
+}
+
+[hidden]{
+    display: none !important;
+}
