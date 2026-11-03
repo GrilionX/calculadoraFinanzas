@@ -53,7 +53,8 @@ function copiarCategoriasIniciales(){
 
 let categorias = copiarCategoriasIniciales();
 let otrosIngresos = copiar(EXTRAS_INICIALES);
-const movimientosAhorros = [];
+let movimientosAhorros = [];
+let guardadoHabilitado = true;
 
 //Elementos
 const campoMonto = document.getElementById("monto");
@@ -83,6 +84,7 @@ const saldoAhorro = document.getElementById("saldo-ahorro");
 const mensajeAhorro = document.getElementById("mensaje-ahorro");
 const historialAhorro  = document.getElementById("historial-ahorro");
 const ahorroVacio = document.getElementById("ahorro-vacio");
+const estadoGuardado = document.getElementById("estado-guardado");
 
 //Leer lo que el usuario escribe
 function leerNumero(texto){
@@ -339,22 +341,46 @@ function revisarReparto(){
 }
 
 //Guardar y cargar
-function construirPaquete(){
+function construirPaquete() {
     return {
         frecuencia: campoFrecuencia.value,
         monto: campoMonto.value,
         periodo: campoPeriodo.value,
         semanasMostrar: campoSemanas.value,
         categorias: categorias,
-        otrosIngresos: otrosIngresos
+        otrosIngresos: otrosIngresos,
+        movimientosAhorros: movimientosAhorros
     };
 }
 
-function guardar(){
+function guardar() {
+    if (!guardadoHabilitado) {
+        estadoGuardado.className = "aviso error";
+        estadoGuardado.textContent =
+            "Guardado detenido: no se pudieron recuperar los datos anteriores. " +
+            "Importa una copia válida antes de continuar.";
+
+        return false;
+    }
+
     try {
-        localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(construirPaquete()));
+        const texto = JSON.stringify(construirPaquete());
+
+        localStorage.setItem(CLAVE_GUARDADO, texto);
+
+        estadoGuardado.className = "ayuda";
+        estadoGuardado.textContent =
+            "Datos guardados en este navegador.";
+
+        return true;
     } catch (error) {
+        estadoGuardado.className = "aviso error";
+        estadoGuardado.textContent =
+            "No se pudo guardar. Descarga una copia antes de cerrar.";
+
         console.warn("No se pudo guardar:", error);
+
+        return false;
     }
 }
 
@@ -428,8 +454,84 @@ function limpiarExtras(lista, idsValidos){
     return limpios;
 }
 
+function limpiarMovimientosAhorro(lista) {
+    if (lista === undefined) {
+        return [];
+    }
+
+    if (!Array.isArray(lista)) {
+        return null;
+    }
+
+    const limpios = [];
+    let saldoCentavos = 0;
+
+    for (const movimiento of lista) {
+        if (
+            typeof movimiento !== "object" ||
+            movimiento === null ||
+            Array.isArray(movimiento)
+        ) {
+            return null;
+        }
+
+        const tipo = movimiento.tipo;
+        const concepto = movimiento.concepto;
+        const monto = movimiento.montoCentavos;
+
+        if (tipo !== "aportacion" && tipo !== "retiro") {
+            return null;
+        }
+
+        if (
+            typeof concepto !== "string" ||
+            concepto.trim() === "" ||
+            concepto.trim().length > 80
+        ) {
+            return null;
+        }
+
+        if (!Number.isSafeInteger(monto) || monto <= 0) {
+            return null;
+        }
+
+        const siguienteSaldo = tipo === "aportacion"
+            ? saldoCentavos + monto
+            : saldoCentavos - monto;
+
+        if (
+            !Number.isSafeInteger(siguienteSaldo) ||
+            siguienteSaldo < 0
+        ) {
+            return null;
+        }
+
+        limpios.push({
+            tipo: tipo,
+            concepto: concepto.trim(),
+            montoCentavos: monto
+        });
+
+        saldoCentavos = siguienteSaldo;
+    }
+
+    return limpios;
+}
+
 function aplicarDatos(datos){
-    if (typeof datos !== "object" || datos === null) {
+    if(
+        typeof datos !== "object" ||
+        datos === null ||
+        Array.isArray(datos)
+    ){
+        return false;
+    }
+
+    const ahorroLimpio = limpiarMovimientosAhorro(
+        datos.movimientosAhorros
+    );
+
+    if(ahorroLimpio === null){
         return false;
     }
 
@@ -465,17 +567,33 @@ function aplicarDatos(datos){
     if (extrasLimpios !== null) {
         otrosIngresos = extrasLimpios;
     }
+
+    movimientosAhorros = ahorroLimpio;
+
     return true;
 }
 
-function cargar(){
+function cargar() {
     try {
         const texto = localStorage.getItem(CLAVE_GUARDADO);
+
         if (texto === null) {
-            return; // no hay nada guardado todavía
+            return;
         }
-        aplicarDatos(JSON.parse(texto));
+
+        const datos = JSON.parse(texto);
+
+        if (!aplicarDatos(datos)) {
+            throw new Error("Los datos guardados no son válidos.");
+        }
     } catch (error) {
+        guardadoHabilitado = false;
+
+        estadoGuardado.className = "aviso error";
+        estadoGuardado.textContent =
+            "No se pudieron recuperar los datos. " +
+            "El guardado automático está detenido.";
+
         console.warn("No se pudo cargar lo guardado:", error);
     }
 }
@@ -532,14 +650,37 @@ function importarCopia(archivo){
                 mostrarMensajeCopia("Ese archivo no parece una copia de esta herramienta.", true);
                 return;
             }
-            if (!confirm("Cargar esta copia reemplazará lo que tienes ahora. ¿Continuar?")) {
+            const aviso =
+                "Cargar esta copia reemplazara el presupuesto y ahorro actuales " +
+                "Si la copia es antigua y no contiene ahorro, el historial quedara vacio " +
+                "Continuar?";
+            if (!confirm(aviso)){
                 return;
             }
-            aplicarDatos(contenido.datos);
+
+            if (!aplicarDatos(contenido.datos)){
+                mostrarMensajeCopia(
+                    "La copia contiene datos de ahorro invalidos no se aplico",
+                    true
+                );
+
+                return;
+            }
+
+            guardadoHabilitado = true;
+
             construirTabla();
             construirExtras();
             actualizarPantalla();
-            mostrarMensajeCopia("Copia cargada ✔", false);
+
+            formularioAhorro.reset();
+            mensajeAhorro.textContent = "";
+
+            mostrarMensajeCopia(
+                "Copia aplicada, favor de revisar el archivo guardado dentro de la pagina",
+                false
+            );
+
         } catch (error) {
             mostrarMensajeCopia("No se pudo leer el archivo. ¿Es una copia de esta herramienta?", true);
         }
@@ -927,6 +1068,7 @@ function actualizarPantalla(){
     mostrarExtras();
     mostrarCalendario(eq);
     mostrarAviso();
+    mostrarAhorro();
     guardar();
 }
 
@@ -940,7 +1082,9 @@ function llenarSelectorPeriodo(){
 }
 
 function restablecer(){
-    if (confirm("¿Volver a los valores iniciales? Se perderán tus cambios.")) {
+    if (confirm(
+    "Restablecer sueldo, categorías y otros ingresos? " +
+    "Tu historial de ahorro se conservará.")){
         categorias = copiarCategoriasIniciales();
         otrosIngresos = copiar(EXTRAS_INICIALES);
         campoFrecuencia.value = "mensual";
@@ -992,6 +1136,13 @@ function mostrarAhorro(){
 function registrarMovimientoAhorro(evento){
     evento.preventDefault();
 
+    if(!guardadoHabilitado){
+        mensajeAhorro.className = "aviso error";
+        mensajeAhorro.textContent = 
+            "Recupera una copia de seguridad antes de registrar movimientos";
+        return;
+    }
+
     const tipo = campoTipoAhorro.value;
     const concepto = campoConceptoAhorro.value.trim();
     const montoPesos = Number(campoMontoAhorro.value);
@@ -1037,10 +1188,18 @@ function registrarMovimientoAhorro(evento){
     });
 
     mostrarAhorro();
+
+    const guardadoCorrecto = guardar();
+
     formularioAhorro.reset();
 
-    mensajeAhorro.className = "aviso ok";
-    mensajeAhorro.textContent = "Movimiento registrado";
+    mensajeAhorro.className = guardadoCorrecto
+        ? "aviso ok"
+        : "aviso error";
+
+    mensajeAhorro.textContent = guardadoCorrecto
+        ? "Movimiento registrado y guardado"
+        : "Movimiento registrado solo en memoria. Descarga una copia.";
 }
 
 // Eventos y arranques
@@ -1078,8 +1237,7 @@ formularioAhorro.addEventListener(
     registrarMovimientoAhorro
 );
 
-
-
+//Llamada
 
 llenarSelectorPeriodo();
 campoPeriodo.value = "semanal";

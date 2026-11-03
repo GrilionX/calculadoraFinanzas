@@ -9,6 +9,7 @@
     <body>
         <main>
             <h1>Mi sueldo y mi reparto</h1>
+            <p id = "estado-guardado" class="ayuda" role="status"></p>
             <nav class = "navegacion-vistas", aria-label="Secciones de finanzas">
                 <button id="boton-reparto" type = "button"
                 aria-controls="vista-reparto" aria-pressed="true">
@@ -137,8 +138,8 @@
                     aria-labelledby="titulo-ahorro">
                 <h2 id="titulo-ahorro">Mi ahorro personal</h2>
             <p class="ayuda">
-                Registra el dinero que realmente guardas o retiras.
-                Este ahorro es independiente del dinero apartado para deudas.
+                Tu historial se guarda en este navegador.
+                Descarga una copia para conservar un respaldo.
             </p>
 
             <p class="resumen">
@@ -190,7 +191,7 @@
                 <input id="archivo-copia" type="file" accept=".json,application/json" hidden>
                 <p id="mensaje-copia" class="aviso" role="status"></p>
             </section>
-            <button id="restablecer" type="button">Volver a los valores iniciales</button>
+            <button id="restablecer" type="button">Restablecer</button>
             <p class="nota">Esta herramienta hace estimaciones para planear. No es asesoría financiera.</p>
         </main>
         <script src="app.js"></script>
