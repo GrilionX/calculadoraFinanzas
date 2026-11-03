@@ -135,9 +135,48 @@
 
             <section id="vista-ahorro" class="tarjeta" hidden
                     aria-labelledby="titulo-ahorro">
-                <h2 id="titulo-ahorro">Mi ahorro</h2>
+                <h2 id="titulo-ahorro">Mi ahorro personal</h2>
             <p class="ayuda">
-                Aqui se registra las aportaciones y los retiros para conocer el ahorro acumulado
+                Registra el dinero que realmente guardas o retiras.
+                Este ahorro es independiente del dinero apartado para deudas.
+            </p>
+
+            <p class="resumen">
+                Disponible:
+                <strong id="saldo-ahorro">$0.00</strong>
+            </p>
+
+            <form id="formulario-ahorro">
+                <label for="tipo-movimiento-ahorro">Movimiento</label>
+                <select id="tipo-movimiento-ahorro">
+                    <option value="aportacion">aportacion</option> 
+                    <option value="retiro">Retiro</option>
+                </select>
+
+                <label for="concepto-ahorro">Concepto</label>
+                <input id="concepto-ahorro" type="text"
+                    maxlength="80" required
+                    placeholder="Por ejemplo: ahorro de esta semana...">
+
+                <label for="monto-ahorro">Monto</label>
+                <input id="monto-ahorro" type="number"
+                inputmode="decimal" min="0.01" step="0.5" required>
+
+                <button type="submit">Registrar Movimiento</button>
+            </form>
+
+            <p id="mensaje-ahorro" class="aviso" role="status"></p>
+
+            <h3>Mis movimientos</h3>
+
+            <p id="ahorro-vacio" class="ayuda">
+                Todavía no has registrado movimientos.
+            </p>
+
+            <ul id="historial-ahorro" class="historial-ahorro"></ul>
+
+            <p class="ayuda">
+                En esta primera etapa, los movimientos se borran al recargar.
             </p>
             </section>
 

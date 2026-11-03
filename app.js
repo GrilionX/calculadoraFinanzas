@@ -53,6 +53,7 @@ function copiarCategoriasIniciales(){
 
 let categorias = copiarCategoriasIniciales();
 let otrosIngresos = copiar(EXTRAS_INICIALES);
+const movimientosAhorros = [];
 
 //Elementos
 const campoMonto = document.getElementById("monto");
@@ -74,6 +75,14 @@ const botonReparto = document.getElementById("boton-reparto");
 const botonAhorro = document.getElementById("boton-ahorro");
 const vistaReparto = document.getElementById("vista-reparto");
 const vistaAhorro = document.getElementById("vista-ahorro");
+const formularioAhorro = document.getElementById("formulario-ahorro");
+const campoTipoAhorro = document.getElementById("tipo-movimiento.ahorro");
+const campoConceptoAhorro = document.getElementById("concepto-ahorro");
+const campoMontoAhorro = document.getElementById("monto-ahorro");
+const saldoAhorro = document.getElementById("saldo-ahorro");
+const mensajeAhorro = document.getElementById("mensaje-ahorro");
+const historialAhorro  = document.getElementById("historial-ahorro");
+const ahorroVacio = document.getElementById("ahorro-vacio");
 
 //Leer lo que el usuario escribe
 function leerNumero(texto){
@@ -122,6 +131,20 @@ function desdeAnual(anual){
         mensual: anual / 12,
         anual: anual
     };
+}
+
+function calcularSaldoAhorro(movimientos){
+    let saldoCentavos = 0;
+
+    for (const movimiento of movimientos){
+        if (movimiento.tipo === "aportacion"){
+            saldoCentavos += movimiento.montoCentavos;
+        } else if(movimiento.tipo === "retiro"){
+            saldoCentavos -= movimiento.montoCentavos;
+        }
+    }
+
+    return saldoCentavos;
 }
 
 function calcularEquivalentes(frecuencia, monto) {
@@ -940,6 +963,86 @@ function cambiarVista(nombreVista){
     botonAhorro.setAttribute("aria-pressed", String(mostrarAhorro));
 }
 
+function mostrarAhorro(){
+    const saldoCentavos = calcularSaldoAhorro(movimientosAhorros);
+
+    saldoAhorro.textContent = 
+        formatoMoneda.format(saldoCentavos / 100);
+
+    historialAhorro.replaceChildren();
+
+    for (const movimiento of movimientosAhorros){
+        const elemento = document.createElement("li");
+
+        const etiqueta = movimiento.tipo === "aportacion"
+            ? "Aportacion"
+            : "Retiro";
+
+        elemento.textContent =
+            etiqueta + ": " +
+            formatoMoneda.format(movimiento.montoCentavos / 100) +
+            " - " + movimiento.concepto;
+
+        historialAhorro.appendChild(elemento);
+    }
+
+    ahorroVacio.hidden = movimientosAhorros.length > 0;
+}
+
+function registrarMovimientoAhorro(evento){
+    evento.preventDefault();
+
+    const tipo = campoTipoAhorro.value;
+    const concepto = campoConceptoAhorro.value.trim();
+    const montoPesos = Number(campoMontoAhorro.value);
+    const montoCentavos = Math.round(montoPesos * 100);
+
+    mensajeAhorro.className = "aviso error";
+
+    if(tipo !== "aportacion" && tipo !== "retiro"){
+        mensajeAhorro.textContent = "Selecciona un movimiento valido";
+        return;
+    }
+
+    if (concepto === ""){
+        mensajeAhorro.textContent = "Escribe un concepto";
+        return;
+    }
+
+    if(!Number.isFinite(montoPesos) ||
+        !Number.isSafeInteger(montoCentavos) ||
+        montoCentavos <= 0){
+            mensajeAhorro.textContent = "Escribe un monto valido mayor que cero";
+            return 0;
+        }
+
+    const saldoActual = calcularSaldoAhorro(movimientosAhorros);
+
+    if(tipo === "retiro" && montoCentavos > saldoActual){
+        mensajeAhorro.textContent =
+            "El retiro supera el ahorro disponible";
+        return;
+    }
+
+    if (tipo === "aportacion" &&
+            !Number.isSafeInteger(saldoActual + montoCentavos)){
+                mensajeAhorro.textContent = "El monto supera el limite permitido";
+                return;
+    }
+
+    movimientosAhorros.push({
+        tipo: tipo,
+        concepto, concepto,
+        montoCentavos: montoCentavos
+    });
+
+    mostrarAhorro();
+    formularioAhorro.reset();
+
+    mensajeAhorro.className = "aviso ok";
+    mensajeAhorro.textContent = "Movimiento registrado";
+}
+
 // Eventos y arranques
 campoMonto.addEventListener("input", actualizarPantalla);
 campoFrecuencia.addEventListener("change", actualizarPantalla);
@@ -969,6 +1072,14 @@ botonReparto.addEventListener("click", function(){
 botonAhorro.addEventListener("click", function(){
     cambiarVista("ahorro");
 });
+
+formularioAhorro.addEventListener(
+    "submit",
+    registrarMovimientoAhorro
+);
+
+
+
 
 llenarSelectorPeriodo();
 campoPeriodo.value = "semanal";
