@@ -214,3 +214,39 @@ function ejecutarPruebas(){
         console.log("Fallaron " + fallos + " prueba(s) ✘");
     }
 }
+
+function probarCalculosSaldoAhorro(){
+    const movimientos = [
+        {
+            tipo: "aportacion",
+            concepto: "Primera Aportacion",
+            montoCentavos: 15000
+
+        },
+        {
+            tipo: "aportacion",
+            concepto: "Segunda aportacion",
+            montoCentavos: 5025,
+        },
+        {
+            tipo: "retiro",
+            concepto: "Retiro de efectivo",
+            montoCentavos: 3010
+        }
+    ];
+
+    const resultados = calcularSaldoAhorro(movimientos);
+
+    console.assert(
+        resultado === 17015,
+        "El saldo deberia de ser 17015 centavos pero son:",
+        resultado
+    );
+
+    console.assert(
+        calcularAhorro([]) === 0,
+        "Un historial vacio deberia de dar cero"
+    );
+}
+
+probarCalculosSaldoAhorro();
