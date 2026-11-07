@@ -1117,6 +1117,7 @@ function mostrarAhorro(){
 
     for (const movimiento of movimientosAhorros){
         const elemento = document.createElement("li");
+        elemento.dataset.tipo = movimiento.tipo;
 
         const etiqueta = movimiento.tipo === "aportacion"
             ? "Aportacion"

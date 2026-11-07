@@ -265,3 +265,120 @@ h3 {
 [hidden]{
     display: none !important;
 }
+
+:root{
+    --ahorro-primario: #1f4ed8;
+    --ahorro-oscuro: #172554;
+    --ahorro-texto: #172033;
+    --ahorro-borde: #dbe3ef;
+    --ahorro-superficie: #f8fafc;
+    --ahorro-radio: 18px;
+}
+
+#vista-ahorro {
+    border-radius: 24px;
+    border-color: var(--ahorro-borde);
+    box-shadow: 0 12px 32px rgb(23 37 84 / 8%);
+}
+
+.resumen-ahorro {
+    display: grid;
+    gap: 10px;
+    margin: 20px 0 24px;
+    padding: clamp(20px, 5vw, 32px);
+    border-radius: var(--ahorro-radio);
+    background: linear-gradient(
+        135deg,
+        var(--ahorro-oscuro),
+        var(--ahorro-primario)
+    );
+    color: #ffffff;
+}
+
+.resumen-ahorro__etiqueta {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+#saldo-ahorro {
+    font-size: clamp(1.8rem, 7vw, 3rem);
+    line-height: 1.15;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.resumen-ahorro__nota {
+    color: #dbeafe;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+#formulario-ahorro {
+    padding: 20px;
+    border: 1px solid var(--ahorro-borde);
+    border-radius: var(--ahorro-radio);
+    background-color: var(--ahorro-superficie);
+}
+
+#formulario-ahorro label {
+    margin-top: 16px;
+    margin-bottom: 6px;
+    color: var(--ahorro-texto);
+    font-weight: 600;
+}
+
+#formulario-ahorro label:first-child {
+    margin-top: 0;
+}
+
+#formulario-ahorro input,
+#formulario-ahorro select {
+    border-radius: 12px;
+    background-color: #ffffff;
+}
+
+#formulario-ahorro button {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 20px;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 12px;
+    background-color: var(--ahorro-primario);
+    color: #ffffff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#formulario-ahorro button:hover {
+    background-color: #1e40af;
+}
+
+#formulario-ahorro :is(input, select, button):focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 3px;
+}
+
+.historial-ahorro {
+    display: grid;
+    gap: 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.historial-ahorro li {
+    padding: 14px 16px;
+    border: 1px solid var(--ahorro-borde);
+    border-left: 4px solid var(--ahorro-primario);
+    border-radius: 12px;
+    background-color: var(--ahorro-superficie);
+    color: var(--ahorro-texto);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.historial-ahorro li[data-tipo="retiro"] {
+    border-left-color: #b45309;
+}
