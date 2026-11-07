@@ -382,3 +382,43 @@ h3 {
 .historial-ahorro li[data-tipo="retiro"] {
     border-left-color: #b45309;
 }
+
+.historial-ahorro .movimiento-ahorro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+}
+
+.movimiento-ahorro__detalle {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.movimiento-ahorro__concepto {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.movimiento-ahorro__tipo {
+    font-size: 0.8rem;
+    color: #526079;
+}
+
+.movimiento-ahorro__importe {
+    color: #166534;
+    font-variant-numeric: tabular-nums;
+}
+
+.movimiento-ahorro[data-tipo="retiro"]
+.movimiento-ahorro__importe {
+    color: #92400e;
+}
+
+@media (max-width: 420px) {
+    .historial-ahorro .movimiento-ahorro {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+}

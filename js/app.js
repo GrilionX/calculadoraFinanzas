@@ -1115,18 +1115,41 @@ function mostrarAhorro(){
 
     historialAhorro.replaceChildren();
 
-    for (const movimiento of movimientosAhorros){
+    for (const movimiento of movimientosAhorro) {
         const elemento = document.createElement("li");
+        elemento.className = "movimiento-ahorro";
         elemento.dataset.tipo = movimiento.tipo;
 
-        const etiqueta = movimiento.tipo === "aportacion"
-            ? "Aportacion"
+        const detalle = document.createElement("div");
+        detalle.className = "movimiento-ahorro__detalle";
+
+        const concepto = document.createElement("strong");
+        concepto.className = "movimiento-ahorro__concepto";
+        concepto.textContent = movimiento.concepto;
+
+        const tipo = document.createElement("span");
+        tipo.className = "movimiento-ahorro__tipo";
+
+        const esAportacion = movimiento.tipo === "aportacion";
+
+        tipo.textContent = esAportacion
+            ? "Aportación"
             : "Retiro";
 
-        elemento.textContent =
-            etiqueta + ": " +
-            formatoMoneda.format(movimiento.montoCentavos / 100) +
-            " - " + movimiento.concepto;
+        const importe = document.createElement("strong");
+        importe.className = "movimiento-ahorro__importe";
+
+        const signo = esAportacion ? "+" : "−";
+
+        importe.textContent =
+            signo +
+            formatoMoneda.format(movimiento.montoCentavos / 100);
+
+        detalle.appendChild(concepto);
+        detalle.appendChild(tipo);
+
+        elemento.appendChild(detalle);
+        elemento.appendChild(importe);
 
         historialAhorro.appendChild(elemento);
     }
