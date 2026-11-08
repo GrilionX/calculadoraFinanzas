@@ -70,3 +70,64 @@ function ordenarDeudas(lista) {
             a.nombre.localeCompare(b.nombre, "es");
     });
 }
+
+function proyectarApartados(lista, presupuestoSemanalCentavos) {
+    if (
+        !Number.isSafeInteger(presupuestoSemanalCentavos) ||
+        presupuestoSemanalCentavos < 0
+    ) {
+        return {
+            error: "El presupuesto semanal no es válido.",
+            filas: []
+        };
+    }
+
+    const pendientes = ordenarDeudas(lista).filter(function (deuda) {
+        return !deuda.liquidada;
+    });
+
+    const filas = [];
+    let faltanteAcumulado = 0;
+
+    for (const deuda of pendientes) {
+        const resumen = resumirDeuda(deuda);
+
+        if (resumen.faltaCentavos === 0) {
+            filas.push({
+                id: deuda.id,
+                nombre: deuda.nombre,
+                faltaCentavos: 0,
+                semanaObjetivo: 0
+            });
+
+            continue;
+        }
+
+        faltanteAcumulado += resumen.faltaCentavos;
+
+        if (!Number.isSafeInteger(faltanteAcumulado)) {
+            return {
+                error: "Los importes superan el límite de cálculo.",
+                filas: []
+            };
+        }
+
+        const semanaObjetivo = presupuestoSemanalCentavos === 0
+            ? null
+            : Math.ceil(
+                faltanteAcumulado / presupuestoSemanalCentavos
+            );
+
+        filas.push({
+            id: deuda.id,
+            nombre: deuda.nombre,
+            faltaCentavos: resumen.faltaCentavos,
+            semanaObjetivo: semanaObjetivo
+        });
+    }
+
+    return {
+        error: null,
+        filas: filas
+    };
+}

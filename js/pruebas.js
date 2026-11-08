@@ -316,3 +316,79 @@ function probarDeudas() {
 }
 
 probarDeudas();
+
+function probarProyeccionApartados() {
+    const lista = [
+        {
+            id: "a",
+            nombre: "Deuda A",
+            objetivoCentavos: 50000,
+            prioridad: 1,
+            aportaciones: [20000],
+            liquidada: false
+        },
+        {
+            id: "b",
+            nombre: "Deuda B",
+            objetivoCentavos: 80000,
+            prioridad: 2,
+            aportaciones: [],
+            liquidada: false
+        }
+    ];
+
+    const antes = JSON.stringify(lista);
+    const resultado = proyectarApartados(lista, 40000);
+
+    console.assert(
+        resultado.error === null,
+        "La proyección debería ser válida."
+    );
+
+    console.assert(
+        resultado.filas[0].semanaObjetivo === 1,
+        "La deuda A debe reunir su objetivo en la semana 1."
+    );
+
+    console.assert(
+        resultado.filas[1].semanaObjetivo === 3,
+        "La deuda B debe reunir su objetivo en la semana 3."
+    );
+
+    console.assert(
+        JSON.stringify(lista) === antes,
+        "La proyección no debe modificar los datos originales."
+    );
+
+    const sinPresupuesto = proyectarApartados(lista, 0);
+
+    console.assert(
+        sinPresupuesto.filas[0].semanaObjetivo === null,
+        "Con presupuesto cero no debe inventarse una semana."
+    );
+
+    const listaConObjetivoReunido = [
+        {
+            ...lista[0],
+            aportaciones: [50000]
+        },
+        lista[1]
+    ];
+
+    const conObjetivoReunido = proyectarApartados(
+        listaConObjetivoReunido,
+        40000
+    );
+
+    console.assert(
+        conObjetivoReunido.filas[0].semanaObjetivo === 0,
+        "Una deuda ya reunida debe aparecer como lista."
+    );
+
+    console.assert(
+        conObjetivoReunido.filas[1].semanaObjetivo === 2,
+        "Una deuda ya reunida no debe consumir presupuesto futuro."
+    );
+}
+
+probarProyeccionApartados();
