@@ -392,3 +392,47 @@ function probarProyeccionApartados() {
 }
 
 probarProyeccionApartados();
+
+function probarRepartoNominas() {
+    const categoriasPrueba = [
+        { id: "basicos", nombre: "Básicos", porcentaje: 55 },
+        { id: "ocio", nombre: "Ocio", porcentaje: 5 },
+        { id: "deudas", nombre: "Deudas", porcentaje: 25 },
+        { id: "ahorro", nombre: "Ahorro", porcentaje: 15 }
+    ];
+
+    const reparto = repartirNomina(10001, categoriasPrueba);
+
+    const total = reparto.reduce(function (suma, fila) {
+        return suma + fila.montoCentavos;
+    }, 0);
+
+    console.assert(
+        total === 10001,
+        "El reparto debe conservar exactamente los centavos."
+    );
+
+    const primerPago = repartirNomina(200000, categoriasPrueba);
+
+    categoriasPrueba[0].porcentaje = 50;
+    categoriasPrueba[3].porcentaje = 20;
+
+    console.assert(
+        primerPago[0].porcentaje === 55,
+        "Cambiar la plantilla no debe modificar el reparto anterior."
+    );
+
+    const segundoPago = repartirNomina(250000, categoriasPrueba);
+
+    console.assert(
+        segundoPago[3].montoCentavos === 50000,
+        "El segundo pago debe usar sus propios porcentajes."
+    );
+
+    console.assert(
+        limpiarNominas(undefined).length === 0,
+        "Una copia antigua debe comenzar sin nóminas registradas."
+    );
+}
+
+probarRepartoNominas();

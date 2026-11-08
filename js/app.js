@@ -338,7 +338,8 @@ function construirPaquete() {
         categorias: categorias,
         otrosIngresos: otrosIngresos,
         movimientosAhorros: movimientosAhorros,
-        deudas: deudas
+        deudas: deudas,
+        nominas: nominas
     };
 }
 
@@ -515,6 +516,11 @@ function aplicarDatos(datos) {
     ) {
         return false;
     }
+    const nominasLimpias = limpiarNominas(datos.nominas);
+
+    if (nominasLimpias === null) {
+        return false;
+    }
 
     const ahorroLimpio = limpiarMovimientosAhorro(
         datos.movimientosAhorros
@@ -565,6 +571,7 @@ function aplicarDatos(datos) {
 
     movimientosAhorros = ahorroLimpio;
     deudas = deudasLimpias;
+    nominas = nominasLimpias;
 
     return true;
 }
@@ -647,9 +654,9 @@ function importarCopia(archivo) {
                 return;
             }
             const aviso =
-                "Cargar esta copia reemplazara el presupuesto, ahorro y deudas actuales " +
-                "Si la copia es antigua y no contiene ahorro, el historial quedara vacio " +
-                "Continuar?";
+                "Esta copia reemplazará presupuesto, ahorro, deudas y nóminas. " +
+                "Las secciones ausentes en una copia antigua quedarán vacías. " +
+                "¿Continuar?";
             if (!confirm(aviso)) {
                 return;
             }
@@ -676,6 +683,10 @@ function importarCopia(archivo) {
             formularioDeuda.reset();
             formularioApartado.reset();
             mensajeDeudas.textContent = "";
+
+            formularioNomina.reset();
+            prepararCategoriasNomina();
+            mensajeNomina.textContent = "";
 
             mostrarMensajeCopia(
                 "Copia aplicada, favor de revisar el archivo guardado dentro de la pagina",
@@ -1071,6 +1082,7 @@ function actualizarPantalla() {
     mostrarAviso();
     mostrarAhorro();
     mostrarDeudas();
+    mostrarHistorialNominas();
     guardar();
 }
 
@@ -1093,6 +1105,9 @@ function restablecer() {
         campoMonto.value = "";
         campoPeriodo.value = "semanal";
         campoSemanas.value = 26;
+        formularioNomina.reset();
+        prepararCategoriasNomina();
+        mensajeNomina.textContent = "";
         construirTabla();
         construirExtras();
         actualizarPantalla();
@@ -1284,7 +1299,10 @@ botonDeudas.addEventListener("click", function () {
 
 llenarSelectorPeriodo();
 campoPeriodo.value = "semanal";
+
 cargar();
+prepararCategoriasNomina();
+
 construirTabla();
 construirExtras();
 actualizarPantalla();

@@ -603,3 +603,84 @@ h3 {
     line-height: 1.6;
     overflow-wrap: anywhere;
 }
+
+#formulario-nomina > label {
+    margin-top: 18px;
+    color: #172033;
+    font-weight: 600;
+}
+
+.reparto-nomina {
+    min-width: 0;
+    margin: 22px 0;
+    padding: 18px;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+}
+
+.reparto-nomina legend {
+    padding-inline: 6px;
+    font-weight: 700;
+}
+
+.porcentaje-nomina {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 100px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.porcentaje-nomina label {
+    margin: 0;
+}
+
+.porcentaje-nomina input {
+    text-align: right;
+    border-radius: 10px;
+}
+
+#formulario-nomina caption {
+    padding: 10px 0;
+    text-align: left;
+    font-weight: 600;
+}
+
+#confirmar-nomina {
+    width: 100%;
+}
+
+.nomina-registrada {
+    margin-bottom: 12px;
+    padding: 16px;
+    border: 1px solid #dbe3ef;
+    border-radius: 16px;
+    background: #f8fafc;
+    overflow-wrap: anywhere;
+}
+
+.nomina-registrada summary,
+.simulador-anterior > summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.nomina-registrada li {
+    padding-block: 5px;
+}
+
+.simulador-anterior {
+    margin-block: 24px;
+    padding: 16px;
+    border: 1px dashed #94a3b8;
+    border-radius: 16px;
+}
+
+.simulador-anterior > summary {
+    margin-bottom: 16px;
+}
+
+#formulario-nomina :is(input, select, button):focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 3px;
+}
