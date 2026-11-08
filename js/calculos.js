@@ -1,10 +1,10 @@
-function calcularSaldoAhorro(movimientos){
+function calcularSaldoAhorro(movimientos) {
     let saldoCentavos = 0;
 
-    for (const movimiento of movimientos){
-        if (movimiento.tipo === "aportacion"){
+    for (const movimiento of movimientos) {
+        if (movimiento.tipo === "aportacion") {
             saldoCentavos += movimiento.montoCentavos;
-        } else if(movimiento.tipo === "retiro"){
+        } else if (movimiento.tipo === "retiro") {
             saldoCentavos -= movimiento.montoCentavos;
         }
     }
@@ -223,4 +223,106 @@ function repartirNomina(montoCentavos, categoriasPago) {
             montoCentavos: fila.montoCentavos
         };
     });
+}
+
+function calcularDisponibleCategoria(
+    nomina,
+    categoriaId,
+    movimientosVinculados
+) {
+    if (
+        !nomina ||
+        typeof nomina !== "object" ||
+        typeof nomina.id !== "string" ||
+        nomina.id.trim() === "" ||
+        !Array.isArray(nomina.reparto)
+    ) {
+        throw new Error("La nomina no es valida");
+    }
+
+    if (
+        typeof categoriaId !== "string" ||
+        categoriaId.trim() === ""
+    ) {
+        throw new Error("La categoria no es valida");
+    }
+
+    if (!Array.isArray(movimientosVinculados)) {
+        throw new Error("La lista de movimientos no es valida ");
+    }
+
+    const coincidencias = nomina.reparto.filter(function (categoria) {
+        return categoria && categoria.id === categoriaId;
+    });
+
+    if (coincidencias.length !== 1) {
+        throw new Error(
+            "La categoria debe existir una sola vez dentro de la nomina"
+        );
+    }
+
+    const categoria = coincidencias[0];
+    const asignadoCentavos = categoria.montoCentavos;
+
+    if (
+        !Number.isSafeInteger(asignadoCentavos) ||
+        asignadoCentavos < 0
+    ) {
+        throw new Error("El importe asignado no es valido")
+    }
+
+    let utilizadoCentavos = 0;
+    const idsRevisados = new Set();
+
+    for (const movimiento of movimientosVinculados) {
+        if (
+            !movimiento ||
+            typeof movimiento !== "object" ||
+            Array.isArray(movimiento) ||
+            typeof movimiento.id !== "string" ||
+            movimiento.id.trim() === "" ||
+            typeof movimiento.nominaId !== "string" ||
+            movimiento.nominaId.trim() === "" ||
+            typeof movimiento.categoriaId !== "string" ||
+            movimiento.categoriaId.trim() === "" ||
+            !Number.isSafeInteger(movimiento.montoCentavos) ||
+            movimiento.montoCentavos <= 0
+        ){
+            throw new Error("Hay un movimiento vinculado invalido");
+        }
+
+        if(idsRevisados.has(movimiento.id)){
+            throw new Error("Hay movimientos con el mismo identificador");
+        }
+
+        idsRevisados.add(movimiento.id);
+        
+        const mismaNomina = movimiento.nominaId === nomina.id;
+        const mismaCategoria = movimiento.categoriaId === categoriaId;
+
+        if (!mismaNomina || !mismaCategoria){
+            continue;
+        }
+
+        const siguienteTotal =
+            utilizadoCentavos + movimiento.montoCentavos;
+
+        if(!Number.isSafeInteger(siguienteTotal)){
+            throw new Error("El total utilizado supera el limite permitido");
+        }
+
+        if(siguienteTotal > asignadoCentavos){
+            throw new Error(
+                "Los movimientos superan el importe asignado a la categoria"
+            );
+        }
+
+        utilizadoCentavos = siguienteTotal;
+    }
+
+    return{
+        asignadoCentavos: asignadoCentavos,
+        utilizadoCentavos: utilizadoCentavos,
+        disponibleCentavos: asignadoCentavos - utilizadoCentavos
+    };
 }

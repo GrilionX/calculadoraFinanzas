@@ -1,64 +1,38 @@
+//Datos
 let deudas = [];
+let deudaEnEdicionId = null;
 
+//Elementos
 const formularioDeuda = document.getElementById("formulario-deuda");
 const campoNombreDeuda = document.getElementById("nombre-deuda");
 const campoObjetivoDeuda = document.getElementById("objetivo-deuda");
 const campoPrioridadDeuda = document.getElementById("prioridad-deuda");
-
 const formularioApartado = document.getElementById("formulario-apartado");
 const campoDestinoApartado = document.getElementById("destino-apartado");
 const campoMontoApartado = document.getElementById("monto-apartado");
 const botonRegistrarApartado = document.getElementById("registrar-apartado");
-
 const listaDeudas = document.getElementById("lista-deudas");
 const resumenDeudas = document.getElementById("resumen-deudas");
 const mensajeDeudas = document.getElementById("mensaje-deudas");
 const deudasVacias = document.getElementById("deudas-vacias");
-
 const editorDeuda = document.getElementById("editor-deuda");
-const formularioEditarDeuda =
-    document.getElementById("formulario-editar-deuda");
+const formularioEditarDeuda = document.getElementById("formulario-editar-deuda");
+const campoEditarNombre = document.getElementById("editar-nombre-deuda");
+const campoEditarObjetivo = document.getElementById("editar-objetivo-deuda");
+const campoEditarPrioridad = document.getElementById("editar-prioridad-deuda");
+const ayudaEditarDeuda = document.getElementById("ayuda-editar-deuda");
+const botonCancelarEdicion = document.getElementById("cancelar-edicion-deuda");
+const campoFiltroDeudas = document.getElementById("filtro-deudas");
+const sinResultadosDeudas = document.getElementById("sin-resultados-deudas");
+const formularioProyeccion = document.getElementById("formulario-proyeccion");
+const campoPresupuestoApartados = document.getElementById("presupuesto-apartados");
+const mensajeProyeccion = document.getElementById("mensaje-proyeccion");
+const resultadoProyeccion = document.getElementById("resultado-proyeccion");
 
-const campoEditarNombre =
-    document.getElementById("editar-nombre-deuda");
-
-const campoEditarObjetivo =
-    document.getElementById("editar-objetivo-deuda");
-
-const campoEditarPrioridad =
-    document.getElementById("editar-prioridad-deuda");
-
-const ayudaEditarDeuda =
-    document.getElementById("ayuda-editar-deuda");
-
-const botonCancelarEdicion =
-    document.getElementById("cancelar-edicion-deuda");
-
-const campoFiltroDeudas =
-    document.getElementById("filtro-deudas");
-
-const sinResultadosDeudas =
-    document.getElementById("sin-resultados-deudas");
-
-const formularioProyeccion =
-    document.getElementById("formulario-proyeccion");
-
-const campoPresupuestoApartados =
-    document.getElementById("presupuesto-apartados");
-
-const mensajeProyeccion =
-    document.getElementById("mensaje-proyeccion");
-
-const resultadoProyeccion =
-    document.getElementById("resultado-proyeccion");
-
-let deudaEnEdicionId = null;
-
+//Mensajes
 function informarDeudas(texto, esError) {
     mensajeDeudas.textContent = texto;
-    mensajeDeudas.className = esError
-        ? "aviso error"
-        : "aviso ok";
+    mensajeDeudas.className = esError ? "aviso error" : "aviso ok";
 }
 
 function puedeModificarDeudas() {
@@ -67,10 +41,8 @@ function puedeModificarDeudas() {
             "Recupera una copia válida antes de modificar las deudas.",
             true
         );
-
         return false;
     }
-
     return true;
 }
 
@@ -88,6 +60,7 @@ function completarCambioDeudas(texto) {
     );
 }
 
+//Registro
 function registrarDeuda(evento) {
     evento.preventDefault();
 
@@ -175,7 +148,6 @@ function registrarApartado(evento) {
 
     deuda.aportaciones.push(monto);
     campoMontoApartado.value = "";
-
     completarCambioDeudas("Apartado registrado.");
 }
 
@@ -221,16 +193,15 @@ function liquidarDeuda(id) {
     );
 }
 
+//Tarjetas
 function crearTarjetaDeuda(deuda) {
     const resumen = resumirDeuda(deuda);
-
     const tarjeta = document.createElement("article");
+
     tarjeta.className = "deuda";
     tarjeta.dataset.estado = deuda.liquidada
         ? "liquidada"
-        : resumen.faltaCentavos === 0
-            ? "lista"
-            : "reuniendo";
+        : resumen.faltaCentavos === 0 ? "lista" : "reuniendo";
 
     const titulo = document.createElement("h3");
     titulo.textContent = deuda.nombre;
@@ -254,7 +225,6 @@ function crearTarjetaDeuda(deuda) {
 
     if (!deuda.liquidada) {
         const botonEditar = document.createElement("button");
-
         botonEditar.type = "button";
         botonEditar.className = "boton-secundario";
         botonEditar.textContent = "Editar deuda";
@@ -264,9 +234,7 @@ function crearTarjetaDeuda(deuda) {
         });
 
         tarjeta.appendChild(botonEditar);
-    }
 
-    if (!deuda.liquidada) {
         const progreso = document.createElement("progress");
         progreso.max = deuda.objetivoCentavos;
         progreso.value = resumen.reunidoCentavos;
@@ -290,31 +258,6 @@ function crearTarjetaDeuda(deuda) {
         botonPagar.addEventListener("click", function () {
             liquidarDeuda(deuda.id);
         });
-
-        formularioEditarDeuda.addEventListener(
-            "submit",
-            guardarEdicionDeuda
-        );
-
-        botonCancelarEdicion.addEventListener(
-            "click",
-            cerrarEditorDeuda
-        );
-
-        campoFiltroDeudas.addEventListener(
-            "change",
-            mostrarDeudas
-        );
-
-        formularioProyeccion.addEventListener(
-            "submit",
-            mostrarProyeccionDeudas
-        );
-
-        campoPresupuestoApartados.addEventListener(
-            "input",
-            invalidarProyeccionDeudas
-        );
 
         tarjeta.appendChild(progreso);
         tarjeta.appendChild(pendiente);
@@ -352,12 +295,12 @@ function mostrarDeudas() {
     let liquidadas = 0;
     let visibles = 0;
 
-
     for (const deuda of ordenadas) {
         if (coincideConFiltroDeuda(deuda, campoFiltroDeudas.value)) {
             listaDeudas.appendChild(crearTarjetaDeuda(deuda));
             visibles++;
         }
+
         if (deuda.liquidada) {
             liquidadas++;
             continue;
@@ -373,11 +316,11 @@ function mostrarDeudas() {
         }
     }
 
-    const sigueDisponible = Array.from(
-        campoDestinoApartado.options
-    ).some(function (opcion) {
-        return opcion.value === destinoAnterior;
-    });
+    const sigueDisponible = Array.from(campoDestinoApartado.options).some(
+        function (opcion) {
+            return opcion.value === destinoAnterior;
+        }
+    );
 
     if (sigueDisponible) {
         campoDestinoApartado.value = destinoAnterior;
@@ -400,11 +343,10 @@ function mostrarDeudas() {
         pendientes + " pendientes · " + liquidadas + " liquidadas";
 
     deudasVacias.hidden = deudas.length > 0;
-
-    sinResultadosDeudas.hidden =
-        deudas.length === 0 || visibles > 0;
+    sinResultadosDeudas.hidden = deudas.length === 0 || visibles > 0;
 }
 
+//Validacion
 function limpiarDeudas(lista) {
     if (lista === undefined) {
         return [];
@@ -474,10 +416,7 @@ function limpiarDeudas(lista) {
             aportaciones.push(monto);
         }
 
-        if (
-            deuda.liquidada &&
-            reunido !== deuda.objetivoCentavos
-        ) {
+        if (deuda.liquidada && reunido !== deuda.objetivoCentavos) {
             return null;
         }
 
@@ -496,6 +435,7 @@ function limpiarDeudas(lista) {
     return limpias;
 }
 
+//Edicion
 function abrirEditorDeuda(id) {
     if (!puedeModificarDeudas()) {
         return;
@@ -511,12 +451,8 @@ function abrirEditorDeuda(id) {
     }
 
     deudaEnEdicionId = deuda.id;
-
     campoEditarNombre.value = deuda.nombre;
-
-    campoEditarObjetivo.value =
-        (deuda.objetivoCentavos / 100).toFixed(2);
-
+    campoEditarObjetivo.value = (deuda.objetivoCentavos / 100).toFixed(2);
     campoEditarPrioridad.value = deuda.prioridad;
 
     const resumen = resumirDeuda(deuda);
@@ -554,11 +490,7 @@ function guardarEdicionDeuda(evento) {
     }
 
     const nombre = campoEditarNombre.value.trim();
-
-    const objetivo = convertirPesosACentavos(
-        campoEditarObjetivo.value
-    );
-
+    const objetivo = convertirPesosACentavos(campoEditarObjetivo.value);
     const prioridad = Number(campoEditarPrioridad.value);
 
     if (nombre === "" || nombre.length > 80) {
@@ -598,6 +530,7 @@ function guardarEdicionDeuda(evento) {
     completarCambioDeudas("Deuda actualizada.");
 }
 
+//Filtros y proyeccion
 function coincideConFiltroDeuda(deuda, filtro) {
     const resumen = resumirDeuda(deuda);
 
@@ -606,8 +539,7 @@ function coincideConFiltroDeuda(deuda, filtro) {
     }
 
     if (filtro === "listas") {
-        return !deuda.liquidada &&
-            resumen.faltaCentavos === 0;
+        return !deuda.liquidada && resumen.faltaCentavos === 0;
     }
 
     if (filtro === "liquidadas") {
@@ -621,12 +553,8 @@ function mostrarProyeccionDeudas(evento) {
     evento.preventDefault();
 
     const texto = campoPresupuestoApartados.value.trim();
-
     const esCero = /^0+(?:\.0{1,2})?$/.test(texto);
-
-    const presupuesto = esCero
-        ? 0
-        : convertirPesosACentavos(texto);
+    const presupuesto = esCero ? 0 : convertirPesosACentavos(texto);
 
     resultadoProyeccion.replaceChildren();
 
@@ -654,7 +582,6 @@ function mostrarProyeccionDeudas(evento) {
 
     for (const fila of proyeccion.filas) {
         const elemento = document.createElement("li");
-
         let horizonte;
 
         if (fila.semanaObjetivo === 0) {
@@ -663,13 +590,10 @@ function mostrarProyeccionDeudas(evento) {
             horizonte = "Sin estimación: el presupuesto semanal es cero.";
         } else {
             horizonte =
-                "Objetivo reunido en la semana " +
-                fila.semanaObjetivo + ".";
+                "Objetivo reunido en la semana " + fila.semanaObjetivo + ".";
         }
 
-        elemento.textContent =
-            fila.nombre + ": " + horizonte;
-
+        elemento.textContent = fila.nombre + ": " + horizonte;
         resultadoProyeccion.appendChild(elemento);
     }
 
@@ -682,8 +606,16 @@ function mostrarProyeccionDeudas(evento) {
 
 function invalidarProyeccionDeudas() {
     resultadoProyeccion.replaceChildren();
-
     mensajeProyeccion.className = "ayuda";
     mensajeProyeccion.textContent =
         "Calcula nuevamente el horizonte con los datos actuales.";
 }
+
+//Eventos
+formularioDeuda.addEventListener("submit", registrarDeuda);
+formularioApartado.addEventListener("submit", registrarApartado);
+formularioEditarDeuda.addEventListener("submit", guardarEdicionDeuda);
+botonCancelarEdicion.addEventListener("click", cerrarEditorDeuda);
+campoFiltroDeudas.addEventListener("change", mostrarDeudas);
+formularioProyeccion.addEventListener("submit", mostrarProyeccionDeudas);
+campoPresupuestoApartados.addEventListener("input", invalidarProyeccionDeudas);

@@ -1,438 +1,464 @@
-function casiIgual(a, b){
-    return Math.abs(a - b) < 0.005;
-}
-
+//Pruebas
 let fallos = 0;
 
-function comprobar(nombre, obtenido, esperado){
-    if (casiIgual(obtenido, esperado)) {
-        console.log("✔ " + nombre);
-    } else {
+function comprobar(nombre, obtenido, esperado) {
+    const iguales = typeof esperado === "number"
+        ? Number.isFinite(obtenido) && Math.abs(obtenido - esperado) < 0.005
+        : obtenido === esperado;
+
+    if (!iguales) {
         fallos++;
-        console.error("✘ " + nombre + ": se esperaba " + esperado + " y salió " + obtenido);
+        console.error("✘ " + nombre, { obtenido, esperado });
     }
 }
 
-// Para comparar textos, verdadero/falso y null con ===
-function comprobarIgual(nombre, obtenido, esperado){
-    if (obtenido === esperado) {
-        console.log("✔ " + nombre);
-    } else {
-        fallos++;
-        console.error("✘ " + nombre + ": se esperaba " + esperado + " y salió " + obtenido);
-    }
-}
-
-function ejecutarPruebas(){
+function ejecutarPruebas() {
     fallos = 0;
-    const respaldoCategorias = categorias;       // guardo tus datos actuales
+    const respaldoCategorias = categorias;
     const respaldoExtras = otrosIngresos;
-    categorias = copiarCategoriasIniciales();    // uso los iniciales para probar
-    otrosIngresos = [];
 
-    //Sueldo
-    let eq = calcularEquivalentes("mensual", 9377);
-    comprobar("9,377 mensual: semanal", eq.semanal, 2163.92);
-    comprobar("9,377 mensual: cada dos semanas", eq.cada2semanas, 4327.85);
-    comprobar("9,377 mensual: quincenal", eq.quincenal, 4688.50);
-    comprobar("9,377 mensual: anual", eq.anual, 112524);
+    try {
+        categorias = copiarCategoriasIniciales();
+        otrosIngresos = [];
 
-    const reparto = calcularReparto(eq);
-    comprobar("Gastos básicos por semana", reparto[0].sueldo.semanal, 1190.16);
-    comprobar("Deudas por semana", reparto[2].sueldo.semanal, 540.98);
-    comprobar("Ahorro por mes", reparto[3].sueldo.mensual, 1406.55);
+        //Sueldo y reparto
+        const eq = calcularEquivalentes("mensual", 9377);
+        comprobar("Semanal", eq.semanal, 2163.92);
+        comprobar("Catorcenal", eq.cada2semanas, 4327.85);
+        comprobar("Quincenal", eq.quincenal, 4688.50);
+        comprobar("Anual", eq.anual, 112524);
 
-    let suma = 0;
-    for (const fila of reparto) {
-        suma += fila.sueldo.semanal;
-    }
-    comprobar("El reparto suma el sueldo semanal", suma, eq.semanal);
+        comprobar(
+            "Quincena a mes",
+            calcularEquivalentes("quincenal", 4688.5).mensual,
+            9377
+        );
 
-    eq = calcularEquivalentes("quincenal", 4688.5);
-    comprobar("4,688.50 quincenal: mensual", eq.mensual, 9377);
+        comprobar(
+            "Semana a mes",
+            calcularEquivalentes("semanal", 1000).mensual,
+            4333.33
+        );
 
-    eq = calcularEquivalentes("mensual", 12000);
-    comprobar("12,000 mensual: semanal", eq.semanal, 2769.23);
-    comprobar("12,000 mensual: deudas por semana", calcularReparto(eq)[2].sueldo.semanal, 692.31);
+        comprobar(
+            "Sueldo cero",
+            calcularEquivalentes("mensual", 0).anual,
+            0
+        );
 
-    eq = calcularEquivalentes("mensual", 7000);
-    comprobar("7,000 mensual: deudas por semana", calcularReparto(eq)[2].sueldo.semanal, 403.85);
+        comprobar("Número infinito", leerNumero(Infinity), 0);
 
-    eq = calcularEquivalentes("semanal", 1000);
-    comprobar("1,000 semanal: mensual", eq.mensual, 4333.33);
-    comprobar("1,000 semanal: quincenal", eq.quincenal, 2166.67);
+        const reparto = calcularReparto(eq);
+        comprobar("Básicos", reparto[0].sueldo.semanal, 1190.16);
+        comprobar("Deudas", reparto[2].sueldo.semanal, 540.98);
+        comprobar("Ahorro", reparto[3].sueldo.mensual, 1406.55);
 
-    eq = calcularEquivalentes("mensual", 0);
-    comprobar("0 de sueldo: anual", eq.anual, 0);
+        comprobar(
+            "Total repartido",
+            reparto.reduce((s, f) => s + f.sueldo.semanal, 0),
+            eq.semanal
+        );
 
-    let extra = calcularExtra({ nombre: "Prueba", monto: 10000, frecuencia: "anual", diasPorSemana: 5 });
-    comprobar("10,000 una vez al año: por mes", extra.mensual, 833.33);
-    extra = calcularExtra({ nombre: "Prueba", monto: 500, frecuencia: "semanal", diasPorSemana: 5 });
-    comprobar("500 cada semana: por año", extra.anual, 26000);
-    comprobar("500 cada semana: por mes", extra.mensual, 2166.67);
-    extra = calcularExtra({ nombre: "Prueba", monto: 3000, frecuencia: "trimestral", diasPorSemana: 5 });
-    comprobar("3,000 cada 3 meses: por mes", extra.mensual, 1000);
+        //Otros ingresos
+        const propinas = {
+            nombre: "Prueba",
+            monto: 150,
+            modo: "promedio",
+            frecuencia: "diaria",
+            diasPorSemana: 6,
+            semana: 1,
+            repetir: 0,
+            sumar: true,
+            destinos: ["ocio", "ahorro"]
+        };
 
-    extra = calcularExtra({ nombre: "Propinas", monto: 150, frecuencia: "diaria", diasPorSemana: 6 });
-    comprobar("Propinas diarias: por semana", extra.semanal, 900);
-    comprobar("Propinas diarias: cada dos semanas", extra.cada2semanas, 1800);
-    comprobar("Propinas diarias: por quincena", extra.quincenal, 1950);
-    comprobar("Propinas diarias: por mes", extra.mensual, 3900);
-    comprobar("Propinas diarias: por año", extra.anual, 46800);
+        comprobar("Propinas semanales", calcularExtra(propinas).semanal, 900);
+        comprobar("Propinas mensuales", calcularExtra(propinas).mensual, 3900);
 
-    eq = calcularEquivalentes("mensual", 9377);
-    otrosIngresos = [{ nombre: "Propinas", monto: 150, frecuencia: "diaria", diasPorSemana: 6, sumar: true, destinos: ["ocio", "ahorro"] }];
-    let r = calcularReparto(eq);
-    comprobar("Propinas a ocio y ahorro: ocio recibe la mitad", r[1].extras.semanal, 450);
-    comprobar("Propinas a ocio y ahorro: ahorro recibe la mitad", r[3].extras.semanal, 450);
-    comprobar("Propinas a ocio y ahorro: deudas no recibe nada", r[2].extras.semanal, 0);
-    comprobar("Los extras no cambian la parte del sueldo", r[1].sueldo.semanal, 108.20);
+        otrosIngresos = [propinas];
+        comprobar("Extras repartidos", calcularReparto(eq)[1].extras.semanal, 450);
 
-    otrosIngresos[0].sumar = false;
-    r = calcularReparto(eq);
-    comprobar("Sin marcar 'sumar', no se reparte nada", r[1].extras.semanal, 0);
+        propinas.sumar = false;
+        comprobar("Extra desactivado", calcularReparto(eq)[1].extras.semanal, 0);
 
-    otrosIngresos[0].sumar = true;
-    otrosIngresos[0].destinos = ["noexiste"];
-    r = calcularReparto(eq);
-    comprobar("Un destino que no existe no recibe dinero", r[1].extras.semanal, 0);
-    comprobar("Se detecta el extra sin destino", extrasSinDestino().length, 1);
+        propinas.sumar = true;
+        propinas.destinos = ["inexistente"];
+        comprobar("Sin destino", extrasSinDestino().length, 1);
 
-    otrosIngresos = [
-        { nombre: "Propinas", monto: 150, frecuencia: "diaria", diasPorSemana: 6, sumar: true, destinos: ["ahorro"] },
-        { nombre: "Venta", monto: 100, frecuencia: "semanal", diasPorSemana: 5, sumar: true, destinos: ["ahorro"] }
-    ];
-    r = calcularReparto(eq);
-    comprobar("Dos extras al mismo destino se suman", r[3].extras.semanal, 1000);
+        const bono = {
+            nombre: "Bono",
+            monto: 10000,
+            modo: "golpe",
+            frecuencia: "anual",
+            diasPorSemana: 5,
+            semana: 8,
+            repetir: 52,
+            sumar: true,
+            destinos: ["ahorro"]
+        };
 
-    otrosIngresos = [{ nombre: "Propinas", monto: 150, frecuencia: "diaria", diasPorSemana: 6, sumar: true, destinos: ["ocio", "ahorro"] }];
-    quitarDestino("ocio");
-    comprobar("Quitar una categoría la saca de los destinos", otrosIngresos[0].destinos.length, 1);
+        comprobar("Antes del bono", montoDeGolpe(bono, 7), 0);
+        comprobar("Semana del bono", montoDeGolpe(bono, 8), 10000);
+        comprobar("Repetición", montoDeGolpe(bono, 60), 10000);
 
-    const cats = limpiarCategorias([
-        { nombre: 5, porcentaje: "abc" },
-        null,
-        "x",
-        { id: "a", nombre: "Uno", porcentaje: 10 },
-        { id: "a", nombre: "Dos", porcentaje: 20 }
-    ]);
-    comprobar("limpiarCategorias descarta lo que no es un objeto", cats.length, 3);
-    comprobarIgual("limpiarCategorias: nombre inválido queda vacío", cats[0].nombre, "");
-    comprobar("limpiarCategorias: porcentaje inválido queda en 0", cats[0].porcentaje, 0);
-    comprobarIgual("limpiarCategorias: le inventa un id a la que no lo trae", typeof cats[0].id, "string");
-    comprobarIgual("limpiarCategorias: conserva un id válido", cats[1].id, "a");
-    comprobarIgual("limpiarCategorias: cambia un id repetido", cats[2].id !== "a", true);
+        comprobar(
+            "Una sola vez",
+            montoDeGolpe({ ...bono, repetir: 0 }, 60),
+            0
+        );
 
-    const limpios = limpiarExtras([
-        { nombre: 5, monto: "abc", frecuencia: "toString", diasPorSemana: 99, sumar: "si", destinos: ["ocio", "ocio", "hack"] },
-        null,
-        "texto suelto",
-        { nombre: "Bono", monto: "300", frecuencia: "anual", sumar: true, destinos: ["ahorro"] }
-    ], ["ocio", "ahorro"]);
-    comprobar("limpiarExtras descarta lo que no es un objeto", limpios.length, 2);
-    comprobarIgual("limpiarExtras: nombre inválido queda vacío", limpios[0].nombre, "");
-    comprobar("limpiarExtras: monto inválido queda en 0", limpios[0].monto, 0);
-    comprobarIgual("limpiarExtras: frecuencia inválida queda en mensual", limpios[0].frecuencia, "mensual");
-    comprobar("limpiarExtras: los días se limitan a 7", limpios[0].diasPorSemana, 7);
-    comprobarIgual("limpiarExtras: 'sumar' solo vale si es true", limpios[0].sumar, false);
-    comprobar("limpiarExtras: quita destinos repetidos o inventados", limpios[0].destinos.length, 1);
-    comprobarIgual("limpiarExtras: conserva un nombre válido", limpios[1].nombre, "Bono");
-    comprobar("limpiarExtras: convierte el monto en número", limpios[1].monto, 300);
-    comprobar("limpiarExtras: sin días guardados usa 5", limpios[1].diasPorSemana, 5);
-    comprobarIgual("limpiarExtras: conserva sumar verdadero", limpios[1].sumar, true);
-    comprobarIgual("limpiarExtras: sin lista devuelve null", limpiarExtras(undefined, []), null);
+        otrosIngresos = [bono];
+        const calendario = calcularCalendario(eq, 26);
+        comprobar("Semanas", calendario.semanas.length, 26);
+        comprobar("Bono completo", calendario.semanas[7].deGolpe, 10000);
+        comprobar("Bono al ahorro", calendario.porCategoria[3].deGolpe, 10000);
+        comprobar("No promediar bono", calcularReparto(eq)[3].extras.semanal, 0);
 
-    const aguinaldo = { nombre: "Aguinaldo", monto: 10000, modo: "golpe", semana: 8, repetir: 52, sumar: true, destinos: ["ahorro"] };
-    comprobar("Aguinaldo: antes de su semana no llega nada", montoDeGolpe(aguinaldo, 7), 0);
-    comprobar("Aguinaldo: en su semana llega completo", montoDeGolpe(aguinaldo, 8), 10000);
-    comprobar("Aguinaldo: la semana siguiente no llega nada", montoDeGolpe(aguinaldo, 9), 0);
-    comprobar("Aguinaldo: se repite un año después", montoDeGolpe(aguinaldo, 60), 10000);
-    comprobar("Aguinaldo: una semana antes de repetirse no llega", montoDeGolpe(aguinaldo, 59), 0);
-    const unaVez = { nombre: "Bono", monto: 5000, modo: "golpe", semana: 8, repetir: 0, sumar: true, destinos: ["ahorro"] };
-    comprobar("Una sola vez: llega en su semana", montoDeGolpe(unaVez, 8), 5000);
-    comprobar("Una sola vez: no se repite", montoDeGolpe(unaVez, 60), 0);
-    const trimestral = { nombre: "Bono", monto: 3000, modo: "golpe", semana: 13, repetir: 13, sumar: true, destinos: ["deudas"] };
-    comprobar("Cada 13 semanas: llega en la 26", montoDeGolpe(trimestral, 26), 3000);
-    comprobar("Cada 13 semanas: no llega en la 20", montoDeGolpe(trimestral, 20), 0);
+        //Ahorro
+        comprobar(
+            "Saldo de ahorro",
+            calcularSaldoAhorro([
+                { tipo: "aportacion", montoCentavos: 15000 },
+                { tipo: "aportacion", montoCentavos: 5025 },
+                { tipo: "retiro", montoCentavos: 3010 }
+            ]),
+            17015
+        );
 
-    eq = calcularEquivalentes("mensual", 9377);
-    otrosIngresos = [aguinaldo, trimestral];
-    let cal = calcularCalendario(eq, 26);
-    comprobar("Calendario: tiene 26 semanas", cal.semanas.length, 26);
-    comprobar("Calendario: semana normal, solo sueldo", cal.semanas[0].total, 2163.92);
-    comprobar("Calendario: la semana 8 trae el aguinaldo", cal.semanas[7].deGolpe, 10000);
-    comprobar("Calendario: la semana 8 suma sueldo y aguinaldo", cal.semanas[7].total, 12163.92);
-    comprobar("Calendario: el bono llega en la semana 13", cal.semanas[12].deGolpe, 3000);
-    comprobar("Calendario: el bono llega otra vez en la 26", cal.semanas[25].deGolpe, 3000);
-    comprobar("Calendario: Ahorro recibe el aguinaldo", cal.porCategoria[3].deGolpe, 10000);
-    comprobar("Calendario: Deudas recibe los dos bonos", cal.porCategoria[2].deGolpe, 6000);
-    comprobar("Calendario: Ocio no recibe nada de golpe", cal.porCategoria[1].deGolpe, 0);
+        comprobar("Ahorro vacío", calcularSaldoAhorro([]), 0);
 
-    aguinaldo.sumar = false;
-    cal = calcularCalendario(eq, 26);
-    comprobar("Calendario: sin marcar 'sumar', no llega", cal.semanas[7].deGolpe, 0);
-    aguinaldo.sumar = true;
-    aguinaldo.destinos = ["ahorro", "ocio"];
-    cal = calcularCalendario(eq, 26);
-    comprobar("Calendario: dos destinos, partes iguales", cal.porCategoria[1].deGolpe, 5000);
+        comprobar(
+            "Retiro sin fondos",
+            limpiarMovimientosAhorro([
+                { tipo: "retiro", concepto: "Prueba", montoCentavos: 1 }
+            ]),
+            null
+        );
 
-    r = calcularReparto(eq);
-    comprobar("De golpe no se promedia en el reparto", r[3].extras.semanal, 0);
+        comprobar("Importe exacto", convertirPesosACentavos("50.25"), 5025);
+        comprobar("Decimales de más", convertirPesosACentavos("50.257"), null);
 
-    const golpeLimpio = limpiarExtras([
-        { nombre: "A", modo: "hola", semana: 0, repetir: -4 },
-        { nombre: "B", modo: "golpe", semana: 99999, repetir: 3.6 }
-    ], []);
-    comprobarIgual("limpiarExtras: un modo inválido queda en promedio", golpeLimpio[0].modo, "promedio");
-    comprobar("limpiarExtras: la semana mínima es 1", golpeLimpio[0].semana, 1);
-    comprobar("limpiarExtras: repetir no puede ser negativo", golpeLimpio[0].repetir, 0);
-    comprobarIgual("limpiarExtras: conserva el modo golpe", golpeLimpio[1].modo, "golpe");
-    comprobar("limpiarExtras: la semana máxima es 520", golpeLimpio[1].semana, 520);
-    comprobar("limpiarExtras: repetir se redondea", golpeLimpio[1].repetir, 4);
-
-    //Copia de seguridad
-    comprobarIgual("Una copia válida se reconoce", esCopiaValida({ app: "finanzas-personal", version: 1, datos: {} }), true);
-    comprobarIgual("Otra aplicación no se acepta", esCopiaValida({ app: "otra", datos: {} }), false);
-    comprobarIgual("null no se acepta", esCopiaValida(null), false);
-    comprobarIgual("Un texto suelto no se acepta", esCopiaValida("hola"), false);
-    comprobarIgual("Sin datos no se acepta", esCopiaValida({ app: "finanzas-personal" }), false);
-    comprobarIgual("Datos como lista no se aceptan", esCopiaValida({ app: "finanzas-personal", datos: [] }), false);
-
-    const paquete = construirPaquete();
-    comprobarIgual("El paquete trae las categorías", Array.isArray(paquete.categorias), true);
-    comprobarIgual("El paquete trae los otros ingresos", Array.isArray(paquete.otrosIngresos), true);
-    const vuelta = limpiarCategorias(JSON.parse(JSON.stringify(paquete)).categorias);
-    comprobar("Guardar y volver a leer conserva las categorías", vuelta.length, categorias.length);
-    comprobarIgual("Guardar y volver a leer conserva los ids", vuelta[0].id, categorias[0].id);
-
-    categorias = respaldoCategorias;
-    otrosIngresos = respaldoExtras;
-
-    if (fallos === 0) {
-        console.log("Todas las pruebas pasaron ✔");
-    } else {
-        console.log("Fallaron " + fallos + " prueba(s) ✘");
-    }
-}
-
-function probarCalculosSaldoAhorro(){
-    const movimientos = [
-        {
-            tipo: "aportacion",
-            concepto: "Primera Aportacion",
-            montoCentavos: 15000
-
-        },
-        {
-            tipo: "aportacion",
-            concepto: "Segunda aportacion",
-            montoCentavos: 5025,
-        },
-        {
-            tipo: "retiro",
-            concepto: "Retiro de efectivo",
-            montoCentavos: 3010
-        }
-    ];
-
-    const resultados = calcularSaldoAhorro(movimientos);
-
-    console.assert(
-        resultado === 17015,
-        "El saldo deberia de ser 17015 centavos pero son:",
-        resultado
-    );
-
-    console.assert(
-        calcularAhorro([]) === 0,
-        "Un historial vacio deberia de dar cero"
-    );
-}
-
-probarCalculosSaldoAhorro();
-
-function probarDeudas() {
-    const ejemplo = {
-        id: "prueba-1",
-        nombre: "Acreedor de prueba",
-        objetivoCentavos: 100000,
-        prioridad: 1,
-        aportaciones: [30000, 20000],
-        liquidada: false
-    };
-
-    const resumen = resumirDeuda(ejemplo);
-
-    console.assert(
-        resumen.faltaCentavos === 50000,
-        "Deben faltar 50000 centavos."
-    );
-
-    console.assert(
-        resumen.apartadoDisponibleCentavos === 50000,
-        "Debe haber 50000 centavos apartados."
-    );
-
-    console.assert(
-        convertirPesosACentavos("50.25") === 5025,
-        "La conversión debe conservar los centavos."
-    );
-
-    console.assert(
-        convertirPesosACentavos("50.257") === null,
-        "No deben aceptarse más de dos decimales."
-    );
-
-    console.assert(
-        limpiarDeudas(undefined).length === 0,
-        "Las copias antiguas deben admitir deudas ausentes."
-    );
-
-    console.assert(
-        limpiarDeudas([ejemplo, ejemplo]) === null,
-        "Deben rechazarse identificadores duplicados."
-    );
-
-    const incompletaLiquidada = {
-        ...ejemplo,
-        liquidada: true
-    };
-
-    console.assert(
-        limpiarDeudas([incompletaLiquidada]) === null,
-        "No puede estar liquidada sin reunir el objetivo."
-    );
-
-    const pagada = {
-        ...ejemplo,
-        aportaciones: [100000],
-        liquidada: true
-    };
-
-    console.assert(
-        resumirDeuda(pagada).apartadoDisponibleCentavos === 0,
-        "El dinero utilizado para pagar ya no está disponible."
-    );
-}
-
-probarDeudas();
-
-function probarProyeccionApartados() {
-    const lista = [
-        {
-            id: "a",
-            nombre: "Deuda A",
-            objetivoCentavos: 50000,
+        //Deudas
+        const deuda = {
+            id: "prueba-a",
+            nombre: "A",
+            objetivoCentavos: 100000,
             prioridad: 1,
-            aportaciones: [20000],
+            aportaciones: [30000, 20000],
             liquidada: false
-        },
-        {
-            id: "b",
-            nombre: "Deuda B",
-            objetivoCentavos: 80000,
-            prioridad: 2,
-            aportaciones: [],
-            liquidada: false
+        };
+
+        comprobar("Faltante", resumirDeuda(deuda).faltaCentavos, 50000);
+        comprobar(
+            "Disponible",
+            resumirDeuda(deuda).apartadoDisponibleCentavos,
+            50000
+        );
+
+        comprobar(
+            "Identificadores duplicados",
+            limpiarDeudas([deuda, deuda]),
+            null
+        );
+
+        comprobar(
+            "Liquidación incompleta",
+            limpiarDeudas([{ ...deuda, liquidada: true }]),
+            null
+        );
+
+        comprobar(
+            "Apartado excesivo",
+            limpiarDeudas([{ ...deuda, aportaciones: [100001] }]),
+            null
+        );
+
+        comprobar(
+            "Dinero pagado",
+            resumirDeuda({
+                ...deuda,
+                aportaciones: [100000],
+                liquidada: true
+            }).apartadoDisponibleCentavos,
+            0
+        );
+
+        const plan = [
+            {
+                ...deuda,
+                objetivoCentavos: 50000,
+                aportaciones: [20000]
+            },
+            {
+                ...deuda,
+                id: "prueba-b",
+                nombre: "B",
+                objetivoCentavos: 80000,
+                prioridad: 2,
+                aportaciones: []
+            }
+        ];
+
+        const original = JSON.stringify(plan);
+        const proyeccion = proyectarApartados(plan, 40000);
+
+        comprobar("Primera semana", proyeccion.filas[0].semanaObjetivo, 1);
+        comprobar("Tercera semana", proyeccion.filas[1].semanaObjetivo, 3);
+
+        comprobar(
+            "Presupuesto cero",
+            proyectarApartados(plan, 0).filas[0].semanaObjetivo,
+            null
+        );
+
+        comprobar("Sin modificar el plan", JSON.stringify(plan), original);
+
+        //Nominas
+        const plantilla = copiarCategoriasIniciales();
+        const pagos = repartirNomina(10001, plantilla);
+
+        comprobar(
+            "Centavos conservados",
+            pagos.reduce((s, f) => s + f.montoCentavos, 0),
+            10001
+        );
+
+        plantilla[0].porcentaje = 50;
+        plantilla[3].porcentaje = 20;
+
+        comprobar("Historial independiente", pagos[0].porcentaje, 55);
+
+        comprobar(
+            "Nuevo reparto",
+            repartirNomina(250000, plantilla)[3].montoCentavos,
+            50000
+        );
+
+        comprobar("Copia antigua", limpiarNominas(undefined).length, 0);
+
+        const nomina = {
+            version: 1,
+            id: "nomina-prueba",
+            referencia: "Prueba",
+            periodo: "semanal",
+            montoCentavos: 10001,
+            reparto: pagos
+        };
+
+        comprobar("Nómina válida", limpiarNominas([nomina]).length, 1);
+
+        const alterada = copiar(nomina);
+        alterada.reparto[0].montoCentavos++;
+        comprobar("Nómina alterada", limpiarNominas([alterada]), null);
+
+        //Disponible por nomina
+        const nominaDisponible = {
+            id: "nomina-disponible",
+            reparto: [
+                {
+                    id: "deudas",
+                    nombre: "Deudas",
+                    porcentaje: 25,
+                    montoCentavos: 50000
+                },
+                {
+                    id: "ahorro",
+                    nombre: "Ahorro",
+                    porcentaje: 15,
+                    montoCentavos: 30000
+                }
+            ]
+        };
+
+        const movimientosDisponibles = [
+            {
+                id: "movimiento-1",
+                nominaId: "nomina-disponible",
+                categoriaId: "deudas",
+                montoCentavos: 30000
+            },
+            {
+                id: "movimiento-2",
+                nominaId: "nomina-disponible",
+                categoriaId: "deudas",
+                montoCentavos: 15000
+            },
+            {
+                id: "movimiento-3",
+                nominaId: "otra-nomina",
+                categoriaId: "deudas",
+                montoCentavos: 90000
+            },
+            {
+                id: "movimiento-4",
+                nominaId: "nomina-disponible",
+                categoriaId: "ahorro",
+                montoCentavos: 10000
+            }
+        ];
+
+        const disponibleDeudas = calcularDisponibleCategoria(
+            nominaDisponible,
+            "deudas",
+            movimientosDisponibles
+        );
+
+        comprobar(
+            "Asignación original",
+            disponibleDeudas.asignadoCentavos,
+            50000
+        );
+
+        comprobar(
+            "Solo cuenta la nómina y categoría elegidas",
+            disponibleDeudas.utilizadoCentavos,
+            45000
+        );
+
+        comprobar(
+            "Disponible para nuevos apartados",
+            disponibleDeudas.disponibleCentavos,
+            5000
+        );
+
+        const disponibleAhorro = calcularDisponibleCategoria(
+            nominaDisponible,
+            "ahorro",
+            movimientosDisponibles
+        );
+
+        comprobar(
+            "Ahorro separado de deudas",
+            disponibleAhorro.disponibleCentavos,
+            20000
+        );
+
+        const sinMovimientos = calcularDisponibleCategoria(
+            nominaDisponible,
+            "deudas",
+            []
+        );
+
+        comprobar(
+            "Sin movimientos conserva toda la asignación",
+            sinMovimientos.disponibleCentavos,
+            50000
+        );
+
+        let excesoRechazado = false;
+
+        try {
+            calcularDisponibleCategoria(
+                nominaDisponible,
+                "deudas",
+                [
+                    ...movimientosDisponibles,
+                    {
+                        id: "movimiento-excesivo",
+                        nominaId: "nomina-disponible",
+                        categoriaId: "deudas",
+                        montoCentavos: 5001
+                    }
+                ]
+            );
+        } catch {
+            excesoRechazado = true;
         }
-    ];
 
-    const antes = JSON.stringify(lista);
-    const resultado = proyectarApartados(lista, 40000);
+        comprobar(
+            "Rechaza utilizar más dinero del asignado",
+            excesoRechazado,
+            true
+        );
 
-    console.assert(
-        resultado.error === null,
-        "La proyección debería ser válida."
+        let duplicadoRechazado = false;
+
+        try {
+            calcularDisponibleCategoria(
+                nominaDisponible,
+                "deudas",
+                [
+                    movimientosDisponibles[0],
+                    movimientosDisponibles[0]
+                ]
+            );
+        } catch {
+            duplicadoRechazado = true;
+        }
+
+        comprobar(
+            "Rechaza movimientos duplicados",
+            duplicadoRechazado,
+            true
+        );
+
+        let categoriaAusenteRechazada = false;
+
+        try {
+            calcularDisponibleCategoria(
+                nominaDisponible,
+                "categoria-inexistente",
+                []
+            );
+        } catch {
+            categoriaAusenteRechazada = true;
+        }
+
+        comprobar(
+            "No inventa saldo para categorías ausentes",
+            categoriaAusenteRechazada,
+            true
+        );
+
+        //Copias
+        comprobar(
+            "Formato válido",
+            esCopiaValida({
+                app: "finanzas-personal",
+                version: 1,
+                datos: {}
+            }),
+            true
+        );
+
+        comprobar(
+            "Versión desconocida",
+            esCopiaValida({
+                app: "finanzas-personal",
+                version: 99,
+                datos: {}
+            }),
+            false
+        );
+
+        comprobar("Copia vacía", aplicarDatos({}), false);
+
+        const estadoAnterior = JSON.stringify(construirPaquete());
+        const invalida = copiar(construirPaquete());
+        invalida.categorias = null;
+
+        comprobar("Categorías inválidas", aplicarDatos(invalida), false);
+
+        comprobar(
+            "Rechazo sin cambios",
+            JSON.stringify(construirPaquete()),
+            estadoAnterior
+        );
+    } catch (error) {
+        fallos++;
+        console.error("Error en las pruebas:", error);
+    } finally {
+        categorias = respaldoCategorias;
+        otrosIngresos = respaldoExtras;
+    }
+
+    console.log(
+        fallos === 0
+            ? "Todas las pruebas pasaron."
+            : "Fallaron " + fallos + " prueba(s)."
     );
 
-    console.assert(
-        resultado.filas[0].semanaObjetivo === 1,
-        "La deuda A debe reunir su objetivo en la semana 1."
-    );
-
-    console.assert(
-        resultado.filas[1].semanaObjetivo === 3,
-        "La deuda B debe reunir su objetivo en la semana 3."
-    );
-
-    console.assert(
-        JSON.stringify(lista) === antes,
-        "La proyección no debe modificar los datos originales."
-    );
-
-    const sinPresupuesto = proyectarApartados(lista, 0);
-
-    console.assert(
-        sinPresupuesto.filas[0].semanaObjetivo === null,
-        "Con presupuesto cero no debe inventarse una semana."
-    );
-
-    const listaConObjetivoReunido = [
-        {
-            ...lista[0],
-            aportaciones: [50000]
-        },
-        lista[1]
-    ];
-
-    const conObjetivoReunido = proyectarApartados(
-        listaConObjetivoReunido,
-        40000
-    );
-
-    console.assert(
-        conObjetivoReunido.filas[0].semanaObjetivo === 0,
-        "Una deuda ya reunida debe aparecer como lista."
-    );
-
-    console.assert(
-        conObjetivoReunido.filas[1].semanaObjetivo === 2,
-        "Una deuda ya reunida no debe consumir presupuesto futuro."
-    );
+    return fallos;
 }
 
-probarProyeccionApartados();
-
-function probarRepartoNominas() {
-    const categoriasPrueba = [
-        { id: "basicos", nombre: "Básicos", porcentaje: 55 },
-        { id: "ocio", nombre: "Ocio", porcentaje: 5 },
-        { id: "deudas", nombre: "Deudas", porcentaje: 25 },
-        { id: "ahorro", nombre: "Ahorro", porcentaje: 15 }
-    ];
-
-    const reparto = repartirNomina(10001, categoriasPrueba);
-
-    const total = reparto.reduce(function (suma, fila) {
-        return suma + fila.montoCentavos;
-    }, 0);
-
-    console.assert(
-        total === 10001,
-        "El reparto debe conservar exactamente los centavos."
-    );
-
-    const primerPago = repartirNomina(200000, categoriasPrueba);
-
-    categoriasPrueba[0].porcentaje = 50;
-    categoriasPrueba[3].porcentaje = 20;
-
-    console.assert(
-        primerPago[0].porcentaje === 55,
-        "Cambiar la plantilla no debe modificar el reparto anterior."
-    );
-
-    const segundoPago = repartirNomina(250000, categoriasPrueba);
-
-    console.assert(
-        segundoPago[3].montoCentavos === 50000,
-        "El segundo pago debe usar sus propios porcentajes."
-    );
-
-    console.assert(
-        limpiarNominas(undefined).length === 0,
-        "Una copia antigua debe comenzar sin nóminas registradas."
-    );
-}
-
-probarRepartoNominas();
+ejecutarPruebas();

@@ -13,7 +13,9 @@ const PERIODOS = {
     mensual: "Por mes"
 };
 
-const CLAVES_PERIODO = ["semanal", "cada2semanas", "quincenal", "mensual", "anual"];
+const CLAVES_PERIODO = [
+    "semanal", "cada2semanas", "quincenal", "mensual", "anual"
+];
 
 const CATEGORIAS_INICIALES = [
     { id: "basicos", nombre: "Gastos básicos", porcentaje: 55 },
@@ -35,13 +37,24 @@ const FRECUENCIAS_EXTRA = {
 };
 
 const EXTRAS_INICIALES = [
-    { nombre: "Aguinaldo", monto: 0, modo: "golpe", frecuencia: "anual", diasPorSemana: 5, semana: 8, repetir: 52, sumar: false, destinos: [] },
-    { nombre: "Propinas", monto: 0, modo: "promedio", frecuencia: "diaria", diasPorSemana: 5, semana: 1, repetir: 0, sumar: false, destinos: [] }
+    {
+        nombre: "Aguinaldo", monto: 0, modo: "golpe",
+        frecuencia: "anual", diasPorSemana: 5,
+        semana: 8, repetir: 52, sumar: false, destinos: []
+    },
+    {
+        nombre: "Propinas", monto: 0, modo: "promedio",
+        frecuencia: "diaria", diasPorSemana: 5,
+        semana: 1, repetir: 0, sumar: false, destinos: []
+    }
 ];
 
 const CLAVE_GUARDADO = "finanzas-personal-v1";
 
-const formatoMoneda = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+const formatoMoneda = new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN"
+});
 
 function copiar(datos) {
     return JSON.parse(JSON.stringify(datos));
@@ -79,7 +92,7 @@ const vistaDeudas = document.getElementById("vista-deudas");
 const vistaReparto = document.getElementById("vista-reparto");
 const vistaAhorro = document.getElementById("vista-ahorro");
 const formularioAhorro = document.getElementById("formulario-ahorro");
-const campoTipoAhorro = document.getElementById("tipo-movimiento.ahorro");
+const campoTipoAhorro = document.getElementById("tipo-movimiento-ahorro");
 const campoConceptoAhorro = document.getElementById("concepto-ahorro");
 const campoMontoAhorro = document.getElementById("monto-ahorro");
 const saldoAhorro = document.getElementById("saldo-ahorro");
@@ -88,10 +101,10 @@ const historialAhorro = document.getElementById("historial-ahorro");
 const ahorroVacio = document.getElementById("ahorro-vacio");
 const estadoGuardado = document.getElementById("estado-guardado");
 
-//Leer lo que el usuario escribe
+//Leer datos
 function leerNumero(texto) {
     const numero = Number(texto);
-    if (numero < 0 || Number.isNaN(numero)) {
+    if (numero < 0 || !Number.isFinite(numero)) {
         return 0;
     }
     return numero;
@@ -119,9 +132,11 @@ function idsDe(lista) {
 }
 
 function generarId(usados) {
-    let id = "c" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
+    let id = "c" + Date.now().toString(36) +
+        Math.floor(Math.random() * 1000).toString(36);
+
     while (usados.includes(id)) {
-        id = id + "x";
+        id += "x";
     }
     return id;
 }
@@ -144,8 +159,9 @@ function calcularEquivalentes(frecuencia, monto) {
 function calcularExtra(extra) {
     const frecuencia = FRECUENCIAS_EXTRA[extra.frecuencia];
     let pagos = frecuencia.pagosAlAnio;
+
     if (frecuencia.usaDias) {
-        pagos = pagos * extra.diasPorSemana;
+        pagos *= extra.diasPorSemana;
     }
     return desdeAnual(extra.monto * pagos);
 }
@@ -159,10 +175,7 @@ function montoDeGolpe(extra, semana) {
         return 0;
     }
     if (extra.repetir === 0) {
-        if (semana === extra.semana) {
-            return extra.monto;
-        }
-        return 0;
+        return semana === extra.semana ? extra.monto : 0;
     }
     if ((semana - extra.semana) % extra.repetir === 0) {
         return extra.monto;
@@ -198,13 +211,12 @@ function destinosValidos(extra) {
 
 function extrasSinDestino() {
     const nombres = [];
+
     for (const extra of otrosIngresos) {
         if (extra.sumar && destinosValidos(extra).length === 0) {
-            if (extra.nombre.trim() === "") {
-                nombres.push("(sin nombre)");
-            } else {
-                nombres.push(extra.nombre);
-            }
+            nombres.push(
+                extra.nombre.trim() === "" ? "(sin nombre)" : extra.nombre
+            );
         }
     }
     return nombres;
@@ -212,6 +224,7 @@ function extrasSinDestino() {
 
 function calcularReparto(eqSueldo) {
     const filas = [];
+
     for (const cat of categorias) {
         filas.push({
             id: cat.id,
@@ -223,8 +236,10 @@ function calcularReparto(eqSueldo) {
 
     for (const extra of otrosIngresos) {
         const validos = destinosValidos(extra);
+
         if (extra.sumar && !esDeGolpe(extra) && validos.length > 0) {
             const parte = multiplicar(calcularExtra(extra), 1 / validos.length);
+
             for (const fila of filas) {
                 if (validos.includes(fila.id)) {
                     fila.extras = sumarEq(fila.extras, parte);
@@ -232,7 +247,6 @@ function calcularReparto(eqSueldo) {
             }
         }
     }
-
     return filas;
 }
 
@@ -240,8 +254,8 @@ function calcularCalendario(eqSueldo, cantidadSemanas) {
     const repartoSemanal = calcularReparto(eqSueldo);
     const semanas = [];
     const porCategoria = [];
-
     let promediadosPorSemana = 0;
+
     for (const fila of repartoSemanal) {
         promediadosPorSemana += fila.extras.semanal;
         porCategoria.push({
@@ -258,11 +272,14 @@ function calcularCalendario(eqSueldo, cantidadSemanas) {
 
         for (const extra of otrosIngresos) {
             const validos = destinosValidos(extra);
+
             if (extra.sumar && esDeGolpe(extra) && validos.length > 0) {
                 const monto = montoDeGolpe(extra, semana);
+
                 if (monto > 0) {
                     deGolpe += monto;
                     llegan.push({ nombre: extra.nombre, monto: monto });
+
                     for (const categoria of porCategoria) {
                         if (validos.includes(categoria.id)) {
                             categoria.deGolpe += monto / validos.length;
@@ -310,11 +327,19 @@ function revisarReparto() {
     } else {
         const suma = sumaPorcentajes();
         const diferencia = Math.round((100 - suma) * 100) / 100;
+
         if (diferencia > 0) {
-            problemas.push("Los porcentajes suman " + suma + "%. Faltan " + diferencia + "% por repartir.");
+            problemas.push(
+                "Los porcentajes suman " + suma +
+                "%. Faltan " + diferencia + "% por repartir."
+            );
         } else if (diferencia < 0) {
-            problemas.push("Los porcentajes suman " + suma + "%. Te pasaste por " + (-diferencia) + "%.");
+            problemas.push(
+                "Los porcentajes suman " + suma +
+                "%. Te pasaste por " + (-diferencia) + "%."
+            );
         }
+
         if (hayNombresVacios()) {
             problemas.push("Hay categorías sin nombre.");
         }
@@ -322,9 +347,11 @@ function revisarReparto() {
 
     const sinDestino = extrasSinDestino();
     if (sinDestino.length > 0) {
-        problemas.push("Se suman a tu reparto pero no tienen destino: " + sinDestino.join(", ") + ".");
+        problemas.push(
+            "Se suman a tu reparto pero no tienen destino: " +
+            sinDestino.join(", ") + "."
+        );
     }
-
     return problemas;
 }
 
@@ -334,7 +361,7 @@ function construirPaquete() {
         frecuencia: campoFrecuencia.value,
         monto: campoMonto.value,
         periodo: campoPeriodo.value,
-        semanasMostrar: campoSemanas.value,
+        semanasMostrar: String(leerEntero(campoSemanas.value, 1, 156)),
         categorias: categorias,
         otrosIngresos: otrosIngresos,
         movimientosAhorros: movimientosAhorros,
@@ -349,27 +376,20 @@ function guardar() {
         estadoGuardado.textContent =
             "Guardado detenido: no se pudieron recuperar los datos anteriores. " +
             "Importa una copia válida antes de continuar.";
-
         return false;
     }
 
     try {
         const texto = JSON.stringify(construirPaquete());
-
         localStorage.setItem(CLAVE_GUARDADO, texto);
-
         estadoGuardado.className = "ayuda";
-        estadoGuardado.textContent =
-            "Datos guardados en este navegador.";
-
+        estadoGuardado.textContent = "Datos guardados en este navegador.";
         return true;
     } catch (error) {
         estadoGuardado.className = "aviso error";
         estadoGuardado.textContent =
             "No se pudo guardar. Descarga una copia antes de cerrar.";
-
         console.warn("No se pudo guardar:", error);
-
         return false;
     }
 }
@@ -378,20 +398,28 @@ function limpiarCategorias(lista) {
     if (!Array.isArray(lista)) {
         return null;
     }
+
     const limpias = [];
     const usados = [];
+
     for (const c of lista) {
         if (typeof c === "object" && c !== null) {
             let nombre = "";
             if (typeof c.nombre === "string") {
                 nombre = c.nombre;
             }
+
             let id = c.id;
             if (typeof id !== "string" || id === "" || usados.includes(id)) {
                 id = generarId(usados);
             }
+
             usados.push(id);
-            limpias.push({ id: id, nombre: nombre, porcentaje: leerNumero(c.porcentaje) });
+            limpias.push({
+                id: id,
+                nombre: nombre,
+                porcentaje: leerNumero(c.porcentaje)
+            });
         }
     }
     return limpias;
@@ -401,25 +429,31 @@ function limpiarExtras(lista, idsValidos) {
     if (!Array.isArray(lista)) {
         return null;
     }
+
     const limpios = [];
+
     for (const e of lista) {
         if (typeof e === "object" && e !== null) {
             let nombre = "";
             if (typeof e.nombre === "string") {
                 nombre = e.nombre;
             }
+
             let modo = "promedio";
             if (e.modo === "golpe") {
                 modo = "golpe";
             }
+
             let frecuencia = "mensual";
             if (Object.keys(FRECUENCIAS_EXTRA).includes(e.frecuencia)) {
                 frecuencia = e.frecuencia;
             }
+
             let dias = 5;
             if (e.diasPorSemana !== undefined) {
                 dias = leerDias(e.diasPorSemana);
             }
+
             const destinos = [];
             if (Array.isArray(e.destinos)) {
                 for (const id of e.destinos) {
@@ -428,6 +462,7 @@ function limpiarExtras(lista, idsValidos) {
                     }
                 }
             }
+
             limpios.push({
                 nombre: nombre,
                 monto: leerNumero(e.monto),
@@ -448,7 +483,6 @@ function limpiarMovimientosAhorro(lista) {
     if (lista === undefined) {
         return [];
     }
-
     if (!Array.isArray(lista)) {
         return null;
     }
@@ -476,12 +510,10 @@ function limpiarMovimientosAhorro(lista) {
         if (
             typeof concepto !== "string" ||
             concepto.trim() === "" ||
-            concepto.trim().length > 80
+            concepto.trim().length > 80 ||
+            !Number.isSafeInteger(monto) ||
+            monto <= 0
         ) {
-            return null;
-        }
-
-        if (!Number.isSafeInteger(monto) || monto <= 0) {
             return null;
         }
 
@@ -489,10 +521,7 @@ function limpiarMovimientosAhorro(lista) {
             ? saldoCentavos + monto
             : saldoCentavos - monto;
 
-        if (
-            !Number.isSafeInteger(siguienteSaldo) ||
-            siguienteSaldo < 0
-        ) {
+        if (!Number.isSafeInteger(siguienteSaldo) || siguienteSaldo < 0) {
             return null;
         }
 
@@ -504,71 +533,166 @@ function limpiarMovimientosAhorro(lista) {
 
         saldoCentavos = siguienteSaldo;
     }
-
     return limpios;
 }
 
 function aplicarDatos(datos) {
     if (
+        !datos ||
         typeof datos !== "object" ||
-        datos === null ||
-        Array.isArray(datos)
+        Array.isArray(datos) ||
+        !Array.isArray(datos.categorias)
     ) {
         return false;
     }
-    const nominasLimpias = limpiarNominas(datos.nominas);
 
-    if (nominasLimpias === null) {
+    const numeroValido = function (valor) {
+        return (
+            typeof valor === "number" ||
+            (typeof valor === "string" && valor.trim() !== "")
+        ) && Number.isFinite(Number(valor)) && Number(valor) >= 0;
+    };
+
+    const ids = new Set();
+
+    for (const c of datos.categorias) {
+        if (
+            !c ||
+            typeof c !== "object" ||
+            Array.isArray(c) ||
+            typeof c.id !== "string" ||
+            c.id.trim() === "" ||
+            ids.has(c.id) ||
+            typeof c.nombre !== "string" ||
+            !numeroValido(c.porcentaje)
+        ) {
+            return false;
+        }
+        ids.add(c.id);
+    }
+
+    if (
+        datos.frecuencia !== undefined &&
+        !Object.hasOwn(PAGOS_POR_ANIO, datos.frecuencia)
+    ) {
         return false;
     }
 
-    const ahorroLimpio = limpiarMovimientosAhorro(
-        datos.movimientosAhorros
-    );
-
-    if (ahorroLimpio === null) {
+    if (
+        datos.periodo !== undefined &&
+        !Object.hasOwn(PERIODOS, datos.periodo)
+    ) {
         return false;
     }
-    const deudasLimpias = limpiarDeudas(datos.deudas);
 
-    if (deudasLimpias === null) {
+    if (
+        datos.monto !== undefined &&
+        datos.monto !== "" &&
+        !numeroValido(datos.monto)
+    ) {
+        return false;
+    }
+
+    if (
+        datos.semanasMostrar !== undefined &&
+        (
+            !numeroValido(datos.semanasMostrar) ||
+            !Number.isInteger(Number(datos.semanasMostrar)) ||
+            Number(datos.semanasMostrar) < 1 ||
+            Number(datos.semanasMostrar) > 156
+        )
+    ) {
         return false;
     }
 
     const categoriasLimpias = limpiarCategorias(datos.categorias);
+    const extrasOriginales = datos.otrosIngresos === undefined
+        ? []
+        : datos.otrosIngresos;
 
-    let idsValidos = idsDe(CATEGORIAS_INICIALES);
-    if (categoriasLimpias !== null) {
-        idsValidos = idsDe(categoriasLimpias);
-    }
-    const extrasLimpios = limpiarExtras(datos.otrosIngresos, idsValidos);
-
-    campoFrecuencia.value = "mensual";
-    campoMonto.value = "";
-    campoPeriodo.value = "semanal";
-    campoSemanas.value = 26;
-    categorias = copiarCategoriasIniciales();
-    otrosIngresos = copiar(EXTRAS_INICIALES);
-
-    if (Object.keys(PAGOS_POR_ANIO).includes(datos.frecuencia)) {
-        campoFrecuencia.value = datos.frecuencia;
-    }
-    if (typeof datos.monto === "string") {
-        campoMonto.value = datos.monto;
-    }
-    if (Object.keys(PERIODOS).includes(datos.periodo)) {
-        campoPeriodo.value = datos.periodo;
-    }
-    if (typeof datos.semanasMostrar === "string") {
-        campoSemanas.value = datos.semanasMostrar;
-    }
-    if (categoriasLimpias !== null) {
-        categorias = categoriasLimpias;
-    }
-    if (extrasLimpios !== null) {
-        otrosIngresos = extrasLimpios;
+    if (!Array.isArray(extrasOriginales)) {
+        return false;
     }
 
+    for (const extra of extrasOriginales) {
+        if (
+            !extra ||
+            typeof extra !== "object" ||
+            Array.isArray(extra) ||
+            typeof extra.nombre !== "string" ||
+            !numeroValido(extra.monto) ||
+            !Object.hasOwn(FRECUENCIAS_EXTRA, extra.frecuencia) ||
+            (
+                extra.modo !== undefined &&
+                extra.modo !== "promedio" &&
+                extra.modo !== "golpe"
+            ) ||
+            typeof extra.sumar !== "boolean" ||
+            !Array.isArray(extra.destinos) ||
+            extra.destinos.some(id => typeof id !== "string" || !ids.has(id))
+        ) {
+            return false;
+        }
+
+        for (const [campo, minimo, maximo] of [
+            ["diasPorSemana", 1, 7],
+            ["semana", 1, 520],
+            ["repetir", 0, 520]
+        ]) {
+            if (
+                extra[campo] !== undefined &&
+                (
+                    !numeroValido(extra[campo]) ||
+                    !Number.isInteger(Number(extra[campo])) ||
+                    Number(extra[campo]) < minimo ||
+                    Number(extra[campo]) > maximo
+                )
+            ) {
+                return false;
+            }
+        }
+    }
+
+    const extrasLimpios = limpiarExtras(
+        extrasOriginales,
+        idsDe(categoriasLimpias)
+    );
+
+    const ahorroPlural = datos.movimientosAhorros;
+    const ahorroSingular = datos.movimientosAhorro;
+
+    if (
+        ahorroPlural !== undefined &&
+        ahorroSingular !== undefined &&
+        JSON.stringify(ahorroPlural) !== JSON.stringify(ahorroSingular)
+    ) {
+        return false;
+    }
+
+    const ahorroLimpio = limpiarMovimientosAhorro(
+        ahorroPlural !== undefined ? ahorroPlural : ahorroSingular
+    );
+
+    const deudasLimpias = limpiarDeudas(datos.deudas);
+    const nominasLimpias = limpiarNominas(datos.nominas);
+
+    if (
+        ahorroLimpio === null ||
+        deudasLimpias === null ||
+        nominasLimpias === null
+    ) {
+        return false;
+    }
+
+    campoFrecuencia.value = datos.frecuencia ?? "mensual";
+    campoMonto.value = datos.monto === undefined ? "" : String(datos.monto);
+    campoPeriodo.value = datos.periodo ?? "semanal";
+    campoSemanas.value = datos.semanasMostrar === undefined
+        ? "26"
+        : String(datos.semanasMostrar);
+
+    categorias = categoriasLimpias;
+    otrosIngresos = extrasLimpios;
     movimientosAhorros = ahorroLimpio;
     deudas = deudasLimpias;
     nominas = nominasLimpias;
@@ -579,24 +703,20 @@ function aplicarDatos(datos) {
 function cargar() {
     try {
         const texto = localStorage.getItem(CLAVE_GUARDADO);
-
         if (texto === null) {
             return;
         }
 
         const datos = JSON.parse(texto);
-
         if (!aplicarDatos(datos)) {
             throw new Error("Los datos guardados no son válidos.");
         }
     } catch (error) {
         guardadoHabilitado = false;
-
         estadoGuardado.className = "aviso error";
         estadoGuardado.textContent =
             "No se pudieron recuperar los datos. " +
             "El guardado automático está detenido.";
-
         console.warn("No se pudo cargar lo guardado:", error);
     }
 }
@@ -604,74 +724,80 @@ function cargar() {
 //Copia de seguridad
 function mostrarMensajeCopia(texto, esError) {
     mensajeCopia.textContent = texto;
-    if (esError) {
-        mensajeCopia.className = "aviso error";
-    } else {
-        mensajeCopia.className = "aviso ok";
-    }
+    mensajeCopia.className = esError ? "aviso error" : "aviso ok";
 }
 
 function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
+        contenido.version === 1 &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
         !Array.isArray(contenido.datos);
 }
 
 function exportarCopia() {
-    const copia = { app: "finanzas-personal", version: 1, datos: construirPaquete() };
-    const texto = JSON.stringify(copia, null, 2);
+    const copia = {
+        app: "finanzas-personal",
+        version: 1,
+        datos: construirPaquete()
+    };
 
+    const texto = JSON.stringify(copia, null, 2);
     const archivo = new Blob([texto], { type: "application/json" });
     const direccion = URL.createObjectURL(archivo);
     const enlace = document.createElement("a");
+
     enlace.href = direccion;
     enlace.download = "copia-finanzas.json";
     document.body.appendChild(enlace);
     enlace.click();
     enlace.remove();
+
     setTimeout(function () {
         URL.revokeObjectURL(direccion);
     }, 1000);
 
-    mostrarMensajeCopia("Copia descargada ✔ Guárdala en un lugar seguro.", false);
+    mostrarMensajeCopia(
+        "Copia descargada ✔ Guárdala en un lugar seguro.",
+        false
+    );
 }
 
 function importarCopia(archivo) {
-    if (archivo.size > 500000) {
-        mostrarMensajeCopia("Ese archivo es demasiado grande para ser una copia de esta herramienta.", true);
-        return;
-    }
-
     const lector = new FileReader();
+
     lector.onload = function () {
         try {
             const contenido = JSON.parse(lector.result);
+
             if (!esCopiaValida(contenido)) {
-                mostrarMensajeCopia("Ese archivo no parece una copia de esta herramienta.", true);
+                mostrarMensajeCopia(
+                    "Ese archivo no parece una copia compatible de esta herramienta.",
+                    true
+                );
                 return;
             }
+
             const aviso =
                 "Esta copia reemplazará presupuesto, ahorro, deudas y nóminas. " +
                 "Las secciones ausentes en una copia antigua quedarán vacías. " +
                 "¿Continuar?";
+
             if (!confirm(aviso)) {
                 return;
             }
 
             if (!aplicarDatos(contenido.datos)) {
                 mostrarMensajeCopia(
-                    "La copia contiene datos de ahorro y deudas invalidos no se aplico",
+                    "La copia contiene datos inválidos. No se aplicó.",
                     true
                 );
-
                 return;
             }
 
             guardadoHabilitado = true;
-
             construirTabla();
             construirExtras();
             actualizarPantalla();
@@ -689,22 +815,28 @@ function importarCopia(archivo) {
             mensajeNomina.textContent = "";
 
             mostrarMensajeCopia(
-                "Copia aplicada, favor de revisar el archivo guardado dentro de la pagina",
+                "Copia aplicada. Revisa el aviso de guardado de la página.",
                 false
             );
-
         } catch (error) {
-            mostrarMensajeCopia("No se pudo leer el archivo. ¿Es una copia de esta herramienta?", true);
+            mostrarMensajeCopia(
+                "No se pudo leer el archivo. ¿Es una copia de esta herramienta?",
+                true
+            );
         }
     };
+
     lector.onerror = function () {
         mostrarMensajeCopia("No se pudo abrir el archivo.", true);
     };
+
     lector.readAsText(archivo);
 }
 
+//Categorias
 function crearFila(cat) {
     const fila = document.createElement("tr");
+
     fila.innerHTML = `
         <td><input class="campo-nombre" type="text" placeholder="Nombre" aria-label="Nombre de la categoría"></td>
         <td><input class="campo-pct" type="number" inputmode="decimal" min="0" max="100" step="any" aria-label="Porcentaje"></td>
@@ -726,10 +858,12 @@ function crearFila(cat) {
         construirExtras();
         actualizarPantalla();
     });
+
     campoPct.addEventListener("input", function () {
         cat.porcentaje = leerNumero(campoPct.value);
         actualizarPantalla();
     });
+
     botonBorrar.addEventListener("click", function () {
         eliminarCategoria(cat);
     });
@@ -745,7 +879,12 @@ function construirTabla() {
 }
 
 function agregarCategoria() {
-    categorias.push({ id: generarId(idsDe(categorias)), nombre: "", porcentaje: 0 });
+    categorias.push({
+        id: generarId(idsDe(categorias)),
+        nombre: "",
+        porcentaje: 0
+    });
+
     construirTabla();
     construirExtras();
     actualizarPantalla();
@@ -770,9 +909,11 @@ function eliminarCategoria(cat) {
     actualizarPantalla();
 }
 
+//Otros ingresos
 function crearTarjetaExtra(extra) {
     const tarjeta = document.createElement("div");
     tarjeta.className = "extra";
+
     tarjeta.innerHTML = `
         <div class="extra-fila">
             <input class="extra-nombre" type="text" placeholder="Nombre" aria-label="Nombre del ingreso">
@@ -824,6 +965,7 @@ function crearTarjetaExtra(extra) {
         const casilla = document.createElement("input");
         casilla.type = "checkbox";
         casilla.checked = extra.destinos.includes(cat.id);
+
         casilla.addEventListener("change", function () {
             if (casilla.checked) {
                 if (!extra.destinos.includes(cat.id)) {
@@ -837,11 +979,9 @@ function crearTarjetaExtra(extra) {
             }
             actualizarPantalla();
         });
+
         etiqueta.appendChild(casilla);
-        let nombre = cat.nombre;
-        if (nombre.trim() === "") {
-            nombre = "(sin nombre)";
-        }
+        const nombre = cat.nombre.trim() === "" ? "(sin nombre)" : cat.nombre;
         etiqueta.appendChild(document.createTextNode(" " + nombre));
         listaDestinos.appendChild(etiqueta);
     }
@@ -859,46 +999,56 @@ function crearTarjetaExtra(extra) {
         const golpe = esDeGolpe(extra);
         frecuenciaExtra.hidden = golpe;
         cajaDias.hidden = golpe || !FRECUENCIAS_EXTRA[extra.frecuencia].usaDias;
+
         for (const caja of cajasGolpe) {
             caja.hidden = !golpe;
         }
     }
+
     ajustarCampos();
 
     nombreExtra.addEventListener("input", function () {
         extra.nombre = nombreExtra.value;
         actualizarPantalla();
     });
+
     montoExtra.addEventListener("input", function () {
         extra.monto = leerNumero(montoExtra.value);
         actualizarPantalla();
     });
+
     modoExtra.addEventListener("change", function () {
         extra.modo = modoExtra.value;
         ajustarCampos();
         actualizarPantalla();
     });
+
     frecuenciaExtra.addEventListener("change", function () {
         extra.frecuencia = frecuenciaExtra.value;
         ajustarCampos();
         actualizarPantalla();
     });
+
     semanaExtra.addEventListener("input", function () {
         extra.semana = leerEntero(semanaExtra.value, 1, 520);
         actualizarPantalla();
     });
+
     repetirExtra.addEventListener("input", function () {
         extra.repetir = leerEntero(repetirExtra.value, 0, 520);
         actualizarPantalla();
     });
+
     diasExtra.addEventListener("input", function () {
         extra.diasPorSemana = leerDias(diasExtra.value);
         actualizarPantalla();
     });
+
     sumarExtra.addEventListener("change", function () {
         extra.sumar = sumarExtra.checked;
         actualizarPantalla();
     });
+
     botonBorrar.addEventListener("click", function () {
         eliminarExtra(extra);
     });
@@ -914,7 +1064,18 @@ function construirExtras() {
 }
 
 function agregarExtra() {
-    otrosIngresos.push({ nombre: "", monto: 0, modo: "promedio", frecuencia: "mensual", diasPorSemana: 5, semana: 1, repetir: 0, sumar: false, destinos: [] });
+    otrosIngresos.push({
+        nombre: "",
+        monto: 0,
+        modo: "promedio",
+        frecuencia: "mensual",
+        diasPorSemana: 5,
+        semana: 1,
+        repetir: 0,
+        sumar: false,
+        destinos: []
+    });
+
     construirExtras();
     actualizarPantalla();
     listaExtras.lastElementChild.querySelector(".extra-nombre").focus();
@@ -939,7 +1100,9 @@ function mostrarExtras() {
         let mensaje = "";
 
         if (esDeGolpe(extra)) {
-            mensaje = formatoMoneda.format(extra.monto) + " llegan de golpe en la semana " + extra.semana;
+            mensaje = formatoMoneda.format(extra.monto) +
+                " llegan de golpe en la semana " + extra.semana;
+
             if (extra.repetir > 0) {
                 mensaje += " y cada " + extra.repetir + " semanas";
             } else {
@@ -947,8 +1110,10 @@ function mostrarExtras() {
             }
         } else {
             const calculo = calcularExtra(extra);
-            mensaje = formatoMoneda.format(calculo[periodo]) + " " + textoPeriodo + " · " +
+            mensaje = formatoMoneda.format(calculo[periodo]) + " " +
+                textoPeriodo + " · " +
                 formatoMoneda.format(calculo.anual) + " al año";
+
             totalTodos += calculo[periodo];
             if (extra.sumar && tieneDestino) {
                 totalSumados += calculo[periodo];
@@ -958,13 +1123,19 @@ function mostrarExtras() {
         if (extra.sumar && !tieneDestino) {
             mensaje += " · Elige a dónde va";
         }
-        listaExtras.children[i].querySelector(".extra-resultado").textContent = mensaje;
+
+        listaExtras.children[i].querySelector(".extra-resultado").textContent =
+            mensaje;
     }
 
-    document.getElementById("extras-total").textContent = formatoMoneda.format(totalTodos) + " " + textoPeriodo;
-    document.getElementById("extras-sumados").textContent = formatoMoneda.format(totalSumados) + " " + textoPeriodo;
+    document.getElementById("extras-total").textContent =
+        formatoMoneda.format(totalTodos) + " " + textoPeriodo;
+
+    document.getElementById("extras-sumados").textContent =
+        formatoMoneda.format(totalSumados) + " " + textoPeriodo;
 }
 
+//Pantalla
 function agregarCelda(fila, texto) {
     const celda = document.createElement("td");
     celda.textContent = texto;
@@ -979,59 +1150,79 @@ function mostrarCalendario(eq) {
     let totalDeGolpe = 0;
 
     cuerpoCalendario.innerHTML = "";
+
     for (const s of calendario.semanas) {
         const fila = document.createElement("tr");
         const textos = [];
-        for (const l of s.llegan) {
-            let nombre = l.nombre;
-            if (nombre.trim() === "") {
-                nombre = "(sin nombre)";
-            }
-            textos.push(nombre + " " + formatoMoneda.format(l.monto));
+
+        for (const ingreso of s.llegan) {
+            const nombre = ingreso.nombre.trim() === ""
+                ? "(sin nombre)"
+                : ingreso.nombre;
+
+            textos.push(nombre + " " + formatoMoneda.format(ingreso.monto));
         }
+
         agregarCelda(fila, String(s.semana));
         agregarCelda(fila, formatoMoneda.format(s.sueldo));
         agregarCelda(fila, formatoMoneda.format(s.promediados));
         agregarCelda(fila, formatoMoneda.format(s.deGolpe));
         agregarCelda(fila, formatoMoneda.format(s.total));
         agregarCelda(fila, textos.join(", "));
+
         if (s.llegan.length > 0) {
             fila.className = "con-golpe";
         }
+
         cuerpoCalendario.appendChild(fila);
         totalSueldo += s.sueldo;
         totalPromediados += s.promediados;
         totalDeGolpe += s.deGolpe;
     }
 
-    document.getElementById("cal-sueldo").textContent = formatoMoneda.format(totalSueldo);
-    document.getElementById("cal-promediados").textContent = formatoMoneda.format(totalPromediados);
-    document.getElementById("cal-golpe").textContent = formatoMoneda.format(totalDeGolpe);
-    document.getElementById("cal-total").textContent = formatoMoneda.format(totalSueldo + totalPromediados + totalDeGolpe);
+    document.getElementById("cal-sueldo").textContent =
+        formatoMoneda.format(totalSueldo);
+    document.getElementById("cal-promediados").textContent =
+        formatoMoneda.format(totalPromediados);
+    document.getElementById("cal-golpe").textContent =
+        formatoMoneda.format(totalDeGolpe);
+    document.getElementById("cal-total").textContent =
+        formatoMoneda.format(totalSueldo + totalPromediados + totalDeGolpe);
 
     cuerpoResumenCategorias.innerHTML = "";
+
     for (let i = 0; i < calendario.porCategoria.length; i++) {
-        const c = calendario.porCategoria[i];
+        const categoria = calendario.porCategoria[i];
         const fila = document.createElement("tr");
-        let nombre = categorias[i].nombre;
-        if (nombre.trim() === "") {
-            nombre = "(sin nombre)";
-        }
+        const nombre = categorias[i].nombre.trim() === ""
+            ? "(sin nombre)"
+            : categorias[i].nombre;
+
         agregarCelda(fila, nombre);
-        agregarCelda(fila, formatoMoneda.format(c.sueldo));
-        agregarCelda(fila, formatoMoneda.format(c.promediados));
-        agregarCelda(fila, formatoMoneda.format(c.deGolpe));
-        agregarCelda(fila, formatoMoneda.format(c.sueldo + c.promediados + c.deGolpe));
+        agregarCelda(fila, formatoMoneda.format(categoria.sueldo));
+        agregarCelda(fila, formatoMoneda.format(categoria.promediados));
+        agregarCelda(fila, formatoMoneda.format(categoria.deGolpe));
+        agregarCelda(
+            fila,
+            formatoMoneda.format(
+                categoria.sueldo + categoria.promediados + categoria.deGolpe
+            )
+        );
         cuerpoResumenCategorias.appendChild(fila);
     }
 }
 
 function mostrarEquivalentes(eq) {
-    document.getElementById("eq-semanal").textContent = formatoMoneda.format(eq.semanal);
-    document.getElementById("eq-cada2semanas").textContent = formatoMoneda.format(eq.cada2semanas);
-    document.getElementById("eq-quincenal").textContent = formatoMoneda.format(eq.quincenal);
-    document.getElementById("eq-mensual").textContent = formatoMoneda.format(eq.mensual);
-    document.getElementById("eq-anual").textContent = formatoMoneda.format(eq.anual);
+    document.getElementById("eq-semanal").textContent =
+        formatoMoneda.format(eq.semanal);
+    document.getElementById("eq-cada2semanas").textContent =
+        formatoMoneda.format(eq.cada2semanas);
+    document.getElementById("eq-quincenal").textContent =
+        formatoMoneda.format(eq.quincenal);
+    document.getElementById("eq-mensual").textContent =
+        formatoMoneda.format(eq.mensual);
+    document.getElementById("eq-anual").textContent =
+        formatoMoneda.format(eq.anual);
 }
 
 function mostrarReparto(eq) {
@@ -1044,26 +1235,37 @@ function mostrarReparto(eq) {
         const sueldo = filas[i].sueldo[periodo];
         const extras = filas[i].extras[periodo];
         const filaHtml = cuerpoTabla.rows[i];
-        filaHtml.querySelector(".c-sueldo").textContent = formatoMoneda.format(sueldo);
-        filaHtml.querySelector(".c-extras").textContent = formatoMoneda.format(extras);
-        filaHtml.querySelector(".c-total").textContent = formatoMoneda.format(sueldo + extras);
+
+        filaHtml.querySelector(".c-sueldo").textContent =
+            formatoMoneda.format(sueldo);
+        filaHtml.querySelector(".c-extras").textContent =
+            formatoMoneda.format(extras);
+        filaHtml.querySelector(".c-total").textContent =
+            formatoMoneda.format(sueldo + extras);
+
         totalSueldo += sueldo;
         totalExtras += extras;
     }
 
     document.getElementById("tot-pct").textContent = sumaPorcentajes() + "%";
-    document.getElementById("tot-sueldo").textContent = formatoMoneda.format(totalSueldo);
-    document.getElementById("tot-extras").textContent = formatoMoneda.format(totalExtras);
-    document.getElementById("tot-total").textContent = formatoMoneda.format(totalSueldo + totalExtras);
+    document.getElementById("tot-sueldo").textContent =
+        formatoMoneda.format(totalSueldo);
+    document.getElementById("tot-extras").textContent =
+        formatoMoneda.format(totalExtras);
+    document.getElementById("tot-total").textContent =
+        formatoMoneda.format(totalSueldo + totalExtras);
 
     document.getElementById("resumen-ingreso").textContent =
-        "Sueldo " + formatoMoneda.format(eq[periodo]) + " + otros ingresos " + formatoMoneda.format(totalExtras) +
-        " = " + formatoMoneda.format(eq[periodo] + totalExtras) + " (" + PERIODOS[periodo].toLowerCase() + ")";
+        "Sueldo " + formatoMoneda.format(eq[periodo]) +
+        " + otros ingresos " + formatoMoneda.format(totalExtras) +
+        " = " + formatoMoneda.format(eq[periodo] + totalExtras) +
+        " (" + PERIODOS[periodo].toLowerCase() + ")";
 }
 
 function mostrarAviso() {
     const problemas = revisarReparto();
     const aviso = document.getElementById("aviso");
+
     if (problemas.length === 0) {
         aviso.textContent = "Los porcentajes suman 100% ✔";
         aviso.className = "aviso ok";
@@ -1097,17 +1299,20 @@ function llenarSelectorPeriodo() {
 
 function restablecer() {
     if (confirm(
-        "Restablecer sueldo, categorías y otros ingresos? " +
-        "Tu historial de ahorro se conservará.")) {
+        "¿Restablecer sueldo, categorías y otros ingresos? " +
+        "Tu ahorro, deudas y nóminas se conservarán."
+    )) {
         categorias = copiarCategoriasIniciales();
         otrosIngresos = copiar(EXTRAS_INICIALES);
         campoFrecuencia.value = "mensual";
         campoMonto.value = "";
         campoPeriodo.value = "semanal";
         campoSemanas.value = 26;
+
         formularioNomina.reset();
         prepararCategoriasNomina();
         mensajeNomina.textContent = "";
+
         construirTabla();
         construirExtras();
         actualizarPantalla();
@@ -1131,21 +1336,18 @@ function cambiarVista(nombreVista) {
 
     for (const vista of vistas) {
         const activa = vista.nombre === nombreVista;
-
         vista.panel.hidden = !activa;
         vista.boton.setAttribute("aria-pressed", String(activa));
     }
 }
 
+//Ahorro
 function mostrarAhorro() {
     const saldoCentavos = calcularSaldoAhorro(movimientosAhorros);
-
-    saldoAhorro.textContent =
-        formatoMoneda.format(saldoCentavos / 100);
-
+    saldoAhorro.textContent = formatoMoneda.format(saldoCentavos / 100);
     historialAhorro.replaceChildren();
 
-    for (const movimiento of movimientosAhorro) {
+    for (const movimiento of movimientosAhorros) {
         const elemento = document.createElement("li");
         elemento.className = "movimiento-ahorro";
         elemento.dataset.tipo = movimiento.tipo;
@@ -1161,26 +1363,17 @@ function mostrarAhorro() {
         tipo.className = "movimiento-ahorro__tipo";
 
         const esAportacion = movimiento.tipo === "aportacion";
-
-        tipo.textContent = esAportacion
-            ? "Aportación"
-            : "Retiro";
+        tipo.textContent = esAportacion ? "Aportación" : "Retiro";
 
         const importe = document.createElement("strong");
         importe.className = "movimiento-ahorro__importe";
-
-        const signo = esAportacion ? "+" : "−";
-
-        importe.textContent =
-            signo +
+        importe.textContent = (esAportacion ? "+" : "−") +
             formatoMoneda.format(movimiento.montoCentavos / 100);
 
         detalle.appendChild(concepto);
         detalle.appendChild(tipo);
-
         elemento.appendChild(detalle);
         elemento.appendChild(importe);
-
         historialAhorro.appendChild(elemento);
     }
 
@@ -1193,70 +1386,67 @@ function registrarMovimientoAhorro(evento) {
     if (!guardadoHabilitado) {
         mensajeAhorro.className = "aviso error";
         mensajeAhorro.textContent =
-            "Recupera una copia de seguridad antes de registrar movimientos";
+            "Recupera una copia de seguridad antes de registrar movimientos.";
         return;
     }
 
     const tipo = campoTipoAhorro.value;
     const concepto = campoConceptoAhorro.value.trim();
-    const montoPesos = Number(campoMontoAhorro.value);
-    const montoCentavos = Math.round(montoPesos * 100);
+    const montoCentavos = convertirPesosACentavos(campoMontoAhorro.value);
 
     mensajeAhorro.className = "aviso error";
 
     if (tipo !== "aportacion" && tipo !== "retiro") {
-        mensajeAhorro.textContent = "Selecciona un movimiento valido";
+        mensajeAhorro.textContent = "Selecciona un movimiento válido.";
         return;
     }
 
-    if (concepto === "") {
-        mensajeAhorro.textContent = "Escribe un concepto";
+    if (concepto === "" || concepto.length > 80) {
+        mensajeAhorro.textContent = "Escribe un concepto de hasta 80 caracteres.";
         return;
     }
 
-    if (!Number.isFinite(montoPesos) ||
+    if (
+        montoCentavos === null ||
         !Number.isSafeInteger(montoCentavos) ||
-        montoCentavos <= 0) {
-        mensajeAhorro.textContent = "Escribe un monto valido mayor que cero";
-        return 0;
+        montoCentavos <= 0
+    ) {
+        mensajeAhorro.textContent = "Escribe un monto válido mayor que cero.";
+        return;
     }
 
     const saldoActual = calcularSaldoAhorro(movimientosAhorros);
 
     if (tipo === "retiro" && montoCentavos > saldoActual) {
-        mensajeAhorro.textContent =
-            "El retiro supera el ahorro disponible";
+        mensajeAhorro.textContent = "El retiro supera el ahorro disponible.";
         return;
     }
 
-    if (tipo === "aportacion" &&
-        !Number.isSafeInteger(saldoActual + montoCentavos)) {
-        mensajeAhorro.textContent = "El monto supera el limite permitido";
+    if (
+        tipo === "aportacion" &&
+        !Number.isSafeInteger(saldoActual + montoCentavos)
+    ) {
+        mensajeAhorro.textContent = "El monto supera el límite permitido.";
         return;
     }
 
     movimientosAhorros.push({
         tipo: tipo,
-        concepto, concepto,
+        concepto: concepto,
         montoCentavos: montoCentavos
     });
 
     mostrarAhorro();
-
     const guardadoCorrecto = guardar();
-
     formularioAhorro.reset();
 
-    mensajeAhorro.className = guardadoCorrecto
-        ? "aviso ok"
-        : "aviso error";
-
+    mensajeAhorro.className = guardadoCorrecto ? "aviso ok" : "aviso error";
     mensajeAhorro.textContent = guardadoCorrecto
-        ? "Movimiento registrado y guardado"
+        ? "Movimiento registrado y guardado."
         : "Movimiento registrado solo en memoria. Descarga una copia.";
 }
 
-// Eventos y arranques
+//Eventos
 campoMonto.addEventListener("input", actualizarPantalla);
 campoFrecuencia.addEventListener("change", actualizarPantalla);
 campoPeriodo.addEventListener("change", actualizarPantalla);
@@ -1286,23 +1476,17 @@ botonAhorro.addEventListener("click", function () {
     cambiarVista("ahorro");
 });
 
-formularioAhorro.addEventListener(
-    "submit",
-    registrarMovimientoAhorro
-);
-
 botonDeudas.addEventListener("click", function () {
     cambiarVista("deudas");
 });
 
-//Llamada
+formularioAhorro.addEventListener("submit", registrarMovimientoAhorro);
 
+//Arranque
 llenarSelectorPeriodo();
 campoPeriodo.value = "semanal";
-
 cargar();
 prepararCategoriasNomina();
-
 construirTabla();
 construirExtras();
 actualizarPantalla();
