@@ -19,7 +19,12 @@
                 aria-controls="vista-ahorro" aria-pressed="false">
                     Ahorro
                 </button>
-            </nav>
+
+                <button id="boton-deudas" type="button"
+                    aria-controls="vista-deudas" aria-pressed="false">
+                    Deudas
+                </button>
+            </nav> 
 
             <div id="vista-reparto">
             <section class="tarjeta">
@@ -188,6 +193,71 @@
             </p>
             </section>
 
+            <section id="vista-deudas" class="tarjeta" hidden
+                    aria-labelledby="titulo-deudas">
+                <h2 id="titulo-deudas">Mis deudas</h2>
+
+                <p class="ayuda">
+                    Reune el dinero por acreedor y confirma la liquidacion despues de realizar el pago
+                </p>
+
+                <p id="resumen-deudas" class="resumen"></p>
+
+                <details class="deudas-registro" open>
+                    <summary>Registrar una deuda</summary>
+
+                    <form id="formulario-deuda" class="formulario-deudas">
+                        <label for="nombre-deuda">Acreedor o nombre</label>
+                        <input id="nombre-deuda" type="text"
+                                maxlength="80" required
+                                placeholder="Por ejemplo: Acreedor A">
+
+                        <label for="objetivo-deuda">Saldo a liquidar</label>
+                        <input id="objetivo-deuda" type="number"
+                            min="0.01" step="0.01"
+                            inputmode="decimal" required>
+
+                        <label for="prioridad-deuda">Prioridad</label>
+                        <input id="prioridad-deuda" type="number"
+                                min="1" max="100" step="1" value="1" required>
+
+                        <p class="ayuda">
+                            Un numeero menor aperece primero. Se puede usar la misma prioridad en varias deudas.
+                        </p>
+
+                        <button type="submit" class="boton-principal">
+                            Registrar Deuda
+                        </button>
+                    </form>
+                </details>
+
+                <h3>Apartar dinero</h3>
+
+                <form id="formulario-apartado" class="formulario-deuda">
+                    <label for="destino-apartado">Deuda de destino</label>
+                    <select id="destino-apartado" required></select>
+
+                    <label for="monto-apartado">Cantidad que ya esta apartada</label>
+                    <input id="monto-apartado" type="number"
+                        min="0.01" step="0.01"
+                        inputmode="decimal" required>
+                    
+                    <button id="registrar-apartado" type="submit"
+                            class="boton-principal">
+                        registrar apartado
+                    </button>
+                </form>
+
+                <p id="mensaje-deudas" class="aviso" role="status"></p>
+
+                <h3>Seguimiento por acreedor</h3>
+                <p id="deudas-vacias" class="ayuda">
+                    Todavua no se han registrado deudas
+                </p>
+
+                <div id="lista-deudas" class="lista-deudas"></div>
+            </section>
+
             <section class="tarjeta">
                 <h2>Copia de seguridad</h2>
                 <p class="ayuda">Tus datos solo viven en este navegador. Descarga una copia para no perderlos o para pasarlos a otro aparato. El archivo contiene tus datos personales: guárdalo en un lugar seguro y no lo compartas.</p>
@@ -202,6 +272,7 @@
             <p class="nota">Esta herramienta hace estimaciones para planear. No es asesoría financiera.</p>
         </main>
         <script src="./js/calculos.js"></script>
+        <script src="./js/deudas.js"></script>
         <script src="./js/app.js"></script>
         <script src="./js/pruebas.js"></script>
     </body>

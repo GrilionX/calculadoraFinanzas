@@ -74,6 +74,8 @@ const botonAgregarExtra = document.getElementById("agregar-extra");
 const botonRestablecer = document.getElementById("restablecer");
 const botonReparto = document.getElementById("boton-reparto");
 const botonAhorro = document.getElementById("boton-ahorro");
+const botonDeudas = document.getElementById("boton-deudas");
+const vistaDeudas = document.getElementById("vista-deudas");
 const vistaReparto = document.getElementById("vista-reparto");
 const vistaAhorro = document.getElementById("vista-ahorro");
 const formularioAhorro = document.getElementById("formulario-ahorro");
@@ -335,7 +337,8 @@ function construirPaquete() {
         semanasMostrar: campoSemanas.value,
         categorias: categorias,
         otrosIngresos: otrosIngresos,
-        movimientosAhorros: movimientosAhorros
+        movimientosAhorros: movimientosAhorros,
+        deudas: deudas
     };
 }
 
@@ -520,8 +523,14 @@ function aplicarDatos(datos){
     if(ahorroLimpio === null){
         return false;
     }
+    const deudasLimpias = limpiarDeudas(datos.deudas);
+
+    if (deudasLimpias === null) {
+        return false;
+    }
 
     const categoriasLimpias = limpiarCategorias(datos.categorias);
+
     let idsValidos = idsDe(CATEGORIAS_INICIALES);
     if (categoriasLimpias !== null) {
         idsValidos = idsDe(categoriasLimpias);
@@ -555,6 +564,7 @@ function aplicarDatos(datos){
     }
 
     movimientosAhorros = ahorroLimpio;
+    deudas = deudasLimpias;
 
     return true;
 }
@@ -637,7 +647,7 @@ function importarCopia(archivo){
                 return;
             }
             const aviso =
-                "Cargar esta copia reemplazara el presupuesto y ahorro actuales " +
+                "Cargar esta copia reemplazara el presupuesto, ahorro y deudas actuales " +
                 "Si la copia es antigua y no contiene ahorro, el historial quedara vacio " +
                 "Continuar?";
             if (!confirm(aviso)){
@@ -646,7 +656,7 @@ function importarCopia(archivo){
 
             if (!aplicarDatos(contenido.datos)){
                 mostrarMensajeCopia(
-                    "La copia contiene datos de ahorro invalidos no se aplico",
+                    "La copia contiene datos de ahorro y deudas invalidos no se aplico",
                     true
                 );
 
@@ -661,6 +671,9 @@ function importarCopia(archivo){
 
             formularioAhorro.reset();
             mensajeAhorro.textContent = "";
+            formularioDeuda.reset();
+            formularioApartado.reset();
+            mensajeDeudas.textContent = "";
 
             mostrarMensajeCopia(
                 "Copia aplicada, favor de revisar el archivo guardado dentro de la pagina",
@@ -1055,6 +1068,7 @@ function actualizarPantalla(){
     mostrarCalendario(eq);
     mostrarAviso();
     mostrarAhorro();
+    mostrarDeudas();
     guardar();
 }
 
@@ -1083,14 +1097,27 @@ function restablecer(){
     }
 }
 
-function cambiarVista(nombreVista){
-    const mostrarAhorro = nombreVista === "ahorro";
+function cambiarVista(nombreVista) {
+    const vistas = [
+        { nombre: "reparto", boton: botonReparto, panel: vistaReparto },
+        { nombre: "ahorro", boton: botonAhorro, panel: vistaAhorro },
+        { nombre: "deudas", boton: botonDeudas, panel: vistaDeudas }
+    ];
 
-    vistaReparto.hidden = mostrarAhorro;
-    vistaAhorro.hidden = !mostrarAhorro;
+    const existe = vistas.some(function (vista) {
+        return vista.nombre === nombreVista;
+    });
 
-    botonReparto.setAttribute("aria-pressed", String(!mostrarAhorro));
-    botonAhorro.setAttribute("aria-pressed", String(mostrarAhorro));
+    if (!existe) {
+        return;
+    }
+
+    for (const vista of vistas) {
+        const activa = vista.nombre === nombreVista;
+
+        vista.panel.hidden = !activa;
+        vista.boton.setAttribute("aria-pressed", String(activa));
+    }
 }
 
 function mostrarAhorro(){
@@ -1246,6 +1273,10 @@ formularioAhorro.addEventListener(
     "submit",
     registrarMovimientoAhorro
 );
+
+botonDeudas.addEventListener("click", function () {
+    cambiarVista("deudas");
+});
 
 //Llamada
 

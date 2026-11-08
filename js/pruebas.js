@@ -250,3 +250,69 @@ function probarCalculosSaldoAhorro(){
 }
 
 probarCalculosSaldoAhorro();
+
+function probarDeudas() {
+    const ejemplo = {
+        id: "prueba-1",
+        nombre: "Acreedor de prueba",
+        objetivoCentavos: 100000,
+        prioridad: 1,
+        aportaciones: [30000, 20000],
+        liquidada: false
+    };
+
+    const resumen = resumirDeuda(ejemplo);
+
+    console.assert(
+        resumen.faltaCentavos === 50000,
+        "Deben faltar 50000 centavos."
+    );
+
+    console.assert(
+        resumen.apartadoDisponibleCentavos === 50000,
+        "Debe haber 50000 centavos apartados."
+    );
+
+    console.assert(
+        convertirPesosACentavos("50.25") === 5025,
+        "La conversión debe conservar los centavos."
+    );
+
+    console.assert(
+        convertirPesosACentavos("50.257") === null,
+        "No deben aceptarse más de dos decimales."
+    );
+
+    console.assert(
+        limpiarDeudas(undefined).length === 0,
+        "Las copias antiguas deben admitir deudas ausentes."
+    );
+
+    console.assert(
+        limpiarDeudas([ejemplo, ejemplo]) === null,
+        "Deben rechazarse identificadores duplicados."
+    );
+
+    const incompletaLiquidada = {
+        ...ejemplo,
+        liquidada: true
+    };
+
+    console.assert(
+        limpiarDeudas([incompletaLiquidada]) === null,
+        "No puede estar liquidada sin reunir el objetivo."
+    );
+
+    const pagada = {
+        ...ejemplo,
+        aportaciones: [100000],
+        liquidada: true
+    };
+
+    console.assert(
+        resumirDeuda(pagada).apartadoDisponibleCentavos === 0,
+        "El dinero utilizado para pagar ya no está disponible."
+    );
+}
+
+probarDeudas();

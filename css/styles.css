@@ -422,3 +422,118 @@ h3 {
         gap: 8px;
     }
 }
+
+#vista-deudas {
+    --deuda-acento: #0f766e;
+    --deuda-borde: #cbd5e1;
+    --deuda-fondo: #f8fafc;
+}
+
+.deudas-registro {
+    padding: 16px;
+    border: 1px solid var(--deuda-borde);
+    border-radius: 16px;
+}
+
+.deudas-registro > summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.formulario-deudas {
+    display: grid;
+    gap: 8px;
+}
+
+.formulario-deudas label {
+    margin-top: 12px;
+    color: #172033;
+    font-weight: 600;
+}
+
+.formulario-deudas input,
+.formulario-deudas select {
+    border-radius: 12px;
+}
+
+.boton-principal {
+    min-height: 44px;
+    margin-top: 12px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--deuda-acento, #1d4ed8);
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.boton-principal:disabled {
+    background: #e2e8f0;
+    color: #475569;
+    cursor: not-allowed;
+}
+
+#vista-deudas :is(input, select, button, summary):focus-visible {
+    outline: 3px solid #0f766e;
+    outline-offset: 3px;
+}
+
+.lista-deudas {
+    display: grid;
+    gap: 16px;
+}
+
+.deuda {
+    padding: 20px;
+    border: 1px solid var(--deuda-borde);
+    border-top: 4px solid var(--deuda-acento);
+    border-radius: 18px;
+    background: var(--deuda-fondo);
+    overflow-wrap: anywhere;
+}
+
+.deuda h3 {
+    margin: 0 0 8px;
+}
+
+.deuda__estado {
+    color: #115e59;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.deuda__cifras {
+    line-height: 1.7;
+    font-variant-numeric: tabular-nums;
+}
+
+.deuda progress {
+    display: block;
+    width: 100%;
+    height: 16px;
+    accent-color: var(--deuda-acento);
+}
+
+.deuda details {
+    margin-top: 18px;
+}
+
+.deuda summary {
+    cursor: pointer;
+}
+
+.deuda li {
+    padding-block: 4px;
+}
+
+.deuda[data-estado="lista"] {
+    border-color: #0f766e;
+    background: #f0fdfa;
+}
+
+.deuda[data-estado="liquidada"] {
+    border-top-color: #64748b;
+    background: #f1f5f9;
+}
