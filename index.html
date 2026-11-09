@@ -295,6 +295,11 @@
                 <input id="monto-ahorro" type="number"
                        inputmode="decimal" min="0.01" step="0.01" required>
 
+                <label for="grupo-deuda">Grupo</label>
+                <select id="grupo-deuda">
+                    <option value="">Sin grupo</option>
+                </select>
+                
                 <button type="submit">Registrar movimiento</button>
             </form>
 
@@ -315,6 +320,30 @@
                 después de realizar el pago.
             </p>
             <p id="resumen-deudas" class="resumen"></p>
+
+            <details class="deudas-registro">
+                <summary>Crear un Grupo</summary>
+
+                <form id="formulario-grupo-deuda" class="formulario-deudas">
+                    <label for="nombre-grupo-deuda">Nombre del grupo</label>
+
+                    <input 
+                        id="nombre-grupo-deuda"
+                        type="text"
+                        maxlength="60"
+                        placeholder="Por ejemplo: compras o personas"
+                        required
+                    >
+
+                    <p class="ayuda">
+                        Los grupos ayudan a organizar deudas
+                    </p>
+
+                    <button type="submit" class="boton-principal">
+                        Crear grupo
+                    </button>
+                </form>
+            </details>
 
             <details class="deudas-registro" open>
                 <summary>Registrar una deuda</summary>
@@ -361,6 +390,12 @@
                     <input id="editar-prioridad-deuda" type="number"
                            min="1" max="999" step="1" required>
 
+                    <label for="editar-grupo-deuda">Grupo</label>
+
+                    <select id="editar-grupo-deuda">
+                        <option value="">Sin grupo</option>
+                    </select>
+
                     <p id="ayuda-editar-deuda" class="ayuda"></p>
 
                     <div class="acciones-deuda">
@@ -405,6 +440,10 @@
                 <option value="listas">Listas para pagar</option>
                 <option value="liquidadas">Liquidadas</option>
             </select>
+
+            <p class="ayuda">
+                El filtro cambia las deudas que se ve
+            </p>
 
             <p id="sin-resultados-deudas" class="ayuda" hidden>
                 No hay deudas que coincidan con este filtro.

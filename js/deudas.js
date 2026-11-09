@@ -1,5 +1,6 @@
 //Datos
 let deudas = [];
+let gruposDeudas = [];
 let deudaEnEdicionId = null;
 
 //Elementos
@@ -28,6 +29,14 @@ const formularioProyeccion = document.getElementById("formulario-proyeccion");
 const campoPresupuestoApartados = document.getElementById("presupuesto-apartados");
 const mensajeProyeccion = document.getElementById("mensaje-proyeccion");
 const resultadoProyeccion = document.getElementById("resultado-proyeccion");
+const formularioGrupoDeuda =
+    document.getElementById("formulario-grupo-deuda");
+const campoNombreGrupoDeuda =
+    document.getElementById("nombre-grupo-deuda");
+const campoGrupoDeuda =
+    document.getElementById("grupo-deuda");
+const campoEditarGrupoDeuda =
+    document.getElementById("editar-grupo-deuda");
 
 //Mensajes
 function informarDeudas(texto, esError) {
@@ -60,6 +69,169 @@ function completarCambioDeudas(texto) {
     );
 }
 
+function normalizarNombreGrupo(nombre) {
+    return nombre.trim().replace(/\s+/g, " ").toLocaleLowerCase("es")
+}
+
+function existeGrupoDeuda(id) {
+    return gruposDeudas.some(function (grupo) {
+        return grupo.id === id;
+    });
+}
+
+function registrarGrupoDeuda(evento) {
+    evento.preventDefault();
+
+    if (!puedoModificarDeudas()) {
+        return;
+    }
+
+    const nombre = campoNombreDeuda.value
+        .trim()
+        .replace(/\s+/g, " ");
+    if (nombre === "" || nombre.length > 60) {
+        informarDeudas(
+            "Escribe un nombre de grupo de hasta 60 caracteres",
+            true
+        );
+        return;
+    }
+
+    const repetido = gruposDeudas.some(function (grupo) {
+        return normalizarNombreGrupo(grupo.nombre) ===
+            normalizarNombreGrupo(nombre);
+    });
+    if (repetido) {
+        informarDeudas("Ya existe un grupo con ese nombre", true);
+        return;
+    }
+
+    const usados = gruposDeudas.map(function (grupo) {
+        return grupo.id;
+    });
+
+    const nuevoGrupo = {
+        id: generarId(usados),
+        nombre: nombre
+    };
+
+    gruposDeudas.push(nuevoGrupo);
+    formularioGrupoDeuda.reset();
+
+    completarCambioDeudas("Grupo creado. Ya puedes asignarle deudas.");
+
+    campoGrupoDeuda.value = nuevoGrupo.id;
+}
+
+function actualizarSelectoresGrupos() {
+    const campos = [campoGrupoDeuda, campoEditarGrupoDeuda];
+
+    for (const campo of campos) {
+        const seleccionAnterior = campo.value;
+
+        campo.replaceChildren();
+
+        const opcionSinGrupo = document.createElement("option");
+        opcionSinGrupo.value = "";
+        opcionSinGrupo.textContent = "Sin grupo";
+        campo.appendChild(opcionSinGrupo);
+
+        for (const grupo of gruposDeudas) {
+            const opcion = document.createElement("option");
+            opcion.value = grupo.id;
+            opcion.textContent = grupo.nombre;
+            campo.appendChild(opcion);
+        }
+
+        campo.value = existeGrupoDeuda(seleccionAnterior)
+            ? seleccionAnterior
+            : "";
+    }
+}
+
+function limpiarGruposDeudas(lista) {
+    if (lista === undefined) {
+        return [];
+    }
+
+    if (!Array.isArray(lista)) {
+        return null;
+    }
+
+    const limpios = [];
+    const ids = new Set();
+    const nombres = new Set();
+
+    for (const grupo of lista) {
+        if (
+            !grupo ||
+            typeof grupo !== "object" ||
+            Array.isArray(grupo) ||
+            typeof grupo.id !== "string" ||
+            grupo.id.trim() === "" ||
+            ids.has(grupo.id) ||
+            typeof grupo.nombre !== "string"
+        ) {
+            return null;
+        }
+
+        const nombre = grupo.nombre.trim().replace(/\s+/g, " ");
+        const nombreComparable = normalizarNombreGrupo(nombre);
+
+        if (
+            nombre === "" ||
+            nombre.length > 60 ||
+            nombres.has(nombreComparable)
+        ) {
+            return null;
+        }
+
+        ids.add(grupo.id);
+        nombres.add(nombreComparable);
+
+        limpios.push({
+            id: grupo.id,
+            nombre: nombre
+        });
+    }
+
+    return limpios;
+}
+
+function resumirGrupoDeudas(lista) {
+    let pendienteCentavos = 0;
+    let apartadoCentavos = 0;
+    let pendientes = 0;
+
+    for (const deuda of lista) {
+        if (deuda.liquidada) {
+            continue;
+        }
+
+        pendientes++;
+        pendienteCentavos += deuda.objetivoCentavos;
+
+        for (const monto of deuda.aportaciones) {
+            apartadoCentavos += monto;
+        }
+
+        if (
+            !Number.isSafeInteger(pendienteCentavos) ||
+            !Number.isSafeInteger(apartadoCentavos)
+        ) {
+            return null;
+        }
+    }
+
+    return {
+        pendientes: pendientes,
+        pendienteCentavos: pendienteCentavos,
+        apartadoCentavos: apartadoCentavos,
+        faltaCentavos: pendienteCentavos - apartadoCentavos
+    };
+}
+
+
 //Registro
 function registrarDeuda(evento) {
     evento.preventDefault();
@@ -71,6 +243,12 @@ function registrarDeuda(evento) {
     const nombre = campoNombreDeuda.value.trim();
     const objetivo = convertirPesosACentavos(campoObjetivoDeuda.value);
     const prioridad = Number(campoPrioridadDeuda.value);
+    const grupoId = campoGrupoDeuda.value || null;
+
+    if (grupoId !== null && !existeGrupoDeuda(grupoId)) {
+        informarDeudas("El grupo seleccionado ya no esta disponible", true);
+        return;
+    }
 
     if (nombre === "" || nombre.length > 80) {
         informarDeudas("Escribe un nombre de hasta 80 caracteres.", true);
@@ -101,6 +279,7 @@ function registrarDeuda(evento) {
     deudas.push({
         id: generarId(usados),
         nombre: nombre,
+        grupoId: grupoId,
         objetivoCentavos: objetivo,
         prioridad: prioridad,
         aportaciones: [],
@@ -284,23 +463,112 @@ function crearTarjetaDeuda(deuda) {
     return tarjeta;
 }
 
+function mostrarListaPorGrupos(ordenadas){
+    const estadosAnteriores = new Map();
+
+    for (const bloque of listaDeudas.querySelectorAll("details.grupo-deudas")){
+        estadosAnteriores.set(bloque.dataset.grupoId, bloque.open);
+    }
+
+    listaDeudas.replaceChildren();
+
+    const gruposVisibles = [
+        ...gruposDeudas,
+        { id: null, nombre: "Sin grupo" }
+    ];
+
+    let visibles = 0;
+
+    for (const grupo of gruposVisibles){
+        const integrantes = ordenadas.filter(function(deuda){
+            return(deuda.grupoId ?? null) === grupo.id;
+        });
+
+        if(grupo.id === null && integrantes.length === 0){
+            continue;
+        }
+
+        const filtradas = integrantes.filter(function(deuda){
+            return coincideConFiltroDeuda(deuda, campoFiltroDeudas.value);
+        });
+
+        const bloque = document.createElement("details");
+        bloque.className = "grupo-deudas";
+
+        const clave = grupo.id ?? "";
+        bloque.dataset.grupoId = clave;
+        bloque.open = estadosAnteriores.get(clave) ?? true ;
+
+        const encabezado = document.createElement("summary");
+        encabezado.className = "grupo-deudas__encabezado";
+
+        const nombre = document.createElement("span");
+        nombre.className = "grupo-deudas__nombre";
+        nombre.textContent = grupo.nombre;
+
+        const cantidad = document.createElement("span");
+        cantidad.className = "grupo-deudas__cantidad";
+        nombre.textContent = integrantes.length === 1
+            ? "1 deuda"
+            : integrantes.length + "deudas";
+        
+            encabezado.append(nombre, cantidad);
+
+            const cifras = document.createElement("p");
+            cifras.className = "grupo-deudas__totales";
+
+            const resumen = resumirGrupoDeudas(integrantes);
+
+            if(resumen === null){
+                cifras.textContent = 
+                    "Los importes superan el limite del calculo";
+            } else{
+                cifras.textContent = 
+                    "Pendiente de pago: " +
+                    formatoMoneda.format(resumen.pendienteCentavos / 100) +
+                    " Apartado disponible: " + 
+                    formatoMoneda.format(resumen.apartadoCentavos / 100) +
+                    " Falta Reunir: " +
+                    formatoMoneda.format(resumen.faltaCentavos / 100);
+            }
+
+            const contenido = document.createElement("div");
+            contenido.className = "grupo-deudas__contenido";
+
+            for(const deuda of filtradas){
+                contenido.appendChild(crearTarjetaDeuda(deuda));
+                visibles++;
+            }
+
+            if(filtradas.length === 0){
+                const aviso = document.createElement("p");
+                aviso.className = "ayuda";
+                aviso.textContent = integrantes.length === 0
+                    ? "Todavia no se han asignado deudas a este grupo"
+                    : "No hay deudas de este grupo que coincidan con el filtro";
+
+                contenido.appendChild(aviso);
+            }
+            bloque.append(encabezado, cifras, contenido);
+            listaDeudas.appendChild(bloque);
+    }
+    return visibles;
+}
+
 function mostrarDeudas() {
     const destinoAnterior = campoDestinoApartado.value;
     const ordenadas = ordenarDeudas(deudas);
 
-    listaDeudas.replaceChildren();
+    actualizarSelectoresGrupos();
+
+    const visibles = mostrarListaPorGrupos(ordenadas);
+
     campoDestinoApartado.replaceChildren();
 
     let pendientes = 0;
     let liquidadas = 0;
-    let visibles = 0;
 
     for (const deuda of ordenadas) {
-        if (coincideConFiltroDeuda(deuda, campoFiltroDeudas.value)) {
-            listaDeudas.appendChild(crearTarjetaDeuda(deuda));
-            visibles++;
-        }
-
         if (deuda.liquidada) {
             liquidadas++;
             continue;
@@ -309,9 +577,16 @@ function mostrarDeudas() {
         pendientes++;
 
         if (resumirDeuda(deuda).faltaCentavos > 0) {
+            const grupo = gruposDeudas.find(function (elemento) {
+                return elemento.id === deuda.grupoId;
+            });
+
             const opcion = document.createElement("option");
             opcion.value = deuda.id;
-            opcion.textContent = deuda.nombre;
+            opcion.textContent = grupo
+                ? grupo.nombre + " — " + deuda.nombre
+                : deuda.nombre;
+
             campoDestinoApartado.appendChild(opcion);
         }
     }
@@ -422,9 +697,24 @@ function limpiarDeudas(lista) {
 
         ids.add(deuda.id);
 
+        const grupoId = deuda.grupoId === undefined
+            ? null
+            : deuda.grupoId;
+
+        if (
+            grupoId !== null &&
+            (
+                typeof grupoId !== "string" ||
+                grupoId.trim() === ""
+            )
+        ) {
+            return null;
+        }
+
         limpias.push({
             id: deuda.id,
             nombre: deuda.nombre.trim(),
+            grupoId: grupoId,
             objetivoCentavos: deuda.objetivoCentavos,
             prioridad: deuda.prioridad,
             aportaciones: aportaciones,
@@ -454,6 +744,8 @@ function abrirEditorDeuda(id) {
     campoEditarNombre.value = deuda.nombre;
     campoEditarObjetivo.value = (deuda.objetivoCentavos / 100).toFixed(2);
     campoEditarPrioridad.value = deuda.prioridad;
+    actualizarSelectoresGrupos();
+    campoEditarGrupoDeuda.value = deuda.grupoId ?? "";
 
     const resumen = resumirDeuda(deuda);
 
@@ -492,6 +784,12 @@ function guardarEdicionDeuda(evento) {
     const nombre = campoEditarNombre.value.trim();
     const objetivo = convertirPesosACentavos(campoEditarObjetivo.value);
     const prioridad = Number(campoEditarPrioridad.value);
+    const grupoId = campoEditarGrupoDeuda.value || null;
+
+    if (grupoId !== null && !existeGrupoDeuda(grupoId)) {
+        informarDeudas("Selecciona un grupo disponible", true);
+        return;
+    }
 
     if (nombre === "" || nombre.length > 80) {
         informarDeudas("Escribe un nombre de hasta 80 caracteres.", true);
@@ -525,6 +823,7 @@ function guardarEdicionDeuda(evento) {
     deuda.nombre = nombre;
     deuda.objetivoCentavos = objetivo;
     deuda.prioridad = prioridad;
+    deuda.grupoId;
 
     cerrarEditorDeuda();
     completarCambioDeudas("Deuda actualizada.");
@@ -619,3 +918,4 @@ botonCancelarEdicion.addEventListener("click", cerrarEditorDeuda);
 campoFiltroDeudas.addEventListener("change", mostrarDeudas);
 formularioProyeccion.addEventListener("submit", mostrarProyeccionDeudas);
 campoPresupuestoApartados.addEventListener("input", invalidarProyeccionDeudas);
+formularioGrupoDeuda.addEventListener("submit", registrarGrupoDeuda);

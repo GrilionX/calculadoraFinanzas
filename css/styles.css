@@ -684,3 +684,69 @@ h3 {
     outline: 3px solid #1d4ed8;
     outline-offset: 3px;
 }
+
+/* Grupos de deudas */
+.grupo-deudas {
+    grid-column: 1 / -1;
+    min-width: 0;
+    margin-block: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #172033;
+    overflow: hidden;
+}
+
+.grupo-deudas__encabezado {
+    padding: 1rem;
+    cursor: pointer;
+    background: #f1f5f9;
+    color: #172033;
+}
+
+.grupo-deudas__encabezado:hover {
+    background: #e2e8f0;
+}
+
+.grupo-deudas__encabezado:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: -3px;
+}
+
+.grupo-deudas__nombre {
+    font-size: 1.05rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.grupo-deudas__cantidad {
+    display: inline-block;
+    margin-inline-start: 0.75rem;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.grupo-deudas__totales {
+    margin: 0;
+    padding: 1rem;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.grupo-deudas__contenido {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    min-width: 0;
+}
+
+.grupo-deudas__contenido > * {
+    min-width: 0;
+}
+
+@media (min-width: 760px) {
+    .grupo-deudas__contenido {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

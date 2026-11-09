@@ -366,6 +366,7 @@ function construirPaquete() {
         otrosIngresos: otrosIngresos,
         movimientosAhorros: movimientosAhorros,
         deudas: deudas,
+        gruposDeudas: gruposDeudas,
         nominas: nominas
     };
 }
@@ -674,13 +675,29 @@ function aplicarDatos(datos) {
     );
 
     const deudasLimpias = limpiarDeudas(datos.deudas);
+    const gruposLimpios = limpiarGruposDeudas(datos.gruposDeudas);
     const nominasLimpias = limpiarNominas(datos.nominas);
 
     if (
         ahorroLimpio === null ||
         deudasLimpias === null ||
+        gruposLimpios === null ||
         nominasLimpias === null
     ) {
+        return false;
+    }
+
+    const idsGrupos = new Set(
+        gruposLimpios.map(function (grupo) {
+            return grupo.id;
+        })
+    );
+
+    const hayGrupoInexistente = deudasLimpias.some(function (deuda) {
+        return deuda.grupoId !== null && !idsGrupos.has(deuda.grupoId);
+    });
+
+    if (hayGrupoInexistente) {
         return false;
     }
 
@@ -695,6 +712,7 @@ function aplicarDatos(datos) {
     otrosIngresos = extrasLimpios;
     movimientosAhorros = ahorroLimpio;
     deudas = deudasLimpias;
+    gruposDeudas = gruposLimpios;
     nominas = nominasLimpias;
 
     return true;
