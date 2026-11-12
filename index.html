@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Mi sueldo</title>
@@ -13,16 +14,13 @@
         <p id="estado-guardado" class="ayuda" role="status"></p>
 
         <nav class="navegacion-vistas" aria-label="Secciones de finanzas">
-            <button id="boton-reparto" type="button"
-                    aria-controls="vista-reparto" aria-pressed="true">
+            <button id="boton-reparto" type="button" aria-controls="vista-reparto" aria-pressed="true">
                 Reparto
             </button>
-            <button id="boton-ahorro" type="button"
-                    aria-controls="vista-ahorro" aria-pressed="false">
+            <button id="boton-ahorro" type="button" aria-controls="vista-ahorro" aria-pressed="false">
                 Ahorro
             </button>
-            <button id="boton-deudas" type="button"
-                    aria-controls="vista-deudas" aria-pressed="false">
+            <button id="boton-deudas" type="button" aria-controls="vista-deudas" aria-pressed="false">
                 Deudas
             </button>
         </nav>
@@ -38,14 +36,11 @@
 
                 <form id="formulario-nomina">
                     <label for="referencia-nomina">Nombre o referencia del pago</label>
-                    <input id="referencia-nomina" type="text"
-                           maxlength="80" required
-                           placeholder="Por ejemplo: Nómina primera semana de noviembre">
+                    <input id="referencia-nomina" type="text" maxlength="80" required
+                        placeholder="Por ejemplo: Nómina primera semana de noviembre">
 
                     <label for="neto-nomina">Importe neto recibido</label>
-                    <input id="neto-nomina" type="number"
-                           min="0.01" step="0.01"
-                           inputmode="decimal" required>
+                    <input id="neto-nomina" type="number" min="0.01" step="0.01" inputmode="decimal" required>
 
                     <label for="periodo-nomina">Periodo correspondiente</label>
                     <select id="periodo-nomina" required>
@@ -67,8 +62,7 @@
 
                         <div id="porcentajes-nomina"></div>
 
-                        <button id="usar-categorias-nomina" type="button"
-                                class="boton-secundario">
+                        <button id="usar-categorias-nomina" type="button" class="boton-secundario">
                             Usar mis categorías actuales
                         </button>
                     </fieldset>
@@ -95,8 +89,7 @@
                         </table>
                     </div>
 
-                    <button id="confirmar-nomina" type="submit"
-                            class="boton-principal" disabled>
+                    <button id="confirmar-nomina" type="submit" class="boton-principal" disabled>
                         Registrar este pago y su reparto
                     </button>
                 </form>
@@ -133,9 +126,8 @@
 
                     <div>
                         <label for="monto">Monto de cada pago</label>
-                        <input id="monto" type="number"
-                               inputmode="decimal" min="0" step="0.01"
-                               placeholder="Por ejemplo 9300">
+                        <input id="monto" type="number" inputmode="decimal" min="0" step="0.01"
+                            placeholder="Por ejemplo 9300">
                     </div>
 
                     <ul>
@@ -210,9 +202,7 @@
                     </p>
 
                     <label for="semanas-mostrar">¿Cuántas semanas quieres ver?</label>
-                    <input id="semanas-mostrar" type="number"
-                           inputmode="numeric" min="1" max="156"
-                           step="1" value="26">
+                    <input id="semanas-mostrar" type="number" inputmode="numeric" min="1" max="156" step="1" value="26">
 
                     <div class="tabla-scroll">
                         <table>
@@ -260,8 +250,7 @@
             </details>
         </div>
 
-        <section id="vista-ahorro" class="tarjeta" hidden
-                 aria-labelledby="titulo-ahorro">
+        <section id="vista-ahorro" class="tarjeta" hidden aria-labelledby="titulo-ahorro">
             <h2 id="titulo-ahorro">Mi ahorro personal</h2>
 
             <p class="ayuda">
@@ -287,19 +276,12 @@
                 </select>
 
                 <label for="concepto-ahorro">Concepto</label>
-                <input id="concepto-ahorro" type="text"
-                       maxlength="80" required
-                       placeholder="Por ejemplo: ahorro de esta semana">
+                <input id="concepto-ahorro" type="text" maxlength="80" required
+                    placeholder="Por ejemplo: ahorro de esta semana">
 
                 <label for="monto-ahorro">Monto</label>
-                <input id="monto-ahorro" type="number"
-                       inputmode="decimal" min="0.01" step="0.01" required>
+                <input id="monto-ahorro" type="number" inputmode="decimal" min="0.01" step="0.01" required>
 
-                <label for="grupo-deuda">Grupo</label>
-                <select id="grupo-deuda">
-                    <option value="">Sin grupo</option>
-                </select>
-                
                 <button type="submit">Registrar movimiento</button>
             </form>
 
@@ -312,8 +294,7 @@
             <ul id="historial-ahorro" class="historial-ahorro"></ul>
         </section>
 
-        <section id="vista-deudas" class="tarjeta" hidden
-                 aria-labelledby="titulo-deudas">
+        <section id="vista-deudas" class="tarjeta" hidden aria-labelledby="titulo-deudas">
             <h2 id="titulo-deudas">Mis deudas</h2>
             <p class="ayuda">
                 Reúne el dinero por acreedor y confirma la liquidación
@@ -327,13 +308,8 @@
                 <form id="formulario-grupo-deuda" class="formulario-deudas">
                     <label for="nombre-grupo-deuda">Nombre del grupo</label>
 
-                    <input 
-                        id="nombre-grupo-deuda"
-                        type="text"
-                        maxlength="60"
-                        placeholder="Por ejemplo: compras o personas"
-                        required
-                    >
+                    <input id="nombre-grupo-deuda" type="text" maxlength="60"
+                        placeholder="Por ejemplo: compras o personas" required>
 
                     <p class="ayuda">
                         Los grupos ayudan a organizar deudas
@@ -350,22 +326,23 @@
 
                 <form id="formulario-deuda" class="formulario-deudas">
                     <label for="nombre-deuda">Acreedor o nombre</label>
-                    <input id="nombre-deuda" type="text"
-                           maxlength="80" required
-                           placeholder="Por ejemplo: Acreedor A">
+                    <input id="nombre-deuda" type="text" maxlength="80" required placeholder="Por ejemplo: Acreedor A">
 
                     <label for="objetivo-deuda">Saldo a liquidar</label>
-                    <input id="objetivo-deuda" type="number"
-                           min="0.01" step="0.01" inputmode="decimal" required>
+                    <input id="objetivo-deuda" type="number" min="0.01" step="0.01" inputmode="decimal" required>
 
                     <label for="prioridad-deuda">Prioridad</label>
-                    <input id="prioridad-deuda" type="number"
-                           min="1" max="999" step="1" value="1" required>
+                    <input id="prioridad-deuda" type="number" min="1" max="999" step="1" value="1" required>
 
                     <p class="ayuda">
                         Un número menor aparece primero.
                         Se puede usar la misma prioridad en varias deudas.
                     </p>
+
+                    <label for="grupo-deuda">Grupo</label>
+                    <select id="grupo-deuda">
+                        <option value="">Sin grupo</option>
+                    </select>
 
                     <button type="submit" class="boton-principal">
                         Registrar deuda
@@ -373,22 +350,18 @@
                 </form>
             </details>
 
-            <section id="editor-deuda" class="editor-deuda" hidden
-                     aria-labelledby="titulo-editor-deuda">
+            <section id="editor-deuda" class="editor-deuda" hidden aria-labelledby="titulo-editor-deuda">
                 <h3 id="titulo-editor-deuda">Editar deuda</h3>
 
                 <form id="formulario-editar-deuda" class="formulario-deudas">
                     <label for="editar-nombre-deuda">Nombre del acreedor</label>
-                    <input id="editar-nombre-deuda" type="text"
-                           maxlength="80" required>
+                    <input id="editar-nombre-deuda" type="text" maxlength="80" required>
 
                     <label for="editar-objetivo-deuda">Saldo objetivo actualizado</label>
-                    <input id="editar-objetivo-deuda" type="number"
-                           min="0.01" step="0.01" inputmode="decimal" required>
+                    <input id="editar-objetivo-deuda" type="number" min="0.01" step="0.01" inputmode="decimal" required>
 
                     <label for="editar-prioridad-deuda">Prioridad</label>
-                    <input id="editar-prioridad-deuda" type="number"
-                           min="1" max="999" step="1" required>
+                    <input id="editar-prioridad-deuda" type="number" min="1" max="999" step="1" required>
 
                     <label for="editar-grupo-deuda">Grupo</label>
 
@@ -402,8 +375,7 @@
                         <button type="submit" class="boton-principal">
                             Guardar cambios
                         </button>
-                        <button id="cancelar-edicion-deuda" type="button"
-                                class="boton-secundario">
+                        <button id="cancelar-edicion-deuda" type="button" class="boton-secundario">
                             Cancelar
                         </button>
                     </div>
@@ -417,11 +389,9 @@
                 <select id="destino-apartado" required></select>
 
                 <label for="monto-apartado">Cantidad que ya está apartada</label>
-                <input id="monto-apartado" type="number"
-                       min="0.01" step="0.01" inputmode="decimal" required>
+                <input id="monto-apartado" type="number" min="0.01" step="0.01" inputmode="decimal" required>
 
-                <button id="registrar-apartado" type="submit"
-                        class="boton-principal">
+                <button id="registrar-apartado" type="submit" class="boton-principal">
                     Registrar apartado
                 </button>
             </form>
@@ -451,8 +421,7 @@
 
             <div id="lista-deudas" class="lista-deudas"></div>
 
-            <section class="simulador-deudas"
-                     aria-labelledby="titulo-simulador-deudas">
+            <section class="simulador-deudas" aria-labelledby="titulo-simulador-deudas">
                 <h3 id="titulo-simulador-deudas">Horizonte de mis apartados</h3>
 
                 <p class="ayuda">
@@ -464,10 +433,8 @@
                     <label for="presupuesto-apartados">
                         Disponible por semana para nuevos apartados
                     </label>
-                    <input id="presupuesto-apartados" type="number"
-                           min="0" step="0.01" inputmode="decimal"
-                           value="0" required
-                           aria-describedby="ayuda-presupuesto-apartados">
+                    <input id="presupuesto-apartados" type="number" min="0" step="0.01" inputmode="decimal" value="0"
+                        required aria-describedby="ayuda-presupuesto-apartados">
 
                     <p id="ayuda-presupuesto-apartados" class="ayuda">
                         Escribe lo que queda después de los pagos requeridos
@@ -503,8 +470,7 @@
                 <button id="importar-copia" type="button">Cargar copia</button>
             </div>
 
-            <input id="archivo-copia" type="file"
-                   accept=".json,application/json" hidden>
+            <input id="archivo-copia" type="file" accept=".json,application/json" hidden>
             <p id="mensaje-copia" class="aviso" role="status"></p>
         </section>
 
@@ -518,7 +484,9 @@
     <script src="./js/calculos.js"></script>
     <script src="./js/nominas.js"></script>
     <script src="./js/deudas.js"></script>
+    <script src="./js/fondos.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
 </body>
+
 </html>

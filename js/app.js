@@ -697,7 +697,10 @@ function aplicarDatos(datos) {
         return deuda.grupoId !== null && !idsGrupos.has(deuda.grupoId);
     });
 
-    if (hayGrupoInexistente) {
+    if (
+        hayGrupoInexistente ||
+        !validarFondosGrupos(gruposLimpios, deudasLimpias)
+    ) {
         return false;
     }
 

@@ -750,3 +750,49 @@ h3 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/* Fondo del grupo */
+.fondo-grupo {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #172033;
+}
+
+.fondo-grupo form {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.fondo-grupo label {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.fondo-grupo input,
+.fondo-grupo select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+.fondo-grupo button {
+    white-space: normal;
+}
+
+.fondo-grupo p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.fondo-grupo summary {
+    cursor: pointer;
+}
+
+.fondo-grupo li {
+    margin-block: 0.5rem;
+    overflow-wrap: anywhere;
+}
