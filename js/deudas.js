@@ -280,7 +280,7 @@ function registrarDeuda(evento) {
         return;
     }
 
-    if (grupoConReservas(grupo)) {
+    if (grupoConReservas(grupoId)) {
         informarDeudas(
             "Este grupo ya tiene reservas. Completa sus pagos " +
             "antes de añadir otra deuda",
@@ -614,6 +614,7 @@ function mostrarDeudas() {
             !usaFondoGrupo(deuda) &&
             resumirDeuda(deuda).faltaCentavos > 0
         ) {
+            const grupo = obtenerGrupoDeuda(deuda);
 
             const opcion = document.createElement("option");
             opcion.value = deuda.id;
