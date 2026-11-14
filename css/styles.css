@@ -796,3 +796,40 @@ h3 {
     margin-block: 0.5rem;
     overflow-wrap: anywhere;
 }
+
+/* Restablecimiento total */
+#formulario-borrado-total {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+#confirmar-borrado {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 24rem;
+}
+
+.boton-peligro {
+    background: #b91c1c;
+    color: #ffffff;
+    border: 1px solid #b91c1c;
+}
+
+.boton-peligro:hover {
+    background: #991b1b;
+    border-color: #991b1b;
+}
+
+.boton-peligro:focus-visible {
+    outline: 3px solid #172033;
+    outline-offset: 3px;
+}
+
+#aviso-reinicio-externo {
+    border: 2px solid #b45309;
+}
+
+#mensaje-borrado {
+    line-height: 1.5;
+}

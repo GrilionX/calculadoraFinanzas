@@ -68,6 +68,8 @@ let categorias = copiarCategoriasIniciales();
 let otrosIngresos = copiar(EXTRAS_INICIALES);
 let movimientosAhorros = [];
 let guardadoHabilitado = true;
+let reinicioActual = null;
+let reinicioDetectado = false;
 
 //Elementos
 const campoMonto = document.getElementById("monto");
@@ -100,6 +102,27 @@ const mensajeAhorro = document.getElementById("mensaje-ahorro");
 const historialAhorro = document.getElementById("historial-ahorro");
 const ahorroVacio = document.getElementById("ahorro-vacio");
 const estadoGuardado = document.getElementById("estado-guardado");
+
+const formularioBorradoTotal =
+    document.getElementById("formulario-borrado-total");
+
+const campoConfirmarBorrado =
+    document.getElementById("confirmar-borrado");
+
+const mensajeBorrado =
+    document.getElementById("mensaje-borrado");
+
+const botonRespaldoAntesBorrar =
+    document.getElementById("respaldo-antes-borrar");
+
+const avisoReinicioExterno =
+    document.getElementById("aviso-reinicio-externo");
+
+const textoReinicioExterno =
+    document.getElementById("texto-reinicio-externo");
+
+const botonRecargarReinicio =
+    document.getElementById("recargar-reinicio");
 
 //Leer datos
 function leerNumero(texto) {
@@ -358,6 +381,7 @@ function revisarReparto() {
 //Guardar y cargar
 function construirPaquete() {
     return {
+        reinicioId: reinicioActual,
         frecuencia: campoFrecuencia.value,
         monto: campoMonto.value,
         periodo: campoPeriodo.value,
@@ -372,24 +396,50 @@ function construirPaquete() {
 }
 
 function guardar() {
+    if (reinicioDetectado) {
+        return false;
+    }
+
     if (!guardadoHabilitado) {
         estadoGuardado.className = "aviso error";
         estadoGuardado.textContent =
             "Guardado detenido: no se pudieron recuperar los datos anteriores. " +
             "Importa una copia válida antes de continuar.";
+
         return false;
     }
 
     try {
-        const texto = JSON.stringify(construirPaquete());
-        localStorage.setItem(CLAVE_GUARDADO, texto);
+        const anterior = localStorage.getItem(CLAVE_GUARDADO);
+
+        const idGuardado = anterior === null
+            ? null
+            : leerIdReinicio(JSON.parse(anterior));
+
+        if (idGuardado !== reinicioActual) {
+            bloquearPantallaPorReinicio(
+                "Los datos se restablecieron en otra pestaña. " +
+                "Recarga antes de continuar."
+            );
+
+            return false;
+        }
+
+        localStorage.setItem(
+            CLAVE_GUARDADO,
+            JSON.stringify(construirPaquete())
+        );
+
         estadoGuardado.className = "ayuda";
-        estadoGuardado.textContent = "Datos guardados en este navegador.";
+        estadoGuardado.textContent =
+            "Datos guardados en este navegador.";
+
         return true;
     } catch (error) {
         estadoGuardado.className = "aviso error";
         estadoGuardado.textContent =
             "No se pudo guardar. Descarga una copia antes de cerrar.";
+
         console.warn("No se pudo guardar:", error);
         return false;
     }
@@ -724,20 +774,26 @@ function aplicarDatos(datos) {
 function cargar() {
     try {
         const texto = localStorage.getItem(CLAVE_GUARDADO);
+
         if (texto === null) {
             return;
         }
 
         const datos = JSON.parse(texto);
+        const idGuardado = leerIdReinicio(datos);
+
         if (!aplicarDatos(datos)) {
             throw new Error("Los datos guardados no son válidos.");
         }
+
+        reinicioActual = idGuardado;
     } catch (error) {
         guardadoHabilitado = false;
         estadoGuardado.className = "aviso error";
         estadoGuardado.textContent =
             "No se pudieron recuperar los datos. " +
             "El guardado automático está detenido.";
+
         console.warn("No se pudo cargar lo guardado:", error);
     }
 }
@@ -1502,6 +1558,146 @@ botonDeudas.addEventListener("click", function () {
 });
 
 formularioAhorro.addEventListener("submit", registrarMovimientoAhorro);
+
+function leerIdReincio(datos){
+    if(
+        datos.reincioId === undefined ||
+        datos.reincioId === null
+    ){
+        return null;
+    }
+    if(
+        typeof datos.reincioId !== "string" ||
+        datos.reincioId.trim() === ""
+    ){
+        throw new Error("La marca de reincio no es valido");
+    }
+
+    return datos.reincioId;
+}
+
+function crearDatosIniciales(){
+    return{
+        reinicioId: generarId([]),
+        frecuencia: "mensual",
+        monto: "",
+        periodo: "semanal",
+        semanasMostrar: "26",
+        categorias: copiarCategoriasIniciales(),
+        otrosIngresos: [],
+        movimientosAhorros: [],
+        deudas: [],
+        gruposDeudas: [],
+        nominas: []
+    };
+}
+
+function bloquearPantallaPorReinicio(texto){
+    reinicioDetectado = true;
+    guardadoHabilitado = false;
+
+    document.querySelector("main").inert = true;
+
+    avisoReinicioExterno.hidden = false;
+    textoReinicioExterno.textContent = texto;
+    botonRecargarReinicio.focus();
+}
+
+function recargarTrasreinicio(){
+    window.location.reload();
+}
+
+function restablecerTodosLosDatos(evento){
+    evento.preventDefault();
+
+    if(reinicioDetectado){
+        return;
+    }
+
+    if(campoConfirmarBorrado.value.trim() !== "BORRAR"){
+        mensajeBorrado.textContent =
+            "Escribe BORRAR para confirmar";
+
+        campoConfirmarBorrado.focus();
+        return;
+    }
+
+    const nuevosDatos = crearDatosIniciales();
+
+    try{
+        localStorage.setItem(
+            CLAVES_GUARDADO,
+            JSON.stringify(nuevosDatos)
+        );
+    } catch(error){
+        mensajeBorrado.textContent = 
+            "No se pudo completar el guardado " +
+            "Los datos anteriores siguen guardados";
+
+        console.warn("No se pudo restablcer: ", error);
+        return;
+    }
+
+    bloquearPantallaPorReinicio(
+        "Los datos se han restablecido" +
+        "Recarga para empezar de cero"
+    );
+
+    recargarTrasreinicio();
+}
+
+function revisarReinicioEnOtraPestana(evento){
+    if(
+        evento.storageArea !== localStorage ||
+        evento.key !== CLAVE_GUARDADO
+    ){
+        return;
+    }
+
+    try{
+        const idGuardado = evento.newValue === null
+            ? null
+            : leerIdReincio(JSON.parse(evento.newValue));
+        if(idGuardado !== reinicioActual){
+            bloquearPantallaPorReinicio(
+                "Los datos se restablecieron en otra pestaña" +
+                "Recarga antes de continuar"
+            );
+        }
+    } catch(error){
+        bloquearPantallaPorReinicio(
+            "Los datos guardados cambiaron y no se pueden leer" +
+            "Recarga para revisarlos"
+        );
+    }
+}
+
+formularioBorradoTotal.addEventListener(
+    "submit",
+    restablecerTodosLosDatos
+);
+
+botonRecargarReinicio.addEventListener(
+    "click",
+    recargarTrasReinicio
+);
+
+window.addEventListener(
+    "storage",
+    revisarReinicioEnOtraPestana
+);
+
+botonRespaldoAntesBorrar.addEventListener("click", function () {
+    if (!guardadoHabilitado || reinicioDetectado) {
+        mensajeBorrado.textContent =
+            "No se pudo recuperar el estado actual. " +
+            "No se generará una copia desde datos incompletos.";
+
+        return;
+    }
+
+    exportarCopia();
+});
 
 //Arranque
 llenarSelectorPeriodo();
