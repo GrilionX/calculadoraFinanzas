@@ -219,9 +219,13 @@ function resumirGrupoDeudas(lista) {
         pendientes++;
         pendienteCentavos += deuda.objetivoCentavos;
 
-        for (const monto of deuda.aportaciones) {
-            apartadoCentavos += monto;
+        const reserva = calcularReservaDeuda(deuda);
+
+        if (reserva === null) {
+            return null;
         }
+
+        apartadoCentavos += reserva;
 
         if (
             !Number.isSafeInteger(pendienteCentavos) ||
@@ -470,8 +474,7 @@ function crearTarjetaDeuda(deuda) {
 
     const historial = document.createElement("details");
     const encabezado = document.createElement("summary");
-    encabezado.textContent =
-        "Historial de apartados (" + deuda.aportaciones.length + ")";
+    encabezado.textContent = "Aportaciones y transferencias";
 
     const lista = document.createElement("ol");
 
@@ -479,6 +482,28 @@ function crearTarjetaDeuda(deuda) {
         const fila = document.createElement("li");
         fila.textContent = formatoMoneda.format(monto / 100);
         lista.appendChild(fila);
+    }
+
+    for (const movimiento of deuda.transferencias ?? []) {
+        const fila = document.createElement("li");
+
+        const grupo = gruposDeudas.find(
+            elemento => elemento.id === movimiento.grupoId
+        );
+
+        fila.textContent =
+            (
+                movimiento.montoCentavos > 0
+                    ? "Recibo de grupo "
+                    : "Enviado al grupo"
+            ) +
+            (grupo?.nombre ?? "registrado") +
+            ": " +
+            formatoMoneda, format(
+                Math.abs(movimiento.montoCentavos) / 100
+            );
+
+        lista.appendChild(fila)
     }
 
     historial.appendChild(encabezado);
@@ -706,25 +731,23 @@ function limpiarDeudas(lista) {
             return null;
         }
 
-        let reunido = 0;
-        const aportaciones = [];
+        const reunido = calcularReservaDeuda(deuda);
 
-        for (const monto of deuda.aportaciones) {
-            if (!Number.isSafeInteger(monto) || monto <= 0) {
-                return null;
-            }
-
-            reunido += monto;
-
-            if (
-                !Number.isSafeInteger(reunido) ||
-                reunido > deuda.objetivoCentavos
-            ) {
-                return null;
-            }
-
-            aportaciones.push(monto);
+        if (reunido === null) {
+            return null;
         }
+
+        const aportaciones = [...deuda.aportaciones];
+
+        const transferencias = (deuda.transferencias ?? []).map(
+            function (movimiento) {
+                return {
+                    id: movimiento.id,
+                    grupoId: movimiento.grupoId,
+                    montoCentavos: movimiento.montoCentavos
+                };
+            }
+        );
 
         if (deuda.liquidada && reunido !== deuda.objetivoCentavos) {
             return null;
@@ -753,6 +776,7 @@ function limpiarDeudas(lista) {
             objetivoCentavos: deuda.objetivoCentavos,
             prioridad: deuda.prioridad,
             aportaciones: aportaciones,
+            transferencias: transferencias,
             liquidada: deuda.liquidada
         });
     }

@@ -6,7 +6,8 @@ function limpiarDatosFondo(grupo) {
         : grupo.modalidad;
 
     const originales = grupo.movimientosFondo === undefined
-        ? [] : grupo.movimientosFondo;
+        ? []
+        : grupo.movimientosFondo;
 
     if (
         !["individual", "grupo"].includes(modalidad) ||
@@ -16,6 +17,7 @@ function limpiarDatosFondo(grupo) {
     }
 
     const movimientosFondo = [];
+    const ids = new Set();
     let saldo = 0;
 
     for (const movimiento of originales) {
@@ -23,17 +25,28 @@ function limpiarDatosFondo(grupo) {
             !movimiento ||
             typeof movimiento !== "object" ||
             Array.isArray(movimiento) ||
-            !["apartado", "asignacion"].includes(movimiento.tipo) ||
-            !Number.isSafeInteger(movimiento.montoCentavos) ||
-            movimiento.montoCentavos <= 0
+            !["apartado", "asignacion", "transferencia"].includes(
+                movimiento.tipo
+            ) ||
+            !Number.isSafeInteger(movimiento.montoCentavos)
         ) {
             return null;
         }
 
-        const esAsignacion = movimiento.tipo === "asignacion";
+        const transferencia = movimiento.tipo === "transferencia";
 
         if (
-            esAsignacion &&
+            transferencia
+                ? movimiento.montoCentavos === 0
+                : movimiento.montoCentavos <= 0
+        ) {
+            return null;
+        }
+
+        const usaDeuda = movimiento.tipo !== "apartado";
+
+        if (
+            usaDeuda &&
             (
                 typeof movimiento.deudaId !== "string" ||
                 movimiento.deudaId.trim() === ""
@@ -42,19 +55,35 @@ function limpiarDatosFondo(grupo) {
             return null;
         }
 
-        saldo += esAsignacion
-            ? -movimiento.montoCentavos
-            : movimiento.montoCentavos;
+        if (
+            transferencia &&
+            (
+                typeof movimiento.id !== "string" ||
+                movimiento.id.trim() === "" ||
+                ids.has(movimiento.id)
+            )
+        ) {
+            return null;
+        }
+
+        saldo += variacionFondo(movimiento);
 
         if (!Number.isSafeInteger(saldo) || saldo < 0) {
             return null;
         }
 
-        movimientosFondo.push({
+        const limpio = {
             tipo: movimiento.tipo,
             montoCentavos: movimiento.montoCentavos,
-            deudaId: esAsignacion ? movimiento.deudaId : null
-        });
+            deudaId: usaDeuda ? movimiento.deudaId : null
+        };
+
+        if (transferencia) {
+            ids.add(movimiento.id);
+            limpio.id = movimiento.id;
+        }
+
+        movimientosFondo.push(limpio);
     }
 
     if (modalidad === "individual" && saldo !== 0) {
@@ -65,6 +94,12 @@ function limpiarDatosFondo(grupo) {
         modalidad: modalidad,
         movimientosFondo: movimientosFondo
     };
+}
+
+function variacionFondo(movimiento) {
+    return movimiento.tipo === "asignacion"
+        ? -movimiento.montoCentavos
+        : movimiento.montoCentavos;
 }
 
 function obtenerGrupoDeuda(deuda) {
@@ -92,9 +127,7 @@ function resumirFondoGrupo(grupo, lista = deudas) {
     let fondoCentavos = 0;
 
     for (const movimiento of datos.movimientosFondo) {
-        fondoCentavos += movimiento.tipo === "apartado"
-            ? movimiento.montoCentavos
-            : -movimiento.montoCentavos;
+        fondoCentavos += variacionFondo(movimiento);
     }
 
     const disponible = base.apartadoCentavos + fondoCentavos;
@@ -116,7 +149,52 @@ function resumirFondoGrupo(grupo, lista = deudas) {
     };
 }
 
+function transferenciasCoinciden(grupos, lista) {
+    const pendientes = new Map();
+
+    for (const deuda of lista) {
+        for (const movimiento of deuda.transferencia ?? []) {
+            if (pendientes.has(movimiento.id)) {
+                return false;
+            }
+
+            pendientes.set(movimiento.id, {
+                deudaId: deuda.id,
+                grupoId: movimiento.grupoId,
+                montoCentavos: movimiento.montoCentavos
+            });
+        }
+    }
+
+    for (const grupo of grupos) {
+        for (const grupo of grupos) {
+            if (movimiento.tipo !== "transferencia") {
+                continue;
+            }
+
+            const pareja = pendientes.get(movimiento.id);
+
+            if (
+                !pareja ||
+                pareja.deudaId !== movimiento.deudaId ||
+                pareja.grupoId !== grupo.id ||
+                pareja.montoCentavos !== -movimiento.montoCentavos
+            ) {
+                return false;
+            }
+
+            pendientes.delete(movimiento.id);
+        }
+    }
+
+    return pendientes.size === 0;
+}
+
 function validarFondosGrupos(grupos, lista) {
+    if (!transferenciasCoinciden(grupos, lista)) {
+        return false;
+    }
+
     const idsDeudas = new Set(lista.map(deuda => deuda.id));
 
     return grupos.every(function (grupo) {
@@ -139,7 +217,7 @@ function validarFondosGrupos(grupos, lista) {
         }
 
         return datos.movimientosFondo.every(function (movimiento) {
-            return movimiento.tipo !== "asignacion" ||
+            return movimiento.tipo === "apartado" ||
                 idsDeudas.has(movimiento.deudaId);
         });
     });
@@ -152,7 +230,9 @@ function cambiarModalidadGrupo(id, modalidad) {
         return;
     }
 
-    const grupo = gruposDeudas.find(elemento => elemento.id === id);
+    const grupo = gruposDeudas.find(
+        elemento => elemento.id === id
+    );
 
     if (!grupo || !["individual", "grupo"].includes(modalidad)) {
         return;
@@ -164,17 +244,173 @@ function cambiarModalidadGrupo(id, modalidad) {
 
     const resumen = resumirFondoGrupo(grupo);
 
-    if (resumen === null || resumen.apartadoCentavos > 0) {
+    if (resumen === null) {
         informarDeudas(
-            "Este grupo tiene dinero reservado, en esta version solo se puede: " +
-            "cambiar la modalidad cuando no quedan reservas disponibles",
+            "Revisa los importes del grupo antes de cambiar.",
             true
         );
         return;
     }
 
-    grupo.modalidad = modalidad;
-    completarCambioDeudas("Habilidad actualizada");
+    const pendientes = ordenarDeudas(deudas).filter(
+        function (deuda) {
+            return deuda.grupoId === id && !deuda.liquidada;
+        }
+    );
+
+    const plan = [];
+    let porAsignar = resumen.fondoCentavos;
+
+    for (const deuda of pendientes) {
+        const detalle = resumirDeuda(deuda);
+
+        const monto = modalidad === "grupo"
+            ? -detalle.reunidoCentavos
+            : Math.min(porAsignar, detalle.faltaCentavos);
+
+        if (modalidad === "individual") {
+            porAsignar -= monto;
+        }
+
+        if (monto !== 0) {
+            plan.push({
+                deudaId: deuda.id,
+                nombre: deuda.nombre,
+                monto: monto
+            });
+        }
+    }
+
+    if (modalidad === "individual" && porAsignar !== 0) {
+        informarDeudas(
+            "No se pudo distribuir todo el fondo.",
+            true
+        );
+        return;
+    }
+
+    const lineas = plan.map(function (fila) {
+        const importe = formatoMoneda.format(
+            Math.abs(fila.monto) / 100
+        );
+
+        return fila.monto > 0
+            ? "Fondo → " + fila.nombre + ": " + importe
+            : fila.nombre + " → Fondo: " + importe;
+    });
+
+    const aviso = [
+        modalidad === "grupo"
+            ? "Cambiar a fondo compartido."
+            : "Cambiar a apartados individuales, siguiendo las prioridades actuales.",
+        ...lineas,
+        plan.length === 0 ? "No hay dinero que trasladar." : "",
+        "Reservas totales: " +
+        formatoMoneda.format(resumen.apartadoCentavos / 100),
+        "El total se conserva. No se registrará ningún pago. ¿Continuar?"
+    ].filter(Boolean).join("\n");
+
+    if (!confirm(aviso)) {
+        return;
+    }
+
+    const siguientesDeudas = copiar(deudas);
+    const siguientesGrupos = copiar(gruposDeudas);
+
+    const siguienteGrupo = siguientesGrupos.find(
+        elemento => elemento.id === id
+    );
+
+    siguienteGrupo.movimientosFondo ??= [];
+
+    const usados = siguientesGrupos.flatMap(function (elemento) {
+        return (elemento.movimientosFondo ?? [])
+            .filter(movimiento => movimiento.tipo === "transferencia")
+            .map(movimiento => movimiento.id);
+    });
+
+    for (const fila of plan) {
+        const transferenciaId = generarId(usados);
+        usados.push(transferenciaId);
+
+        const deuda = siguientesDeudas.find(
+            elemento => elemento.id === fila.deudaId
+        );
+
+        deuda.transferencias ??= [];
+
+        deuda.transferencias.push({
+            id: transferenciaId,
+            grupoId: id,
+            montoCentavos: fila.monto
+        });
+
+        siguienteGrupo.movimientosFondo.push({
+            id: transferenciaId,
+            tipo: "transferencia",
+            deudaId: fila.deudaId,
+            montoCentavos: -fila.monto
+        });
+    }
+
+    siguienteGrupo.modalidad = modalidad;
+
+    const limpias = limpiarDeudas(siguientesDeudas);
+    const gruposLimpios = limpiarGruposDeudas(siguientesGrupos);
+
+    if (
+        limpias === null ||
+        gruposLimpios === null ||
+        !validarFondosGrupos(gruposLimpios, limpias)
+    ) {
+        informarDeudas(
+            "La transferencia no pasó la comprobación. No se aplicó.",
+            true
+        );
+        return;
+    }
+
+    const nuevoResumen = resumirFondoGrupo(
+        gruposLimpios.find(elemento => elemento.id === id),
+        limpias
+    );
+
+    if (
+        nuevoResumen === null ||
+        nuevoResumen.apartadoCentavos !== resumen.apartadoCentavos
+    ) {
+        informarDeudas(
+            "La transferencia alteraría el total reservado. No se aplicó.",
+            true
+        );
+        return;
+    }
+
+    const anterioresDeudas = deudas;
+    const anterioresGrupos = gruposDeudas;
+
+    deudas = limpias;
+    gruposDeudas = gruposLimpios;
+
+    if (!guardar()) {
+        deudas = anterioresDeudas;
+        gruposDeudas = anterioresGrupos;
+
+        informarDeudas(
+            "No se pudo guardar el cambio. Se conservó la modalidad anterior.",
+            true
+        );
+        return;
+    }
+
+    cerrarEditorDeuda();
+    mostrarDeudas();
+    invalidarProyeccionDeudas();
+
+    informarDeudas(
+        "Modalidad actualizada. Se conservó el dinero y su historial.",
+        false
+    );
 }
 
 function registrarApartadoGrupo(id, textoMonto) {
@@ -422,12 +658,26 @@ function crearControlesFondo(grupo) {
             return elemento.id === movimiento.deudaId;
         });
 
-        fila.textContent = movimiento.tipo === "apartado"
-            ? "Entrada al fondo: "
-            : "Asignación a " + (deuda?.nombre ?? "deuda registrada") + ": ";
+        if (movimiento.tipo === "transferencia") {
+            fila.textContent =
+                (
+                    movimiento.montoCentavos > 0
+                        ? "Recibido de "
+                        : "Enviado a "
+                ) +
+                (deuda?.nombre ?? "deuda registrada") +
+                ": ";
+        } else {
+            fila.textContent = movimiento.tipo === "apartado"
+                ? "Entrada al fondo: "
+                : "Asignación a " +
+                (deuda?.nombre ?? "deuda registrada") +
+                ": ";
+        }
 
-        fila.textContent +=
-            formatoMoneda.format(movimiento.montoCentavos / 100);
+        fila.textContent += formatoMoneda.format(
+            Math.abs(movimiento.montoCentavos) / 100
+        );
 
         lista.appendChild(fila);
     }

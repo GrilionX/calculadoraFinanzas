@@ -32,11 +32,73 @@ function convertirPesosACentavos(texto) {
     return centavos;
 }
 
-function resumirDeuda(deuda) {
-    let reunidoCentavos = 0;
+function calcularReservaDeuda(deuda){
+    if(
+        !deuda ||
+        !Number.isSafeInteger(deuda.objetivoCentavos) ||
+        deuda.objetivoCentavos <= 0 || 
+        !Array.isArray(deuda.aportaciones)
+    ){
+        return null;
+    }
 
-    for (const aportacion of deuda.aportaciones) {
-        reunidoCentavos += aportacion;
+    const transferencias = deuda.transferencias ===  undefined
+        ? []
+        : deuda.transferencias;
+
+    if (!Array.isArray(transferencias)){
+        return null;
+    }
+
+    let saldo = 0;
+
+    for(const monto of deuda.aportaciones){
+        if(!Number.isSafeInteger(monto) || monto <= 0){
+            return null;
+        }
+
+        saldo += monto;
+
+        if(!Number.isSafeInteger(saldo)){
+            return null;
+        }
+    }
+
+    const ids = new Set();
+
+    for(const movimiento of transferencias){
+        if(
+            !movimiento ||
+            typeof movimiento !== "object" ||
+            Array.isArray(movimiento) || 
+            typeof movimiento.id !== "string" || 
+            movimiento.id.trim() === "" ||
+            !Number.isSafeInteger(movimiento.montoCentavos) ||
+            movimiento.montoCentavos === 0
+        ){
+            return null;
+        }
+
+        ids.add(movimiento.id);
+        saldo += movimiento.montoCentavos;
+
+        if(!Number.isSafeInteger(saldo)){
+            return null;
+        }
+    }
+
+    if(saldo < 0 || saldo > deuda.objetivoCentavos){
+        return null;
+    }
+
+    return saldo;
+}
+
+function resumirDeuda(deuda) {
+    const reunidoCentavos = calcularReservaDeuda(deuda);
+
+    if(reunidoCentavos === null){
+        throw new Error("La reserva de la deuda no es valido");
     }
 
     const faltaCentavos = deuda.objetivoCentavos - reunidoCentavos;
