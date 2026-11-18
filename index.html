@@ -10,17 +10,13 @@
 
 <body>
 
-    <section
-    id="aviso-reinicio-externo"
-    class="tarjeta"
-    hidden
-    aria-label="Recarga necesaria">
-    <p id="texto-reinicio-externo" role="alert"></p>
+    <section id="aviso-reinicio-externo" class="tarjeta" hidden aria-label="Recarga necesaria">
+        <p id="texto-reinicio-externo" role="alert"></p>
 
-    <button id="recargar-reincio" type="button">
-        Recargar Aplicacion
-    </button>
-</section>
+        <button id="recargar-reincio" type="button">
+            Recargar Aplicacion
+        </button>
+    </section>
 
     <main>
         <h1>Mi sueldo y mi reparto</h1>
@@ -395,6 +391,30 @@
                 </form>
             </section>
 
+            <section class="origen-apartados" aria-labelledby="titulo-origen-apartados">
+
+                <h3 id="titulo-origen-apartados">
+                    Origen del proximo apartado
+                </h3>
+
+                <p class="ayuda">
+                    Elige el pago y la categoria que financiaria en el proximo apartado
+                </p>
+
+                <label for="nomina-origen-apartado">Pago recibido</label>
+                <select id="nomina-origen-apartado"></select>
+
+                <label for="categoria-origen-apartado">Categoria de origen</label>
+                <select id="categoria-origen-apartado"></select>
+
+                <p id="disponible-origen-apartado" role="status"></p>
+
+                <p class="ayuda">
+                    Los apartados anteriores conservan su historial sin nomina vinculad.
+                    Esta disponibilidad todavia no descuenta gastos ni movimiento de ahorro
+                </p>
+            </section>
+
             <h3>Apartar dinero</h3>
 
             <form id="formulario-apartado" class="formulario-deudas">
@@ -512,12 +532,7 @@
                     Escribe BORRAR para confrimar
                 </label>
 
-                <input 
-                id="confirmar-borrado"
-                type="text"
-                autocomplete="off"
-                spellcheck="false"
-                required>
+                <input id="confirmar-borrado" type="text" autocomplete="off" spellcheck="false" required>
 
                 <button type="submit" class="boton-peligro">
                     Borrar todos mis datos
@@ -536,6 +551,7 @@
     <script src="./js/nominas.js"></script>
     <script src="./js/deudas.js"></script>
     <script src="./js/fondos.js"></script>
+    <script src="./js/origenes.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
 </body>

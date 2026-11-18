@@ -749,7 +749,12 @@ function aplicarDatos(datos) {
 
     if (
         hayGrupoInexistente ||
-        !validarFondosGrupos(gruposLimpios, deudasLimpias)
+        !validarFondosGrupos(gruposLimpios, deudasLimpias) ||
+        !validarOrigenesNomina(
+            nominasLimpias,
+            deudasLimpias,
+            gruposLimpios
+        )
     ) {
         return false;
     }
@@ -808,7 +813,7 @@ function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
-        [1, 2].includes(contenido.version) && 
+        [1, 2, 3].includes(contenido.version) &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
         !Array.isArray(contenido.datos);
@@ -817,7 +822,7 @@ function esCopiaValida(contenido) {
 function exportarCopia() {
     const copia = {
         app: "finanzas-personal",
-        version: 2,
+        version: 3,
         datos: construirPaquete()
     };
 
@@ -1559,25 +1564,25 @@ botonDeudas.addEventListener("click", function () {
 
 formularioAhorro.addEventListener("submit", registrarMovimientoAhorro);
 
-function leerIdReincio(datos){
-    if(
+function leerIdReincio(datos) {
+    if (
         datos.reincioId === undefined ||
         datos.reincioId === null
-    ){
+    ) {
         return null;
     }
-    if(
+    if (
         typeof datos.reincioId !== "string" ||
         datos.reincioId.trim() === ""
-    ){
+    ) {
         throw new Error("La marca de reincio no es valido");
     }
 
     return datos.reincioId;
 }
 
-function crearDatosIniciales(){
-    return{
+function crearDatosIniciales() {
+    return {
         reinicioId: generarId([]),
         frecuencia: "mensual",
         monto: "",
@@ -1592,7 +1597,7 @@ function crearDatosIniciales(){
     };
 }
 
-function bloquearPantallaPorReinicio(texto){
+function bloquearPantallaPorReinicio(texto) {
     reinicioDetectado = true;
     guardadoHabilitado = false;
 
@@ -1603,18 +1608,18 @@ function bloquearPantallaPorReinicio(texto){
     botonRecargarReinicio.focus();
 }
 
-function recargarTrasreinicio(){
+function recargarTrasreinicio() {
     window.location.reload();
 }
 
-function restablecerTodosLosDatos(evento){
+function restablecerTodosLosDatos(evento) {
     evento.preventDefault();
 
-    if(reinicioDetectado){
+    if (reinicioDetectado) {
         return;
     }
 
-    if(campoConfirmarBorrado.value.trim() !== "BORRAR"){
+    if (campoConfirmarBorrado.value.trim() !== "BORRAR") {
         mensajeBorrado.textContent =
             "Escribe BORRAR para confirmar";
 
@@ -1624,13 +1629,13 @@ function restablecerTodosLosDatos(evento){
 
     const nuevosDatos = crearDatosIniciales();
 
-    try{
+    try {
         localStorage.setItem(
             CLAVES_GUARDADO,
             JSON.stringify(nuevosDatos)
         );
-    } catch(error){
-        mensajeBorrado.textContent = 
+    } catch (error) {
+        mensajeBorrado.textContent =
             "No se pudo completar el guardado " +
             "Los datos anteriores siguen guardados";
 
@@ -1646,25 +1651,25 @@ function restablecerTodosLosDatos(evento){
     recargarTrasreinicio();
 }
 
-function revisarReinicioEnOtraPestana(evento){
-    if(
+function revisarReinicioEnOtraPestana(evento) {
+    if (
         evento.storageArea !== localStorage ||
         evento.key !== CLAVE_GUARDADO
-    ){
+    ) {
         return;
     }
 
-    try{
+    try {
         const idGuardado = evento.newValue === null
             ? null
             : leerIdReincio(JSON.parse(evento.newValue));
-        if(idGuardado !== reinicioActual){
+        if (idGuardado !== reinicioActual) {
             bloquearPantallaPorReinicio(
                 "Los datos se restablecieron en otra pestaña" +
                 "Recarga antes de continuar"
             );
         }
-    } catch(error){
+    } catch (error) {
         bloquearPantallaPorReinicio(
             "Los datos guardados cambiaron y no se pueden leer" +
             "Recarga para revisarlos"

@@ -32,66 +32,82 @@ function convertirPesosACentavos(texto) {
     return centavos;
 }
 
-function calcularReservaDeuda(deuda){
-    if(
+function calcularReservaDeuda(deuda) {
+    if (
         !deuda ||
         !Number.isSafeInteger(deuda.objetivoCentavos) ||
-        deuda.objetivoCentavos <= 0 || 
+        deuda.objetivoCentavos <= 0 ||
         !Array.isArray(deuda.aportaciones)
-    ){
+    ) {
         return null;
     }
 
-    const transferencias = deuda.transferencias ===  undefined
+    const vinculadas = limpiarAportacionesNomina(
+        deuda.aportacionesNomina
+    );
+
+    const transferencias = deuda.transferencias === undefined
         ? []
         : deuda.transferencias;
 
-    if (!Array.isArray(transferencias)){
+    if (
+        vinculadas === null ||
+        !Array.isArray(transferencias)
+    ) {
         return null;
     }
 
     let saldo = 0;
 
-    for(const monto of deuda.aportaciones){
-        if(!Number.isSafeInteger(monto) || monto <= 0){
+    for (const monto of deuda.aportaciones) {
+        if (!Number.isSafeInteger(monto) || monto <= 0) {
             return null;
         }
 
         saldo += monto;
 
-        if(!Number.isSafeInteger(saldo)){
+        if (!Number.isSafeInteger(saldo)) {
+            return null;
+        }
+    }
+
+    for (const movimiento of vinculadas) {
+        saldo += movimiento.montoCentavos;
+
+        if (!Number.isSafeInteger(saldo)) {
             return null;
         }
     }
 
     const ids = new Set();
 
-    for(const movimiento of transferencias){
-        if(
+    for (const movimiento of transferencias) {
+        if (
             !movimiento ||
             typeof movimiento !== "object" ||
-            Array.isArray(movimiento) || 
-            typeof movimiento.id !== "string" || 
+            Array.isArray(movimiento) ||
+            typeof movimiento.id !== "string" ||
             movimiento.id.trim() === "" ||
+            ids.has(movimiento.id) ||
+            typeof movimiento.grupoId !== "string" ||
+            movimiento.grupoId.trim() === "" ||
             !Number.isSafeInteger(movimiento.montoCentavos) ||
             movimiento.montoCentavos === 0
-        ){
+        ) {
             return null;
         }
 
         ids.add(movimiento.id);
         saldo += movimiento.montoCentavos;
 
-        if(!Number.isSafeInteger(saldo)){
+        if (!Number.isSafeInteger(saldo)) {
             return null;
         }
     }
 
-    if(saldo < 0 || saldo > deuda.objetivoCentavos){
-        return null;
-    }
-
-    return saldo;
+    return saldo < 0 || saldo > deuda.objetivoCentavos
+        ? null
+        : saldo;
 }
 
 function resumirDeuda(deuda) {

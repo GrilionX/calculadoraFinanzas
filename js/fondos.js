@@ -83,6 +83,36 @@ function limpiarDatosFondo(grupo) {
             limpio.id = movimiento.id;
         }
 
+        if (movimiento.origenNomina !== undefined) {
+            if (
+                movimiento.tipo !== "apartado" ||
+                !movimiento.origenNomina ||
+                typeof movimiento.origenNomina !== "object" ||
+                Array.isArray(movimiento.origenNomina)
+            ) {
+                return null;
+            }
+
+            const origen = movimiento.origenNomina;
+
+            const revisados = limpiarAportacionesNomina([{
+                id: origen.id,
+                nominaId: origen.nominaId,
+                categoriaId: origen.categoriaId,
+                montoCentavos: movimiento.montoCentavos
+            }]);
+
+            if (revisados === null) {
+                return null;
+            }
+
+            limpio.origenNomina = {
+                id: origen.id,
+                nominaId: origen.nominaId,
+                categoriaId: origen.categoriaId
+            };
+        }
+
         movimientosFondo.push(limpio);
     }
 
@@ -153,7 +183,7 @@ function transferenciasCoinciden(grupos, lista) {
     const pendientes = new Map();
 
     for (const deuda of lista) {
-        for (const movimiento of deuda.transferencia ?? []) {
+        for (const movimiento of deuda.transferencias ?? []) {
             if (pendientes.has(movimiento.id)) {
                 return false;
             }
@@ -167,7 +197,7 @@ function transferenciasCoinciden(grupos, lista) {
     }
 
     for (const grupo of grupos) {
-        for (const grupo of grupos) {
+        for (const movimiento of grupo.movimientosFondo ?? []) {
             if (movimiento.tipo !== "transferencia") {
                 continue;
             }
@@ -414,41 +444,11 @@ function cambiarModalidadGrupo(id, modalidad) {
 }
 
 function registrarApartadoGrupo(id, textoMonto) {
-    if (!puedeModificarDeudas()) {
-        return;
-    }
-
-    const grupo = gruposDeudas.find(elemento => elemento.id === id);
-    const monto = convertirPesosACentavos(textoMonto);
-
-    if (!grupo || grupo.modalidad !== "grupo" || monto === null) {
-        informarDeudas(
-            "Revisa el grupo y escribe un importe positivo",
-            true
-        );
-        return;
-    }
-
-    const resumen = resumirFondoGrupo(grupo);
-
-    if (resumen === null || monto > resumen.faltaCentavos) {
-        informarDeudas(
-            "El apartado supera lo que falta resumir para el grupo",
-            true
-        );
-        return;
-    }
-
-    grupo.movimientosFondo = [
-        ...(grupo.movimientosFondo ?? []),
-        {
-            tipo: "apartado",
-            montoCentavos: monto,
-            deudaId: null
-        }
-    ];
-
-    completarCambioDeudas("Apartado registrado en el fondo del grupo");
+    return registrarApartadoNomina(
+        "grupo",
+        id,
+        textoMonto
+    );
 }
 
 function distribuirFondoGrupo(id) {
@@ -624,7 +624,14 @@ function crearControlesFondo(grupo) {
         agregar.disabled = resumen.faltaCentavos === 0;
         monto.disabled = agregar.disabled;
 
-        formulario.append(etiquetaMonto, agregar);
+        const avisoOrigen = document.createElement("p");
+        avisoOrigen.className = "ayuda origen-apartado-actual";
+
+        formulario.append(
+            avisoOrigen,
+            etiquetaMonto,
+            agregar
+        );
 
         formulario.addEventListener("submit", function (evento) {
             evento.preventDefault();
@@ -678,6 +685,19 @@ function crearControlesFondo(grupo) {
         fila.textContent += formatoMoneda.format(
             Math.abs(movimiento.montoCentavos) / 100
         );
+
+        if (
+            limpias === null ||
+            gruposLimpios === null ||
+            !validarFondosGrupos(gruposLimpios, limpias) ||
+            !validarOrigenesNomina(nominas, limpias, gruposLimpios)
+        ) {
+            informarDeudas(
+                "La transferencia no pasó la comprobación. No se aplicó.",
+                true
+            );
+            return;
+        }
 
         lista.appendChild(fila);
     }

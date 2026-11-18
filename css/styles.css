@@ -833,3 +833,31 @@ h3 {
 #mensaje-borrado {
     line-height: 1.5;
 }
+
+/* Origen de apartados */
+.origen-apartados {
+    display: grid;
+    gap: 0.75rem;
+    margin-block: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #172033;
+}
+
+.origen-apartados h3,
+.origen-apartados p {
+    margin: 0;
+}
+
+.origen-apartados select {
+    width: 100%;
+    min-width: 0;
+}
+
+.origen-apartado-actual {
+    padding: 0.75rem;
+    border-left: 3px solid #2563eb;
+    overflow-wrap: anywhere;
+}

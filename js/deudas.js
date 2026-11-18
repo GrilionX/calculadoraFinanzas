@@ -314,49 +314,15 @@ function registrarDeuda(evento) {
 function registrarApartado(evento) {
     evento.preventDefault();
 
-    if (!puedeModificarDeudas()) {
-        return;
+    const registrado = registrarApartadoConNomina(
+        "deuda",
+        campoDestinoApartado.value,
+        campoMontoApartado.value
+    );
+
+    if (registrado) {
+        campoMontoApartado.value = "";
     }
-
-    const deuda = deudas.find(function (elemento) {
-        return elemento.id === campoDestinoApartado.value;
-    });
-
-    const monto = convertirPesosACentavos(campoMontoApartado.value);
-
-    if (!deuda || deuda.liquidada) {
-        informarDeudas("Selecciona una deuda pendiente.", true);
-        return;
-    }
-
-    if (monto === null) {
-        informarDeudas("Escribe un importe válido mayor que cero.", true);
-        return;
-    }
-
-    if (usaFondoGrupo(deuda)) {
-        informarDeudas(
-            "Registra el apartado desde el fondo de su grupo",
-            true
-        );
-        return;
-    }
-
-    const resumen = resumirDeuda(deuda);
-
-    if (monto > resumen.faltaCentavos) {
-        informarDeudas(
-            "Solo falta reunir " +
-            formatoMoneda.format(resumen.faltaCentavos / 100) +
-            ". No se registró el apartado.",
-            true
-        );
-        return;
-    }
-
-    deuda.aportaciones.push(monto);
-    campoMontoApartado.value = "";
-    completarCambioDeudas("Apartado registrado.");
 }
 
 function liquidarDeuda(id) {
@@ -504,6 +470,17 @@ function crearTarjetaDeuda(deuda) {
             );
 
         lista.appendChild(fila)
+    }
+
+    for(const movimiento of deuda.aportacionesNomina ?? []){
+        const fila = document.createElement("li");
+
+        fila.textContent =
+            formatoMoneda.format(movimiento.montoCentavos / 100) +
+            ". Origen " +
+            describirOriginNomina(movimiento);
+
+        lista.appendChild(fila);
     }
 
     historial.appendChild(encabezado);
@@ -679,6 +656,7 @@ function mostrarDeudas() {
 
     deudasVacias.hidden = deudas.length > 0;
     sinResultadosDeudas.hidden = deudas.length === 0 || visibles > 0;
+    actualizarOrigenApartados();
 }
 
 //Validacion
@@ -776,6 +754,9 @@ function limpiarDeudas(lista) {
             objetivoCentavos: deuda.objetivoCentavos,
             prioridad: deuda.prioridad,
             aportaciones: aportaciones,
+            aportacionesNomina: limpiarAportacionesNomin(
+                deuda.aportacionesNomina
+            ),
             transferencias: transferencias,
             liquidada: deuda.liquidada
         });

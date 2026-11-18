@@ -29,7 +29,7 @@ const botonConfirmarNomina = document.getElementById("confirmar-nomina");
 const botonUsarCategoriasNomina =
     document.getElementById("usar-categorias-nomina");
 
-    function prepararCategoriasNomina() {
+function prepararCategoriasNomina() {
     categoriasBorradorNomina = categorias.map(function (categoria) {
         return {
             id: categoria.id,
@@ -222,10 +222,26 @@ function mostrarHistorialNominas() {
         for (const categoria of nomina.reparto) {
             const elemento = document.createElement("li");
 
+            const disponible = calcularDisponibleCategoria(
+                nomina,
+                categoria.id,
+                obtenerApartadosNomina()
+            );
+
             elemento.textContent =
-                categoria.nombre + ": " +
-                categoria.porcentaje + "% — " +
-                formatoMoneda.format(categoria.montoCentavos / 100);
+                categoria.nombre +
+                " · Asignado: " +
+                formatoMoneda.format(
+                    disponible.asignadoCentavos / 100
+                ) +
+                " · Comprometido en deudas: " +
+                formatoMoneda.format(
+                    disponible.utilizadoCentavos / 100
+                ) +
+                " · Disponible para apartados: " +
+                formatoMoneda.format(
+                    disponible.disponibleCentavos / 100
+                );
 
             lista.appendChild(elemento);
         }
