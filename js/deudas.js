@@ -56,15 +56,15 @@ function puedeModificarDeudas() {
 }
 
 function completarCambioDeudas(texto) {
-    mostrarDeudas();
-    invalidarProyeccionDeudas();
-
     const guardadoCorrecto = guardar();
+    mostrarDeudas();
+    mostrarHistorialNominas();
+    invalidarProyeccionDeudas();
 
     informarDeudas(
         guardadoCorrecto
             ? texto
-            : texto + " No se pudo guardar: descarga una copia.",
+            : "No se pudo guardar. El cambio no se aplicó.",
         !guardadoCorrecto
     );
 }
@@ -465,7 +465,7 @@ function crearTarjetaDeuda(deuda) {
             ) +
             (grupo?.nombre ?? "registrado") +
             ": " +
-            formatoMoneda, format(
+            formatoMoneda.format(
                 Math.abs(movimiento.montoCentavos) / 100
             );
 
@@ -478,7 +478,7 @@ function crearTarjetaDeuda(deuda) {
         fila.textContent =
             formatoMoneda.format(movimiento.montoCentavos / 100) +
             ". Origen " +
-            describirOriginNomina(movimiento);
+            describirOrigenNomina(movimiento);
 
         lista.appendChild(fila);
     }
@@ -754,7 +754,7 @@ function limpiarDeudas(lista) {
             objetivoCentavos: deuda.objetivoCentavos,
             prioridad: deuda.prioridad,
             aportaciones: aportaciones,
-            aportacionesNomina: limpiarAportacionesNomin(
+            aportacionesNomina: limpiarAportacionesNomina(
                 deuda.aportacionesNomina
             ),
             transferencias: transferencias,

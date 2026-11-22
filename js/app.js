@@ -70,6 +70,7 @@ let movimientosAhorros = [];
 let guardadoHabilitado = true;
 let reinicioActual = null;
 let reinicioDetectado = false;
+let ultimoTextoGuardado = null;
 
 //Elementos
 const campoMonto = document.getElementById("monto");
@@ -391,7 +392,8 @@ function construirPaquete() {
         movimientosAhorros: movimientosAhorros,
         deudas: deudas,
         gruposDeudas: gruposDeudas,
-        nominas: nominas
+        nominas: nominas,
+        historialCorrecciones: historialCorrecciones
     };
 }
 
@@ -425,20 +427,39 @@ function guardar() {
             return false;
         }
 
-        localStorage.setItem(
-            CLAVE_GUARDADO,
-            JSON.stringify(construirPaquete())
-        );
+        if (anterior !== ultimoTextoGuardado) {
+            bloquearPantallaPorReinicio(
+                "Los datos cambiaron en otra pestaña. Recarga para trabajar con la versión más reciente."
+            );
+            return false;
+        }
+
+        const historialNuevo = prepararHistorialGuardado();
+        const paquete = construirPaquete();
+        paquete.historialCorrecciones = historialNuevo;
+        const estadoLimpio = validarEstadoCorreccion(capturarEstadoDeudas(), nominas);
+        paquete.deudas = estadoLimpio.deudas;
+        paquete.gruposDeudas = estadoLimpio.gruposDeudas;
+        const textoNuevo = JSON.stringify(paquete);
+        localStorage.setItem(CLAVE_GUARDADO, textoNuevo);
+        ultimoTextoGuardado = textoNuevo;
+        deudas = estadoLimpio.deudas;
+        gruposDeudas = estadoLimpio.gruposDeudas;
+        historialCorrecciones = historialNuevo;
+        estadoDeudasGuardado = capturarEstadoDeudas();
 
         estadoGuardado.className = "ayuda";
         estadoGuardado.textContent =
             "Datos guardados en este navegador.";
 
+        mostrarHistorialCorrecciones();
         return true;
     } catch (error) {
+        deudas = copiar(estadoDeudasGuardado.deudas);
+        gruposDeudas = copiar(estadoDeudasGuardado.gruposDeudas);
         estadoGuardado.className = "aviso error";
         estadoGuardado.textContent =
-            "No se pudo guardar. Descarga una copia antes de cerrar.";
+            "No se pudo guardar. El cambio de deudas no se aplicó. Descarga una copia antes de cerrar.";
 
         console.warn("No se pudo guardar:", error);
         return false;
@@ -759,6 +780,12 @@ function aplicarDatos(datos) {
         return false;
     }
 
+    const historialLimpio = limpiarHistorialCorrecciones(
+        datos.historialCorrecciones, nominasLimpias,
+        { deudas: deudasLimpias, gruposDeudas: gruposLimpios }
+    );
+    if (historialLimpio === null) return false;
+
     campoFrecuencia.value = datos.frecuencia ?? "mensual";
     campoMonto.value = datos.monto === undefined ? "" : String(datos.monto);
     campoPeriodo.value = datos.periodo ?? "semanal";
@@ -772,6 +799,8 @@ function aplicarDatos(datos) {
     deudas = deudasLimpias;
     gruposDeudas = gruposLimpios;
     nominas = nominasLimpias;
+    historialCorrecciones = historialLimpio;
+    estadoDeudasGuardado = capturarEstadoDeudas();
 
     return true;
 }
@@ -779,6 +808,7 @@ function aplicarDatos(datos) {
 function cargar() {
     try {
         const texto = localStorage.getItem(CLAVE_GUARDADO);
+        ultimoTextoGuardado = texto;
 
         if (texto === null) {
             return;
@@ -813,7 +843,7 @@ function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
-        [1, 2, 3].includes(contenido.version) &&
+        [1, 2, 3, 4].includes(contenido.version) &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
         !Array.isArray(contenido.datos);
@@ -822,7 +852,7 @@ function esCopiaValida(contenido) {
 function exportarCopia() {
     const copia = {
         app: "finanzas-personal",
-        version: 3,
+        version: 4,
         datos: construirPaquete()
     };
 
@@ -1564,21 +1594,21 @@ botonDeudas.addEventListener("click", function () {
 
 formularioAhorro.addEventListener("submit", registrarMovimientoAhorro);
 
-function leerIdReincio(datos) {
+function leerIdReinicio(datos) {
     if (
-        datos.reincioId === undefined ||
-        datos.reincioId === null
+        datos.reinicioId === undefined ||
+        datos.reinicioId === null
     ) {
         return null;
     }
     if (
-        typeof datos.reincioId !== "string" ||
-        datos.reincioId.trim() === ""
+        typeof datos.reinicioId !== "string" ||
+        datos.reinicioId.trim() === ""
     ) {
         throw new Error("La marca de reincio no es valido");
     }
 
-    return datos.reincioId;
+    return datos.reinicioId;
 }
 
 function crearDatosIniciales() {
@@ -1593,7 +1623,8 @@ function crearDatosIniciales() {
         movimientosAhorros: [],
         deudas: [],
         gruposDeudas: [],
-        nominas: []
+        nominas: [],
+        historialCorrecciones: []
     };
 }
 
@@ -1608,7 +1639,7 @@ function bloquearPantallaPorReinicio(texto) {
     botonRecargarReinicio.focus();
 }
 
-function recargarTrasreinicio() {
+function recargarTrasReinicio() {
     window.location.reload();
 }
 
@@ -1631,7 +1662,7 @@ function restablecerTodosLosDatos(evento) {
 
     try {
         localStorage.setItem(
-            CLAVES_GUARDADO,
+            CLAVE_GUARDADO,
             JSON.stringify(nuevosDatos)
         );
     } catch (error) {
@@ -1648,7 +1679,7 @@ function restablecerTodosLosDatos(evento) {
         "Recarga para empezar de cero"
     );
 
-    recargarTrasreinicio();
+    recargarTrasReinicio();
 }
 
 function revisarReinicioEnOtraPestana(evento) {
@@ -1662,7 +1693,7 @@ function revisarReinicioEnOtraPestana(evento) {
     try {
         const idGuardado = evento.newValue === null
             ? null
-            : leerIdReincio(JSON.parse(evento.newValue));
+            : leerIdReinicio(JSON.parse(evento.newValue));
         if (idGuardado !== reinicioActual) {
             bloquearPantallaPorReinicio(
                 "Los datos se restablecieron en otra pestaña" +
