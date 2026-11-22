@@ -936,3 +936,14 @@ h3 {
 .ajustes-financieros button { min-height: 44px; white-space: normal; }
 .movimiento-ahorro { flex-wrap: wrap; }
 .movimiento-ahorro > p { flex-basis: 100%; overflow-wrap: anywhere; }
+
+/*Resumen y grupos*/
+.tarjetas-financieras { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: .75rem; margin-block: 1rem; }
+.tarjetas-financieras > div { display: grid; gap: .5rem; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; color: #172033; }
+.tarjetas-financieras strong { font-size: 1.3rem; overflow-wrap: anywhere; }
+.administrador-grupos { margin-block: 1.5rem; }
+.administrador-grupos summary { cursor: pointer; padding-block: .75rem; font-weight: 600; }
+.administrador-grupos form { display: grid; gap: .65rem; margin-block: 1rem; }
+.administrador-grupos input, .administrador-grupos select, #resumen-nomina { width: 100%; min-width: 0; box-sizing: border-box; font-size: 1rem; }
+.administrador-grupos button { min-height: 44px; white-space: normal; }
+@media (max-width: 400px) { .tarjetas-financieras { grid-template-columns: minmax(0, 1fr); } }

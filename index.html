@@ -88,6 +88,23 @@
             </section>
         </section>
         <div id="vista-reparto">
+            <section id="resumen-financiero" class="tarjeta" aria-labelledby="titulo-resumen-financiero">
+                <h2 id="titulo-resumen-financiero">Mi resumen financiero</h2>
+                <label for="resumen-nomina">Ver el dinero de</label>
+                <select id="resumen-nomina"></select>
+                <div class="tarjetas-financieras"><div><span>Ingresos recibidos</span><strong id="resumen-ingresos">$0.00</strong></div><div><span>Gastos registrados</span><strong id="resumen-gastos">$0.00</strong></div><div><span>Destinado a ahorro</span><strong id="resumen-ahorroDestinado">$0.00</strong></div><div><span>Destinado a deudas</span><strong id="resumen-destinadoDeudas">$0.00</strong></div><div><span>Sin utilizar en nóminas</span><strong id="resumen-disponible">$0.00</strong></div></div>
+                <p class="ayuda">Ingresos recibidos = gastos + destinado a ahorro + destinado a deudas + sin utilizar. “Destinado a deudas” incluye apartados ya pagados. Los retiros de ahorro no vuelven a liberar la nómina.</p>
+                <details><summary>Disponible por nómina y categoría</summary>
+                    <div class="tabla-scroll"><table><caption>Distribución del dinero registrado</caption>
+                        <thead><tr><th>Nómina</th><th>Categoría</th><th>Asignado</th><th>Utilizado o apartado</th><th>Disponible</th></tr></thead>
+                        <tbody id="filas-resumen-financiero"></tbody>
+                    </table></div>
+                </details>
+                <h3>Saldos actuales de toda mi cuenta local</h3>
+                <p class="ayuda">Estos saldos siempre incluyen todos tus registros, también los anteriores sin nómina vinculada. No se suman a las tarjetas de arriba ni cambian con el filtro de nómina. No representan un saldo bancario sincronizado.</p>
+                <div class="tarjetas-financieras"><div><span>Ahorro personal actual</span><strong id="resumen-ahorroActual">$0.00</strong></div><div><span>Reservado para deudas pendientes</span><strong id="resumen-reservasActuales">$0.00</strong></div><div><span>Pagos de deuda confirmados</span><strong id="resumen-pagadoDeudas">$0.00</strong></div><div><span>Deuda pendiente total</span><strong id="resumen-deudaPendiente">$0.00</strong></div><div><span>Falta reunir para deudas</span><strong id="resumen-faltaReunir">$0.00</strong></div><div><span>Retiros de ahorro registrados</span><strong id="resumen-retirosAhorro">$0.00</strong></div></div>
+                <p id="mensaje-resumen-financiero" role="status"></p>
+            </section>
             <section class="tarjeta acceso-gastos">
                 <div><p class="etiqueta-gastos">Tu día a día</p><h2>Mis gastos</h2>
                 <p>Organiza tus gastos por categorías y consulta cuánto queda de cada nómina.</p></div>
@@ -391,6 +408,25 @@
                 </form>
             </details>
 
+            <details class="administrador-grupos">
+                <summary>Administrar mis grupos</summary>
+                <p>Puedes renombrar grupos sin perder su historial. Los traslados no redistribuyen dinero de fondos compartidos.</p>
+                <form id="formulario-renombrar-grupo">
+                    <label for="administrar-grupo">Grupo</label><select id="administrar-grupo" required></select>
+                    <label for="administrar-nombre">Nombre</label><input id="administrar-nombre" maxlength="60" required>
+                    <button type="submit">Guardar nombre del grupo</button>
+                </form>
+                <p id="estado-administrar-grupo"></p>
+                <button id="eliminar-grupo-vacio" type="button" disabled>Eliminar grupo vacío</button>
+                <form id="formulario-trasladar-deuda">
+                    <h3>Reorganizar una deuda</h3>
+                    <label for="trasladar-deuda">Deuda pendiente</label><select id="trasladar-deuda" required></select>
+                    <label for="trasladar-destino">Nuevo grupo</label><select id="trasladar-destino"></select>
+                    <p id="previa-traslado"></p>
+                    <button id="confirmar-traslado" type="submit" disabled>Mover deuda</button>
+                </form>
+                <p id="mensaje-grupos" role="status"></p>
+            </details>
             <details class="deudas-registro" open>
                 <summary>Registrar una deuda</summary>
 
@@ -673,6 +709,8 @@
     <script src="./js/correcciones.js"></script>
     <script src="./js/ahorro.js"></script>
     <script src="./js/ajustes.js"></script>
+    <script src="./js/grupos.js"></script>
+    <script src="./js/resumen.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
 </body>

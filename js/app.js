@@ -464,6 +464,8 @@ function guardar() {
         mostrarGastos();
         actualizarOrigenAhorro();
         mostrarAjustesFinancieros();
+        mostrarAdministradorGrupos();
+        mostrarResumenFinanciero();
         return true;
     } catch (error) {
         deudas = copiar(estadoDeudasGuardado.deudas);

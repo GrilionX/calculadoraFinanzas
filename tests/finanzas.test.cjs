@@ -526,3 +526,134 @@ test('ahorro: copias antiguas, origen corrupto y formulario móvil', async t => 
     }), { rechazada: true, antigua: true, saldo: 5000 });
     assert.deepEqual(errors, []);
 });
+
+
+test('grupos: renombrar preserva pagos e identidad; nombres duplicados rechazados', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoConNomina("deuda", "d1", "100");
+        liquidarDeuda("d1");
+        const renombrado = renombrarGrupoDeudas("g1", "Compras personales");
+        const vacio = renombrarGrupoDeudas("g1", " ");
+        gruposDeudas.push({ id: "g2", nombre: "Otro", modalidad: "individual", movimientosFondo: [] });
+        guardar();
+        const duplicado = renombrarGrupoDeudas("g1", " otro ");
+        return { renombrado, vacio, duplicado, grupo: deudas[0].grupoId, pagada: deudas[0].liquidada };
+    }), { renombrado: true, vacio: false, duplicado: false, grupo: "g1", pagada: true });
+    await page.reload();
+    assert.equal(await page.evaluate(() => gruposDeudas[0].nombre), "Compras personales");
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+});
+
+test('grupos: mover apartados individuales conserva saldos y eliminar vacío mantiene historial', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoConNomina("deuda", "d1", "50");
+        gruposDeudas.push({ id: "g2", nombre: "Destino", modalidad: "individual", movimientosFondo: [] });
+        guardar();
+        const movida = trasladarDeudaGrupo("d1", "g2");
+        const eliminado = eliminarGrupoVacio("g1");
+        const ocupado = eliminarGrupoVacio("g2");
+        const historial = historialCorrecciones.at(-1).antes.gruposDeudas.some(g => g.id === "g1");
+        return { movida, eliminado, ocupado, historial, reserva: calcularReservaDeuda(deudas[0]),
+            disponible: calcularDisponibleCategoria(nominas[0], "deudas", obtenerCompromisosNomina()).disponibleCentavos };
+    }), { movida: true, eliminado: true, ocupado: false, historial: true, reserva: 5000, disponible: 95000 });
+    await page.reload();
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+    assert.equal(await page.evaluate(() => deudas[0].grupoId), "g2");
+});
+
+test('grupos: fondos y transferencias bloquean reorganización sin borrar movimientos', async t => {
+    const { page } = await abrir(t, true);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoGrupo("g1", "50");
+        const conFondo = trasladarDeudaGrupo("d1", null);
+        cambiarModalidadGrupo("g1", "individual");
+        const conTransferencias = trasladarDeudaGrupo("d1", null);
+        const borrar = eliminarGrupoVacio("g1");
+        return { conFondo, conTransferencias, borrar, referencias: deudas[0].transferencias.length };
+    }), { conFondo: false, conTransferencias: false, borrar: false, referencias: 1 });
+});
+
+test('grupos: fallo de guardado mantiene nombre y grupo anteriores', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        const nombre = gruposDeudas[0].nombre;
+        const original = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => { throw new Error("Sin espacio"); };
+        const renombrado = renombrarGrupoDeudas("g1", "Nuevo");
+        const traslado = trasladarDeudaGrupo("d1", null);
+        Storage.prototype.setItem = original;
+        return { renombrado, traslado, intacto: gruposDeudas[0].nombre === nombre, grupo: deudas[0].grupoId };
+    }), { renombrado: false, traslado: false, intacto: true, grupo: "g1" });
+});
+
+test('resumen: nóminas, gastos, ahorro y deudas concilian sin contar dos veces', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        agregarCategoriaGasto("Comida");
+        registrarGastoBasico({ nominaId: "n1", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Compra", fecha: "2026-11-22", monto: "150" });
+        registrarAhorroVinculado("aportacion", "Ahorro", "200", "n1");
+        registrarAhorroVinculado("retiro", "Uso personal", "50", "");
+        campoCategoriaOrigen.value = "deudas";
+        registrarApartadoConNomina("deuda", "d1", "100");
+        liquidarDeuda("d1");
+        const r = calcularResumenFinanciero();
+        return { ingresos: r.ingresos, gastos: r.gastos, ahorro: r.ahorroDestinado,
+            deudas: r.destinadoDeudas, libre: r.disponible, ahorroActual: r.ahorroActual,
+            reservas: r.reservasActuales, pagado: r.pagadoDeudas, pendiente: r.deudaPendiente };
+    }), { ingresos: 200000, gastos: 15000, ahorro: 20000, deudas: 10000, libre: 155000,
+        ahorroActual: 15000, reservas: 0, pagado: 10000, pendiente: 0 });
+});
+
+test('resumen: distribuir y transferir no duplica las reservas del grupo', async t => {
+    const { page } = await abrir(t, true);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoGrupo("g1", "100");
+        const antes = calcularResumenFinanciero();
+        distribuirFondoGrupo("g1");
+        const despues = calcularResumenFinanciero();
+        liquidarDeuda("d1");
+        const pagado = calcularResumenFinanciero();
+        return { antes: antes.reservasActuales, despues: despues.reservasActuales,
+            destinado: despues.destinadoDeudas, libre: despues.disponible,
+            pagado: pagado.pagadoDeudas, reservaFinal: pagado.reservasActuales };
+    }), { antes: 10000, despues: 10000, destinado: 10000, libre: 90000, pagado: 10000, reservaFinal: 0 });
+});
+
+test('resumen: datos antiguos separados, filtro por nómina y exceso numérico', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        movimientosAhorros = [{ tipo: "aportacion", concepto: "Anterior", montoCentavos: 5000 }];
+        deudas[0].aportaciones.push(2000);
+        guardar();
+        nominas.push({ version: 1, id: "n2", referencia: "Segundo", periodo: "unico",
+            montoCentavos: 50000, reparto: [{ id: "ocio", nombre: "Ocio", porcentaje: 100, montoCentavos: 50000 }] });
+        guardar();
+        const r = calcularResumenFinanciero("n2");
+        let rechazado = false;
+        try { sumarCentavosResumen([Number.MAX_SAFE_INTEGER, 1]); } catch { rechazado = true; }
+        return { ingresos: r.ingresos, libre: r.disponible, ahorro: r.ahorroDestinado,
+            actual: r.ahorroActual, reservas: r.reservasActuales, rechazado };
+    }), { ingresos: 50000, libre: 50000, ahorro: 0, actual: 5000, reservas: 2000, rechazado: true });
+});
+
+test('grupos y resumen: controles móviles y actualización visible', async t => {
+    const { page, errors } = await abrir(t);
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.match(await page.locator("#resumen-ingresos").textContent(), /1,000/);
+    await page.locator("#boton-deudas").click();
+    await page.locator(".administrador-grupos summary").click();
+    await page.locator("#administrar-grupo").selectOption("g1");
+    await page.locator("#administrar-nombre").fill("Grupo personal");
+    await page.locator("#formulario-renombrar-grupo button").click();
+    await page.locator("#trasladar-deuda").selectOption("d1");
+    await page.locator("#trasladar-destino").selectOption("");
+    await page.locator("#confirmar-traslado").click();
+    await page.locator("#eliminar-grupo-vacio").click();
+    assert.equal(await page.evaluate(() => gruposDeudas.length), 0);
+    await page.locator("#boton-reparto").click();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    assert.deepEqual(errors, []);
+});

@@ -879,6 +879,11 @@ function guardarEdicionDeuda(evento) {
         return;
     }
 
+    if (grupoId !== (deuda.grupoId ?? null)) {
+        const bloqueo = motivoImpedimentoTraslado(deuda.id, grupoId);
+        if (bloqueo) { informarDeudas(bloqueo, true); return; }
+    }
+
     const destinoEsCompartido = gruposDeudas.some(function (grupo) {
         return grupo.id === grupoId && grupo.modalidad === "grupo";
     });

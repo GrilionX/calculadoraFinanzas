@@ -31,6 +31,27 @@ Un gasto no puede superar el saldo disponible. El mismo dinero no puede financia
 
 Las categorías de gastos antiguas se migran automáticamente al presupuesto de básicos y comienzan activas. Los campos internos `gastosBasicos` y algunas funciones conservan su nombre anterior por compatibilidad, pero ahora almacenan gastos de los distintos presupuestos, identificados por `categoriaId`.
 
+## Administración de grupos
+
+En **Deudas → Administrar mis grupos** puedes cambiar el nombre de un grupo, mover una deuda pendiente a otro grupo o dejarla sin grupo, y eliminar grupos vacíos sin movimientos.
+
+Renombrar conserva el identificador, los pagos y los movimientos. Un traslado conserva el objetivo y los apartados individuales con su origen de nómina. Se bloquea si hay transferencias o asignaciones que referencian esa deuda, si interviene un fondo compartido con reservas o si se intenta llevar una deuda con apartados individuales a un fondo compartido. Las mismas restricciones se aplican desde el editor de deuda.
+
+Eliminar exige que no haya deudas (tampoco liquidadas), movimientos de fondo ni referencias de transferencias. Todos estos cambios quedan en el historial de estados anteriores y posteriores. Si no se puede guardar, se conserva el estado anterior.
+
+## Resumen financiero
+
+En **Reparto → Mi resumen financiero** puedes ver todas las nóminas o elegir una. Se comprueba esta igualdad con importes enteros en centavos:
+
+**Ingresos recibidos = gastos + destinado a ahorro + destinado a deudas + sin utilizar.**
+
+- El destino a ahorro incluye las aportaciones vinculadas activas, aunque después hayas retirado ahorro.
+- El destino a deudas incluye los apartados vinculados, aunque se hayan distribuido, transferido o pagado. Cada origen se cuenta una sola vez.
+- El disponible por nómina y categoría descuenta gastos, aportaciones de ahorro y apartados activos.
+- El simulador y los ingresos supuestos no se incluyen como dinero recibido.
+
+Debajo aparecen los **saldos actuales de toda la cuenta local**, que no cambian con el filtro de nómina: ahorro actual, reservas para deudas pendientes, pagos confirmados, deuda pendiente, lo que falta reunir y retiros de ahorro. Incluyen registros anteriores sin origen de nómina. Son saldos del registro local, no una consulta al banco. No deben sumarse nuevamente a los totales de nóminas. Los retiros de ahorro no crean automáticamente un gasto ni liberan la nómina original.
+
 ## Ahorro vinculado
 
 Las nuevas aportaciones requieren elegir una nómina con categoría Ahorro. El importe consume su disponible y no puede reutilizarse en apartados. Los movimientos anteriores sin origen se conservan como ahorro previo; no se inventa una nómina para ellos.
@@ -75,6 +96,8 @@ js/correcciones.js         Validación, historial y reversión
 js/gastos.js               Gastos por presupuesto, categorías y disponibilidad conjunta
 js/ahorro.js               Origen y correcciones del ahorro personal
 js/ajustes.js              Objetivos y apartados concretos con motivo
+js/grupos.js               Renombrar, trasladar y eliminar grupos vacíos
+js/resumen.js              Conciliación de nóminas y saldos actuales
 js/app.js                  Persistencia, presupuesto, ahorro y arranque
 js/pruebas.js              Comprobaciones existentes
 scripts/servir.cjs         Servidor local de archivos
@@ -102,4 +125,6 @@ Las pruebas usan datos ficticios y perfiles temporales, sin acceder al almacenam
 
 ## Pendientes
 
-Administrar grupos de deudas y unificar el resumen financiero; después mejorar diseño y accesibilidad. Las correcciones de apartados transferidos o distribuidos requieren aún deshacer primero las operaciones dependientes. Cuentas, sincronización y una API quedan para una fase posterior. Excel queda fuera del alcance acordado.
+Mejorar navegación, accesibilidad y comodidad móvil; después incorporar cuentas, sincronización y una API. Las correcciones de apartados transferidos o distribuidos siguen requiriendo deshacer primero las operaciones dependientes. Excel permanece fuera del alcance acordado.
+
+La entrega de grupos y resumen se verificó con 34 escenarios de integración, incluidos los anteriores de gastos, ahorro, correcciones, copias y restablecimiento.
