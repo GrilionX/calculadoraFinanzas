@@ -1,0 +1,88 @@
+/*Identidad y componentes compartidos*/
+:root {
+    --fondo: #f3f6f8;
+    --superficie: #ffffff;
+    --tinta: #192d3b;
+    --secundario: #526473;
+    --linea: #dce5e9;
+    --acento: #08786f;
+    --acento-fuerte: #075f58;
+    --acento-suave: #e7f4ef;
+    --error: #a72c39;
+    --radio: 20px;
+    --ahorro-primario: #08786f;
+    --ahorro-oscuro: #113b3a;
+    --ahorro-texto: var(--tinta);
+    --ahorro-borde: var(--linea);
+}
+html { scroll-padding-block: 6rem; }
+body { background: var(--fondo); color: var(--tinta); font: 1rem/1.55 Inter, "Segoe UI", system-ui, sans-serif; }
+main { max-width: 1220px; padding: 0 32px 56px; }
+main:focus { outline: none; }
+h1, h2, h3, h4 { color: var(--tinta); line-height: 1.25; letter-spacing: -.025em; }
+h1 { font-size: clamp(1.8rem, 3vw, 2.65rem); font-weight: 750; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+p { overflow-wrap: anywhere; }
+.sobretitulo, .etiqueta-gastos { font-size: .75rem; letter-spacing: .12em; font-weight: 750; color: var(--acento); margin: 0 0 .5rem; }
+.ayuda, .nota { font-size: .9rem; color: var(--secundario); line-height: 1.6; }
+.cabecera-app { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; min-height: 94px; }
+.marca-app { display: flex; align-items: center; gap: .7rem; font-size: 1.1rem; font-weight: 750; letter-spacing: -.03em; }
+.marca-app small { display: block; color: var(--secundario); font-size: .75rem; letter-spacing: .02em; font-weight: 500; }
+.marca-simbolo { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: var(--acento); color: white; font-size: 1.1rem; letter-spacing: -.12em; position: relative; }
+.marca-simbolo span { position: absolute; margin-left: 12px; margin-top: 10px; color: #a8e7cc; }
+#estado-guardado { margin: 0; max-width: 32rem; text-align: right; font-size: .85rem; }
+.navegacion-vistas { position: sticky; top: 0; z-index: 20; display: flex; gap: .5rem; padding: .65rem 0; margin: 0 0 2.25rem; border-block: 1px solid var(--linea); background: var(--fondo); }
+.navegacion-vistas button { border: 0; border-radius: 10px; background: transparent; color: var(--secundario); font-size: .95rem; font-weight: 650; min-width: 130px; padding: .7rem 1.2rem; }
+.navegacion-vistas button[aria-pressed="true"] { background: var(--acento-suave); color: var(--acento-fuerte); }
+.icono-nav { font-size: 1.1rem; margin-right: .4rem; }
+.titulo-app { margin: 0; }
+.subtitulo-app { margin: .6rem 0 2.4rem; color: var(--secundario); }
+.tarjeta, #vista-ahorro, #vista-deudas, .panel-correcciones { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio); padding: clamp(20px, 3vw, 30px); box-shadow: 0 3px 8px #142a3b03; margin-bottom: 24px; }
+label, #formulario-nomina > label, #formulario-ahorro label, .formulario-deudas label { margin: 16px 0 6px; color: var(--tinta); font-size: .9rem; font-weight: 600; }
+input, select, #formulario-ahorro input, #formulario-ahorro select { min-height: 48px; border: 1px solid #bdcdd4; border-radius: 10px; background-color: white; color: var(--tinta); padding: .75rem .9rem; font-size: 1rem; max-width: 100%; }
+input::placeholder { color: #6a7b86; opacity: 1; }
+select { appearance: none; padding-right: 2.5rem !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23526473' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .9rem center; }
+input[type="checkbox"] { min-height: 20px; accent-color: var(--acento); }
+button, .boton-principal, #formulario-ahorro button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 46px; padding: .7rem 1rem; border-radius: 10px; border: 1px solid transparent; background: var(--acento); color: white; font: 650 .95rem/1.4 Inter, "Segoe UI", system-ui, sans-serif; cursor: pointer; white-space: normal; }
+button:hover, .boton-principal:hover, #formulario-ahorro button:hover { background: var(--acento-fuerte); }
+.boton-secundario, #agregar-categoria, #agregar-extra, #exportar-copia, #importar-copia, #restablecer, #respaldo-antes-borrar { background: white; color: var(--acento-fuerte); border: 1px solid #a7c3bf; border-radius: 10px; font-weight: 650; }
+.boton-secundario:hover, #exportar-copia:hover, #importar-copia:hover { background: var(--acento-suave); }
+button:disabled, .boton-principal:disabled, .panel-correcciones button:disabled { opacity: 1; background: #e7ecef; border-color: #d6e0e5; color: #596875; cursor: not-allowed; }
+button.boton-peligro { color: white; background: var(--error); border-color: var(--error); }
+button.boton-peligro:hover { background: #842331; }
+.boton-borrar { background: transparent; color: var(--error); }
+.boton-borrar:hover { background: #fff0f0; }
+:where(input, select, button, summary, a):focus-visible { outline: 3px solid #1464b5 !important; outline-offset: 3px !important; }
+details { min-width: 0; }
+summary { cursor: pointer; font-weight: 650; padding-block: .8rem; overflow-wrap: anywhere; }
+summary::marker { color: var(--acento); }
+details[open] > summary { margin-bottom: .75rem; }
+.aviso:not(:empty) { padding: .8rem 1rem; border-radius: 10px; background: #f1f5f7; color: var(--secundario); font-weight: 500; font-size: .9rem; }
+.aviso.ok:not(:empty) { background: #eaf6ef; color: #186240; }
+.aviso.error:not(:empty) { background: #fff0f1; color: #912735; }
+table { font-size: .9rem; font-variant-numeric: tabular-nums; }
+th { color: #526473; font-weight: 650; font-size: .85rem; background: #f5f8fa; }
+th, td { padding: 12px; border-color: var(--linea); }
+caption { text-align: left; padding: .75rem 0; color: var(--secundario); font-size: .9rem; }
+.tabla-scroll { border: 1px solid var(--linea); border-radius: 12px; max-width: 100%; overscroll-behavior-x: contain; }
+.tabla-scroll:focus-visible { outline: 3px solid #1464b5; outline-offset: 3px; }
+.resumen-ahorro { background: #113e3b; box-shadow: none; }
+#formulario-ahorro { background: #f5f9f8; border-color: var(--linea); }
+.historial-ahorro li { background: #fff; border-color: var(--linea); border-left-color: var(--acento); }
+.historial-ahorro .movimiento-ahorro > p, .historial-ahorro .movimiento-ahorro > button { grid-column: 1 / -1; }
+.historial-ahorro .movimiento-ahorro > button { justify-self: start; }
+#vista-deudas { --deuda-acento: var(--acento); --deuda-borde: var(--linea); --deuda-fondo: #fbfdfd; }
+.grupo-deudas__encabezado { background: #f0f6f5; }
+.deudas-registro, .administrador-grupos, .origen-apartados, .simulador-deudas, .ajustes-financieros { border: 1px solid var(--linea); padding: 1.1rem; border-radius: 14px; margin-block: 1rem; }
+.deudas-registro { background: #fbfdfd; }
+.fondo-grupo { background: #f7faf9; }
+.deuda { border-top-width: 3px; box-shadow: none; }
+.resumen-gastos > div, .tarjetas-financieras > div { border-color: var(--linea); border-radius: 14px; }
+.cabecera-gastos { max-width: 650px; }
+.panel-correcciones { margin-top: 2rem; }
+.zona-borrado { border-color: #efced2; background: #fffbfb; }
+.zona-borrado > summary { color: var(--error); }
+.saltar-contenido { position: fixed; z-index: 100; left: 16px; top: -100px; background: #fff; color: var(--acento-fuerte); padding: 12px 20px; border-radius: 8px; }
+.saltar-contenido:focus { top: 16px; }
+[hidden] { display: none !important; }

@@ -127,8 +127,9 @@ function actualizarVistaPreviaNomina() {
 
         botonConfirmarNomina.disabled = false;
     } catch (error) {
-        avisoNomina.className = "aviso error";
-        avisoNomina.textContent = error.message;
+        const sinEmpezar = campoNetoNomina.value === "" && campoPeriodoNomina.value === "";
+        avisoNomina.className = sinEmpezar ? "ayuda" : "aviso error";
+        avisoNomina.textContent = sinEmpezar ? "Introduce el importe y el periodo para ver tu reparto antes de guardarlo." : error.message;
     }
 }
 
@@ -212,10 +213,16 @@ function mostrarHistorialNominas() {
         detalle.className = "nomina-registrada";
 
         const encabezado = document.createElement("summary");
-        encabezado.textContent =
-            nomina.referencia + " · " +
-            PERIODOS_NOMINA[nomina.periodo] + " · " +
-            formatoMoneda.format(nomina.montoCentavos / 100);
+        const titulo = document.createElement("span");
+        titulo.className = "nomina-titulo";
+        titulo.textContent = nomina.referencia;
+        const periodo = document.createElement("span");
+        periodo.className = "nomina-periodo";
+        periodo.textContent = PERIODOS_NOMINA[nomina.periodo];
+        const importe = document.createElement("span");
+        importe.className = "nomina-importe";
+        importe.textContent = formatoMoneda.format(nomina.montoCentavos / 100);
+        encabezado.append(titulo, periodo, importe);
 
         const lista = document.createElement("ul");
 

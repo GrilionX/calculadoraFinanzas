@@ -3,12 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Mi sueldo</title>
+    <title>Mis finanzas · Ingresos, ahorro y deudas</title>
+    <meta name="theme-color" content="#08786f">
+    <meta name="description" content="Organiza tus ingresos, registra gastos y avanza con tu ahorro y tus deudas.">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/sistema.css">
+    <link rel="stylesheet" href="./css/ingresos.css">
+    <link rel="stylesheet" href="./css/movil.css">
 </head>
 
 <body>
+    <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
 
     <section id="aviso-reinicio-externo" class="tarjeta" hidden aria-label="Recarga necesaria">
         <p id="texto-reinicio-externo" role="alert"></p>
@@ -18,24 +24,28 @@
         </button>
     </section>
 
-    <main>
-        <h1>Mi sueldo y mi reparto</h1>
-        <p id="estado-guardado" class="ayuda" role="status"></p>
+    <main id="contenido-principal" tabindex="-1">
+        <header class="cabecera-app">
+            <div class="marca-app"><span class="marca-simbolo" aria-hidden="true">m<span>f</span></span><span>Mis finanzas<small>Un paso a la vez</small></span></div>
+            <p id="estado-guardado" class="ayuda" role="status"></p>
+        </header>
 
         <nav class="navegacion-vistas" aria-label="Secciones de finanzas">
             <button id="boton-reparto" type="button" aria-controls="vista-reparto" aria-pressed="true">
-                Reparto
+                <span class="icono-nav" aria-hidden="true">▥</span> Ingresos
             </button>
             <button id="boton-ahorro" type="button" aria-controls="vista-ahorro" aria-pressed="false">
-                Ahorro
+                <span class="icono-nav" aria-hidden="true">◇</span> Ahorro
             </button>
             <button id="boton-deudas" type="button" aria-controls="vista-deudas" aria-pressed="false">
-                Deudas
+                <span class="icono-nav" aria-hidden="true">≋</span> Deudas
             </button>
         </nav>
+        <h1 class="titulo-app">Tu dinero, en orden.</h1>
+        <p class="subtitulo-app">Decide con claridad qué gastar, qué guardar y qué pagar.</p>
 
         <section id="vista-gastos" hidden aria-labelledby="titulo-gastos">
-            <button id="volver-gastos" type="button" class="boton-secundario">← Volver a Reparto</button>
+            <button id="volver-gastos" type="button" class="boton-secundario">Volver a ingresos</button>
             <header class="cabecera-gastos"><p class="etiqueta-gastos">Tu día a día</p>
                 <h2 id="titulo-gastos" tabindex="-1">Mis gastos</h2>
                 <p>Gestiona básicos, ocio y tus otros presupuestos de gastos. Cada uno usa el importe asignado en la nómina seleccionada.</p>
@@ -88,30 +98,33 @@
             </section>
         </section>
         <div id="vista-reparto">
+            <div class="encabezado-vista"><div><p class="sobretitulo">TU PUNTO DE PARTIDA</p><h2>Ingresos y reparto</h2></div>
+            <button type="button" id="ir-a-ingreso" class="boton-principal">Registrar un ingreso</button></div>
             <section id="resumen-financiero" class="tarjeta" aria-labelledby="titulo-resumen-financiero">
-                <h2 id="titulo-resumen-financiero">Mi resumen financiero</h2>
-                <label for="resumen-nomina">Ver el dinero de</label>
-                <select id="resumen-nomina"></select>
-                <div class="tarjetas-financieras"><div><span>Ingresos recibidos</span><strong id="resumen-ingresos">$0.00</strong></div><div><span>Gastos registrados</span><strong id="resumen-gastos">$0.00</strong></div><div><span>Destinado a ahorro</span><strong id="resumen-ahorroDestinado">$0.00</strong></div><div><span>Destinado a deudas</span><strong id="resumen-destinadoDeudas">$0.00</strong></div><div><span>Sin utilizar en nóminas</span><strong id="resumen-disponible">$0.00</strong></div></div>
-                <p class="ayuda">Ingresos recibidos = gastos + destinado a ahorro + destinado a deudas + sin utilizar. “Destinado a deudas” incluye apartados ya pagados. Los retiros de ahorro no vuelven a liberar la nómina.</p>
+                <div class="cabecera-resumen"><div><p class="sobretitulo">VISTA GENERAL</p><h3 id="titulo-resumen-financiero">Así está tu dinero</h3></div>
+                <div class="filtro-resumen"><label for="resumen-nomina">Nóminas incluidas</label><select id="resumen-nomina"></select></div></div>
+                <div class="tarjetas-financieras metricas-nominas"><div class="metrica-disponible"><span>Disponible en tus nóminas</span><strong id="resumen-disponible">$0.00</strong><small>Después de gastos y apartados</small></div><div><span>Ingresos recibidos</span><strong id="resumen-ingresos">$0.00</strong></div><div><span>Gastos registrados</span><strong id="resumen-gastos">$0.00</strong></div><div><span>Destinado a ahorro</span><strong id="resumen-ahorroDestinado">$0.00</strong></div><div><span>Destinado a deudas</span><strong id="resumen-destinadoDeudas">$0.00</strong></div></div>
+                <div class="distribucion-visual"><div id="barra-distribucion" class="barra-distribucion" role="img" aria-label="Distribución de ingresos"></div><p id="texto-distribucion" class="ayuda"></p></div>
+                <details class="detalle-explicacion"><summary>Cómo se calcula el disponible</summary><p class="ayuda">Ingresos recibidos = gastos + destinado a ahorro + destinado a deudas + sin utilizar. “Destinado a deudas” incluye apartados ya pagados. Los retiros de ahorro no vuelven a liberar la nómina.</p></details>
                 <details><summary>Disponible por nómina y categoría</summary>
                     <div class="tabla-scroll"><table><caption>Distribución del dinero registrado</caption>
                         <thead><tr><th>Nómina</th><th>Categoría</th><th>Asignado</th><th>Utilizado o apartado</th><th>Disponible</th></tr></thead>
                         <tbody id="filas-resumen-financiero"></tbody>
                     </table></div>
                 </details>
-                <h3>Saldos actuales de toda mi cuenta local</h3>
+                <details class="saldos-globales"><summary>Saldos actuales de ahorro y deudas <span>Todos tus registros</span></summary>
                 <p class="ayuda">Estos saldos siempre incluyen todos tus registros, también los anteriores sin nómina vinculada. No se suman a las tarjetas de arriba ni cambian con el filtro de nómina. No representan un saldo bancario sincronizado.</p>
                 <div class="tarjetas-financieras"><div><span>Ahorro personal actual</span><strong id="resumen-ahorroActual">$0.00</strong></div><div><span>Reservado para deudas pendientes</span><strong id="resumen-reservasActuales">$0.00</strong></div><div><span>Pagos de deuda confirmados</span><strong id="resumen-pagadoDeudas">$0.00</strong></div><div><span>Deuda pendiente total</span><strong id="resumen-deudaPendiente">$0.00</strong></div><div><span>Falta reunir para deudas</span><strong id="resumen-faltaReunir">$0.00</strong></div><div><span>Retiros de ahorro registrados</span><strong id="resumen-retirosAhorro">$0.00</strong></div></div>
-                <p id="mensaje-resumen-financiero" role="status"></p>
+                </details><p id="mensaje-resumen-financiero" role="status"></p>
             </section>
             <section class="tarjeta acceso-gastos">
                 <div><p class="etiqueta-gastos">Tu día a día</p><h2>Mis gastos</h2>
                 <p>Organiza tus gastos por categorías y consulta cuánto queda de cada nómina.</p></div>
-                <button id="abrir-gastos" type="button" aria-controls="vista-gastos">Registrar mis gastos →</button>
+                <button id="abrir-gastos" type="button" aria-controls="vista-gastos">Registrar un gasto</button>
             </section>
-            <section class="tarjeta" aria-labelledby="titulo-nomina">
-                <h2 id="titulo-nomina">Repartir un pago</h2>
+            <div class="espacio-ingresos">
+            <section class="tarjeta ingreso-editor" aria-labelledby="titulo-nomina">
+                <p class="sobretitulo">NUEVO INGRESO</p><h2 id="titulo-nomina" tabindex="-1">Dale un destino a tu pago</h2>
 
                 <p class="ayuda">
                     Escribe el neto final que recibiste.
@@ -119,14 +132,15 @@
                 </p>
 
                 <form id="formulario-nomina">
-                    <label for="referencia-nomina">Nombre o referencia del pago</label>
+                    <div class="datos-nomina">
+                    <div class="campo-formulario campo-referencia"><label for="referencia-nomina">Nombre o referencia del pago</label>
                     <input id="referencia-nomina" type="text" maxlength="80" required
-                        placeholder="Por ejemplo: Nómina primera semana de noviembre">
+                        placeholder="Por ejemplo: Nómina primera semana de noviembre"></div>
 
-                    <label for="neto-nomina">Importe neto recibido</label>
-                    <input id="neto-nomina" type="number" min="0.01" step="0.01" inputmode="decimal" required>
+                    <div class="campo-formulario campo-importe"><label for="neto-nomina">Importe neto recibido</label>
+                    <input id="neto-nomina" type="number" min="0.01" step="0.01" inputmode="decimal" required></div>
 
-                    <label for="periodo-nomina">Periodo correspondiente</label>
+                    <div class="campo-formulario"><label for="periodo-nomina">Periodo correspondiente</label>
                     <select id="periodo-nomina" required>
                         <option value="">Selecciona el periodo</option>
                         <option value="unico">Pago de golpe / único</option>
@@ -134,9 +148,9 @@
                         <option value="catorcenal">Catorcenal — cada 14 días</option>
                         <option value="quincenal">Quincenal</option>
                         <option value="mensual">Mensual</option>
-                    </select>
+                    </select></div>
 
-                    <fieldset class="reparto-nomina">
+                    </div><fieldset class="reparto-nomina">
                         <legend>Cómo repartir este pago</legend>
 
                         <p class="ayuda">
@@ -181,11 +195,12 @@
                 <p id="mensaje-nomina" class="aviso" role="status"></p>
             </section>
 
-            <section class="tarjeta" aria-labelledby="titulo-historial-nominas">
-                <h2 id="titulo-historial-nominas">Mis pagos registrados</h2>
+            <section class="tarjeta historial-ingresos" aria-labelledby="titulo-historial-nominas">
+                <p class="sobretitulo">TU HISTORIAL</p><h2 id="titulo-historial-nominas">Ingresos registrados</h2><p class="ayuda">Cada pago conserva el reparto que elegiste al registrarlo.</p>
                 <div id="historial-nominas"></div>
             </section>
 
+            </div>
             <details class="simulador-anterior">
                 <summary>Simulador de sueldo constante y categorías generales</summary>
 
@@ -623,15 +638,16 @@
         </section>
 
         <button id="restablecer" type="button">
-            Restablcer solo el presupuesto
+            Restablecer solo el presupuesto
         </button>
 
-        <section class="tarjeta" aria-labelledby="titulo-borrado">
+        <details class="tarjeta zona-borrado"><summary>Empezar de cero</summary>
+        <section aria-labelledby="titulo-borrado">
             <h2 id="titulo-borrado">Empezar de cero</h2>
 
             <p>
                 Se borran las nóminas, ahorro, deudas, grupos, fondos, gastos, ingresos extras y categorías personalizadas
-                Volveran a las categorias iniciales
+                Se recuperarán las categorías iniciales.
             </p>
 
             <p>
@@ -644,7 +660,7 @@
 
             <form id="formulario-borrado-total">
                 <label for="confirmar-borrado">
-                    Escribe BORRAR para confrimar
+                    Escribe BORRAR para confirmar
                 </label>
 
                 <input id="confirmar-borrado" type="text" autocomplete="off" spellcheck="false" required>
@@ -656,6 +672,7 @@
 
             <p id="mensaje-borrado" role="status"></p>
         </section>
+        </details>
         <section class="panel-correcciones" aria-labelledby="titulo-correcciones">
             <h2 id="titulo-correcciones">Correcciones e historial</h2>
             <p>Corrige los cambios de deudas del más reciente al más antiguo. Un pago confirmado no se deshace aquí.</p>
@@ -713,6 +730,7 @@
     <script src="./js/resumen.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
+    <script src="./js/interfaz.js"></script>
 </body>
 
 </html>

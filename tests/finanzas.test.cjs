@@ -139,6 +139,7 @@ test('borrado total conserva claves ajenas y bloquea otra pestaña', async t => 
     await page.evaluate(() => { localStorage.setItem('ajena', 'conservar'); registrarApartadoConNomina('deuda', 'd1', '50'); });
     const otra = await page.context().newPage();
     await otra.goto(url);
+    await page.locator(".zona-borrado > summary").click();
     await page.locator('#confirmar-borrado').fill('BORRAR');
     await Promise.all([page.waitForEvent('load'), page.locator('#formulario-borrado-total button').click()]);
     assert.deepEqual(await page.evaluate(() => ({ deudas: deudas.length, grupos: gruposDeudas.length,
@@ -656,4 +657,63 @@ test('grupos y resumen: controles móviles y actualización visible', async t =>
     await page.locator("#boton-reparto").click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.deepEqual(errors, []);
+});
+
+
+test('diseño: navegación y formularios sin desborde en móvil, tableta y escritorio', async t => {
+    const { page, errors } = await abrirGastosPrueba(t);
+    for (const width of [320, 390, 768, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const id of ["boton-reparto", "boton-ahorro", "boton-deudas"]) {
+            await page.locator("#" + id).click();
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false,
+                "No debe desbordar a " + width + " en " + id);
+            const alto = await page.locator("#" + id).evaluate(el => el.getBoundingClientRect().height);
+            assert.ok(alto >= 44, "Navegación táctil");
+        }
+        await page.locator("#boton-reparto").click();
+        await page.locator("#abrir-gastos").click();
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+        await page.locator("#volver-gastos").click();
+    }
+    assert.deepEqual(errors, []);
+});
+
+test('diseño: acceso al ingreso, gráfico real y borrado protegido por desplegable', async t => {
+    const { page, errors } = await abrirGastosPrueba(t);
+    await page.locator("#ir-a-ingreso").click();
+    assert.equal(await page.evaluate(() => document.activeElement.id), "referencia-nomina");
+    await page.evaluate(() => {
+        agregarCategoriaGasto("Comida");
+        registrarGastoBasico({ nominaId: "n1", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Compra", fecha: "2026-11-22", monto: "100" });
+    });
+    await page.waitForFunction(() => document.querySelector("#texto-distribucion").textContent.includes("Gastos 5%"));
+    assert.match(await page.locator("#barra-distribucion").getAttribute("aria-label"), /Gastos:.*100/);
+    assert.equal(await page.locator(".zona-borrado").getAttribute("open"), null);
+    assert.equal(await page.locator("#confirmar-borrado").isVisible(), false);
+    const ids = await page.evaluate(() => {
+        const ids = [...document.querySelectorAll("[id]")].map(e => e.id);
+        return ids.length === new Set(ids).size;
+    });
+    assert.equal(ids, true);
+    assert.deepEqual(errors, []);
+});
+
+test('diseño: importes largos, historial y teclado sin perder contenido', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.evaluate(() => {
+        nominas[0].referencia = "Una nómina con un nombre especialmente largo para comprobar la lectura en el celular";
+        mostrarHistorialNominas();
+        mostrarResumenFinanciero();
+    });
+    await page.locator("#historial-nominas summary").click();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.locator("#boton-reparto").click();
+    await page.locator("#resumen-financiero > details").nth(1).locator("summary").click();
+    const tabla = page.locator("#resumen-financiero .tabla-scroll");
+    await tabla.focus();
+    assert.equal(await tabla.getAttribute("tabindex"), "0");
+    assert.equal(await tabla.getAttribute("role"), "region");
 });

@@ -1,0 +1,65 @@
+/*Ingresos y lectura del reparto*/
+.encabezado-vista, .cabecera-resumen { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
+.encabezado-vista { margin-bottom: 1.25rem; }
+.encabezado-vista h2 { margin: 0; font-size: 1.6rem; }
+.encabezado-vista .boton-principal { margin: 0; }
+.cabecera-resumen { margin-bottom: 1.5rem; align-items: flex-start; }
+.cabecera-resumen h3 { margin: 0; font-size: 1.25rem; }
+.filtro-resumen { min-width: 230px; max-width: 360px; }
+.filtro-resumen label { margin-top: 0; }
+#resumen-financiero { padding: 26px; }
+#resumen-financiero .metricas-nominas { grid-template-columns: 1.55fr repeat(4, minmax(0, 1fr)); gap: .7rem; margin: 0 0 1.5rem; }
+.metricas-nominas > div { background: #f7f9fb; border: 1px solid var(--linea); padding: 1.1rem; align-content: start; min-height: 136px; }
+.metricas-nominas > div > span { color: var(--secundario); font-size: .875rem; line-height: 1.4; min-height: 2.4em; }
+.metricas-nominas strong { font-size: clamp(1.15rem, 1.9vw, 1.65rem); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+#resumen-financiero .metrica-disponible { background: #113e3b; color: white; border-color: #113e3b; }
+.metrica-disponible > span, .metrica-disponible small { color: #d3e9e3 !important; }
+.metrica-disponible small { font-size: .75rem; }
+.metrica-disponible strong { font-size: clamp(1.8rem, 2.5vw, 2.25rem); }
+.distribucion-visual { margin-block: 1rem; }
+.barra-distribucion { display: flex; height: 10px; background: #e5ecef; border-radius: 20px; overflow: hidden; }
+.barra-distribucion span { height: 100%; }
+.segmento-gastos { background: #b55e31; }
+.segmento-ahorro { background: #5268ad; }
+.segmento-deudas { background: #947224; }
+.segmento-disponible { background: #08786f; }
+.leyenda-distribucion { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .875rem; color: var(--secundario); }
+.leyenda-distribucion span::before { content: ""; display: inline-block; height: 8px; width: 8px; border-radius: 2px; margin-right: .4rem; background: var(--color); }
+#resumen-financiero > details { border-top: 1px solid var(--linea); }
+#resumen-financiero summary { font-size: .9rem; }
+.saldos-globales > summary > span { font-weight: 400; color: var(--secundario); font-size: .8rem; margin-left: .75rem; }
+#mensaje-resumen-financiero { font-size: .8rem; margin: .75rem 0 0; }
+#resumen-financiero .saldos-globales .tarjetas-financieras { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.acceso-gastos { border: 1px solid #c8dfd7; background: #edf7f2; border-radius: 16px; box-shadow: none; padding: 1.25rem 1.5rem; }
+.acceso-gastos h2 { margin: 0; font-size: 1.1rem; }
+.acceso-gastos p { margin: .3rem 0; font-size: .9rem; }
+.acceso-gastos .etiqueta-gastos { display: none; }
+.acceso-gastos button { flex-shrink: 0; margin: 0; }
+.espacio-ingresos { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, 1fr); gap: 24px; align-items: start; }
+.espacio-ingresos > * { min-width: 0; }
+.datos-nomina { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+.campo-referencia { grid-column: 1 / -1; }
+#neto-nomina { font-size: 1.4rem; font-weight: 650; letter-spacing: -.025em; height: 56px; }
+#periodo-nomina { height: 56px; }
+.ingreso-editor h2 { margin-bottom: .6rem; }
+.reparto-nomina { background: #f7faf9; border: 1px solid #d7e4df; border-radius: 14px; padding: 1.25rem; margin: 1.5rem 0; }
+.reparto-nomina legend { font-size: .95rem; }
+.porcentaje-nomina { grid-template-columns: minmax(0, 1fr) 92px; gap: 1rem; margin-bottom: .65rem; padding-bottom: .65rem; border-bottom: 1px solid #e1eae6; }
+.porcentaje-nomina:last-child { border-bottom: 0; margin-bottom: 0; }
+.porcentaje-nomina label { font-weight: 500; font-size: .9rem; color: var(--tinta); }
+.porcentaje-nomina input { background: white; min-height: 44px; padding: .5rem .75rem; }
+#usar-categorias-nomina { width: 100%; font-size: .875rem; }
+#confirmar-nomina { margin-top: 1.25rem; min-height: 50px; }
+#aviso-nomina { margin-bottom: 1rem; }
+.historial-ingresos > .ayuda { margin-bottom: 1.5rem; }
+.nomina-registrada { padding: .5rem 1rem; background: #fff; border-radius: 12px; border-color: var(--linea); }
+.nomina-registrada summary { display: list-item; padding-block: .75rem; }
+.nomina-titulo { display: inline; font-weight: 650; }
+.nomina-periodo { display: block; font-size: .8rem; font-weight: 400; color: var(--secundario); margin-top: .3rem; }
+.nomina-importe { display: block; font-size: 1.25rem; font-weight: 700; margin-top: .5rem; letter-spacing: -.025em; }
+.nomina-registrada ul { list-style: none; padding: 0; margin: 0; }
+.nomina-registrada li { border-top: 1px solid var(--linea); font-size: .875rem; line-height: 1.7; padding-block: .75rem; }
+#historial-nominas > .ayuda { border: 1px dashed #becfd1; border-radius: 14px; padding: 2rem 1.25rem; text-align: center; background: #f7faf9; }
+.simulador-anterior { border: 1px solid var(--linea); background: #f0f4f6; padding: 1.25rem; border-radius: 16px; }
+.simulador-anterior > summary { margin: 0; }
+.simulador-anterior[open] > summary { margin-bottom: 1rem; }

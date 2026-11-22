@@ -2,6 +2,22 @@
 
 Aplicación estática en español: presupuesto, ahorro personal, nóminas variables, deudas individuales, fondos por grupo y proyección. Cada usuario introduce sus datos; no incluye deudas personales precargadas.
 
+## Diseño y uso en celular
+
+La vista principal se llama **Ingresos** y conserva el reparto por nómina. El disponible ocupa la tarjeta principal; los detalles de cálculo y saldos globales se pueden desplegar. El gráfico muestra únicamente movimientos registrados, con leyenda y descripción accesible.
+
+El botón **Registrar un ingreso** lleva al formulario. En escritorio, el registro y el historial se presentan en columnas; en celular se apilan y la navegación de Ingresos, Ahorro y Deudas queda en la parte inferior. Las tablas conservan desplazamiento horizontal y acceso por teclado. El borrado total está dentro del desplegable **Empezar de cero**.
+
+Los estilos se cargan en este orden:
+- `css/styles.css`: estilos funcionales existentes.
+- `css/sistema.css`: colores, tipografía, componentes y estados compartidos.
+- `css/ingresos.css`: resumen, formulario, reparto e historial.
+- `css/movil.css`: adaptación por tamaño de pantalla y preferencias de accesibilidad.
+
+`js/interfaz.js` añade navegación de presentación y la barra de distribución; no modifica los importes ni el almacenamiento. No se añadieron fuentes remotas, librerías visuales ni rastreadores.
+
+Referencias consultadas para jerarquía de información y presentación de presupuestos: [Monarch](https://www.monarch.com/features/budgeting), [YNAB](https://www.ynab.com/features) y [Copilot Money](https://www.copilot.money/). El diseño y los componentes son propios.
+
 ## Ejecutar en tu ordenador
 
 Desde la carpeta del repositorio, con Node.js instalado:
@@ -86,7 +102,10 @@ Las copias nuevas usan la versión 7 e incluyen ahorro vinculado, anulaciones, g
 
 ```text
 index.html                 Interfaz y orden de carga
-css/styles.css             Estilos
+css/styles.css             Estilos funcionales existentes
+css/sistema.css            Identidad y componentes compartidos
+css/ingresos.css           Vista de ingresos y reparto
+css/movil.css              Adaptación móvil y accesibilidad
 js/calculos.js             Operaciones monetarias y reparto
 js/nominas.js              Registro de nóminas
 js/deudas.js               Deudas, grupos y horizonte
@@ -98,6 +117,7 @@ js/ahorro.js               Origen y correcciones del ahorro personal
 js/ajustes.js              Objetivos y apartados concretos con motivo
 js/grupos.js               Renombrar, trasladar y eliminar grupos vacíos
 js/resumen.js              Conciliación de nóminas y saldos actuales
+js/interfaz.js             Navegación visual y distribución accesible
 js/app.js                  Persistencia, presupuesto, ahorro y arranque
 js/pruebas.js              Comprobaciones existentes
 scripts/servir.cjs         Servidor local de archivos
@@ -125,6 +145,8 @@ Las pruebas usan datos ficticios y perfiles temporales, sin acceder al almacenam
 
 ## Pendientes
 
-Mejorar navegación, accesibilidad y comodidad móvil; después incorporar cuentas, sincronización y una API. Las correcciones de apartados transferidos o distribuidos siguen requiriendo deshacer primero las operaciones dependientes. Excel permanece fuera del alcance acordado.
+Continuar validando la experiencia en dispositivos reales; incorporar cuentas, sincronización y una API en la siguiente fase. Las correcciones de apartados transferidos o distribuidos siguen requiriendo deshacer primero las operaciones dependientes. Excel permanece fuera del alcance acordado.
 
 La entrega de grupos y resumen se verificó con 34 escenarios de integración, incluidos los anteriores de gastos, ahorro, correcciones, copias y restablecimiento.
+
+El rediseño se comprobó con 37 escenarios de integración y revisión visual en navegador. Se verificaron anchos de 320, 390, 768 y 1440 píxeles, navegación táctil, acceso al formulario, tablas por teclado y continuidad de los cálculos existentes. Esto no equivale a una auditoría completa de accesibilidad ni a pruebas en todos los dispositivos físicos.

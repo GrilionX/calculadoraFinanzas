@@ -1,0 +1,60 @@
+/*Adaptación y accesibilidad*/
+@media (max-width: 1050px) {
+    #resumen-financiero .metricas-nominas { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .metricas-nominas .metrica-disponible { grid-column: 1 / -1; min-height: auto; }
+    .metrica-disponible > span { min-height: auto; }
+    .espacio-ingresos { grid-template-columns: minmax(0, 1.2fr) minmax(270px, 1fr); gap: 16px; }
+}
+@media (max-width: 780px) {
+    main { padding: 0 20px 120px; }
+    .cabecera-app { min-height: 84px; gap: .8rem; }
+    #estado-guardado { max-width: 45%; font-size: .75rem; }
+    .navegacion-vistas { position: fixed; top: auto; bottom: 0; left: 0; right: 0; background: #fff; padding: .5rem 1rem calc(.5rem + env(safe-area-inset-bottom)); margin: 0; border-top: 1px solid #c8d7db; border-bottom: 0; box-shadow: 0 -4px 24px #122e3810; justify-content: space-around; }
+    .navegacion-vistas button { min-width: 0; flex: 1; flex-direction: column; gap: .1rem; padding: .45rem; font-size: .8rem; border-radius: 12px; }
+    .icono-nav { margin: 0; line-height: 1; font-size: 1.35rem; }
+    .titulo-app { margin-top: 1.25rem; font-size: 1.8rem; }
+    .subtitulo-app { margin-bottom: 1.8rem; font-size: .95rem; }
+    .espacio-ingresos { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .encabezado-vista { flex-wrap: wrap; gap: .8rem; }
+    .encabezado-vista h2 { font-size: 1.35rem; }
+    .encabezado-vista .boton-principal { font-size: .85rem; }
+    .cabecera-resumen { flex-direction: column; gap: 1rem; }
+    .filtro-resumen { min-width: 0; max-width: none; width: 100%; }
+    #resumen-financiero { padding: 20px; }
+    #resumen-financiero .metricas-nominas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+    .metricas-nominas > div { padding: 1rem; min-height: 115px; }
+    .metricas-nominas strong { font-size: 1.35rem; }
+    .metricas-nominas .metrica-disponible strong { font-size: 2.3rem; }
+    #resumen-financiero .saldos-globales .tarjetas-financieras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .saldos-globales > summary > span { display: block; margin-left: 0; }
+    .tarjeta, #vista-ahorro, #vista-deudas, .panel-correcciones { padding: 20px; border-radius: 16px; }
+    .acceso-gastos { padding: 1.25rem; flex-direction: column; align-items: stretch; gap: 1rem; }
+    .acceso-gastos button { width: 100%; }
+    .columnas-gastos { grid-template-columns: minmax(0, 1fr); }
+    .grupo-deudas__contenido { grid-template-columns: minmax(0, 1fr); }
+    .fila-botones > button { flex: 1 1 150px; }
+    .extra-fila input, .extra-fila select { max-width: 100%; }
+    .nota { padding-bottom: 1rem; }
+}
+@media (max-width: 400px) {
+    main { padding-inline: 14px; }
+    .marca-app { font-size: .95rem; }
+    .marca-simbolo { width: 36px; height: 36px; }
+    .datos-nomina { grid-template-columns: minmax(0, 1fr); }
+    .campo-referencia { grid-column: auto; }
+    #resumen-financiero, .tarjeta, #vista-ahorro, #vista-deudas, .panel-correcciones { padding: 16px; }
+    .metricas-nominas > div { padding: .8rem; }
+    .metricas-nominas > div > span { font-size: .875rem; }
+    .reparto-nomina, #formulario-ahorro { padding: 14px; }
+    .porcentaje-nomina { grid-template-columns: minmax(0, 1fr) 78px; gap: .5rem; }
+    .tarjetas-financieras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .resumen-gastos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .extra input[type="text"] { min-width: 0; flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}
+@media (forced-colors: active) {
+    button, input, select, .tarjeta, .navegacion-vistas button[aria-pressed="true"] { border: 1px solid ButtonText; }
+    .barra-distribucion { border: 1px solid CanvasText; }
+}
