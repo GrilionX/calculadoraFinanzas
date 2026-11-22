@@ -14,6 +14,19 @@ Abre http://127.0.0.1:5173. No necesitas instalar dependencias para usar la apli
 
 Los datos se guardan en el navegador, no en GitHub. Usa siempre la misma dirección y navegador. Cambiar de dirección, puerto o navegador muestra un almacenamiento diferente: exporta una copia JSON e impórtala en la nueva ubicación para trasladar tus datos.
 
+## Gastos básicos
+
+Desde Reparto, pulsa **Registrar mis gastos**. Se conservan las tres pestañas principales.
+
+1. Selecciona una nómina registrada. El presupuesto se toma de su categoría Gastos básicos; el 55% solo es el valor inicial.
+2. Crea tus categorías de gastos (comida, transporte, renta u otros nombres). Estas categorías comparten el presupuesto de básicos; no cambian los porcentajes del pago.
+3. Registra concepto, categoría, fecha e importe. Mientras escribes, se muestra cuánto quedará después.
+4. Consulta el total gastado, las reservas para deudas, el disponible y la suma por categoría, siempre para la nómina seleccionada.
+
+Un gasto no puede superar el disponible. El mismo dinero no se puede usar para un gasto y un apartado. Para corregir una captura, anula el gasto con motivo y registra el correcto: la anulación conserva el movimiento y devuelve su importe al disponible.
+
+Una nómina que no tenga la categoría general con identificador `basicos` no podrá financiar esta sección. Renombrar esa categoría conserva su identidad; eliminarla y crear otra distinta no la convierte automáticamente en gastos básicos. No se toman importes del simulador ni se generan ingresos recurrentes.
+
 ## Correcciones e historial
 
 El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del más reciente al más antiguo, con una vista previa y un motivo obligatorio. La operación original y su corrección permanecen en la copia de seguridad.
@@ -27,7 +40,7 @@ El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del
 
 Se muestran los últimos 30 registros, pero se guarda el historial completo. Esta primera versión guarda estados completos antes y después: el espacio utilizado crece con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
 
-Las copias nuevas usan la versión 4. Se siguen leyendo las versiones 1, 2 y 3. El borrado total elimina también el historial, conserva otras claves del navegador y requiere escribir BORRAR. Las copias descargadas no se borran.
+Las copias nuevas usan la versión 5 e incluyen gastos y sus categorías. Se siguen leyendo las versiones 1, 2, 3 y 4; si no contienen gastos, esa sección comienza vacía. El borrado total elimina también el historial, conserva otras claves del navegador y requiere escribir BORRAR. Las copias descargadas no se borran.
 
 ## Archivos
 
@@ -40,6 +53,7 @@ js/deudas.js               Deudas, grupos y horizonte
 js/fondos.js               Fondos, asignaciones y modalidades
 js/origenes.js             Vínculo de apartados con nóminas
 js/correcciones.js         Validación, historial y reversión
+js/gastos.js               Gastos básicos, categorías y disponibilidad conjunta
 js/app.js                  Persistencia, presupuesto, ahorro y arranque
 js/pruebas.js              Comprobaciones existentes
 scripts/servir.cjs         Servidor local de archivos
@@ -67,4 +81,4 @@ Las pruebas usan datos ficticios y perfiles temporales, sin acceder al almacenam
 
 ## Pendientes
 
-Profundizar en correcciones selectivas y ajustes de objetivos; añadir gastos reales vinculados a nóminas, subcategorías y administración de grupos; después mejorar diseño y accesibilidad. Cuentas, sincronización y una API quedan para una fase posterior. Excel queda fuera del alcance acordado.
+Profundizar en correcciones selectivas y ajustes de objetivos; ampliar gastos a otras categorías generales, edición de categorías de gastos y administración de grupos; después mejorar diseño y accesibilidad. Cuentas, sincronización y una API quedan para una fase posterior. Excel queda fuera del alcance acordado.

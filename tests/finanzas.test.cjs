@@ -177,3 +177,141 @@ test('otra pestaña no sobrescribe un apartado más reciente', async t => {
     await otra.reload();
     assert.equal(await otra.evaluate(() => calcularReservaDeuda(deudas[0])), 5000);
 });
+
+
+async function abrirGastosPrueba(t) {
+    const resultado = await abrir(t);
+    await resultado.page.evaluate(() => {
+        const datos = construirPaquete();
+        datos.nominas = [{ version: 1, id: "n1", referencia: "Pago básico", periodo: "semanal",
+            montoCentavos: 200000, reparto: repartirNomina(200000, copiarCategoriasIniciales()) }];
+        if (!aplicarDatos(datos) || !guardar()) throw new Error("Preparación de gastos inválida");
+        mostrarDeudas();
+        campoNominaOrigen.value = "n1";
+        actualizarCategoriasOrigen();
+        campoCategoriaOrigen.value = "basicos";
+    });
+    return resultado;
+}
+
+test('gastos: formulario, suma inmediata por categoría y persistencia', async t => {
+    const { page, errors } = await abrirGastosPrueba(t);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#abrir-gastos").click();
+    await page.locator("#nombre-categoria-gasto").fill("Comida");
+    await page.locator("#formulario-categoria-gasto button").click();
+    await page.locator("#gasto-concepto").fill("Supermercado");
+    await page.locator("#gasto-monto").fill("150");
+    assert.match(await page.locator("#gasto-previa").textContent(), /950/);
+    await page.locator("#gasto-registrar").click();
+    assert.equal(await page.evaluate(() => resumenGastosNomina("n1").disponibleCentavos), 95000);
+    assert.match(await page.locator("#gastos-por-categoria").textContent(), /Comida.*150/);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.reload();
+    assert.equal(await page.evaluate(() => gastosBasicos.length), 1);
+    assert.equal(await page.evaluate(() => resumenGastosNomina("n1").gastadoCentavos), 15000);
+    assert.deepEqual(errors, []);
+});
+
+test('gastos: categorías únicas, fechas válidas, importes positivos y límite exacto', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    const result = await page.evaluate(() => {
+        const categoria = agregarCategoriaGasto("Comida");
+        const duplicada = agregarCategoriaGasto(" comida ");
+        const base = { nominaId: "n1", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Prueba", fecha: "2026-11-22", monto: "1100" };
+        const fecha = registrarGastoBasico({ ...base, fecha: "2026-02-30" });
+        const negativo = registrarGastoBasico({ ...base, monto: "-1" });
+        const exceso = registrarGastoBasico({ ...base, monto: "1100.01" });
+        const exacto = registrarGastoBasico(base);
+        const repetido = registrarGastoBasico({ ...base, monto: "0.01" });
+        return { categoria, duplicada, fecha, negativo, exceso, exacto, repetido,
+            disponible: resumenGastosNomina("n1").disponibleCentavos };
+    });
+    assert.deepEqual(result, { categoria: true, duplicada: false, fecha: false, negativo: false,
+        exceso: false, exacto: true, repetido: false, disponible: 0 });
+});
+
+test('gastos: el porcentaje se toma de cada nómina sin mezclar pagos', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    const result = await page.evaluate(() => {
+        nominas.push({ version: 1, id: "n2", referencia: "Otro pago", periodo: "unico", montoCentavos: 100000,
+            reparto: repartirNomina(100000, [
+                { id: "basicos", nombre: "Gastos básicos", porcentaje: 20 },
+                { id: "ahorro", nombre: "Ahorro", porcentaje: 80 }
+            ]) });
+        guardar();
+        agregarCategoriaGasto("Transporte");
+        registrarGastoBasico({ nominaId: "n2", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Viaje", fecha: "2026-11-22", monto: "50" });
+        return { primerPago: resumenGastosNomina("n1").disponibleCentavos,
+            segundoPago: resumenGastosNomina("n2").disponibleCentavos,
+            asignado: resumenGastosNomina("n2").asignadoCentavos };
+    });
+    assert.deepEqual(result, { primerPago: 110000, segundoPago: 15000, asignado: 20000 });
+});
+
+test('gastos: no se duplica dinero entre reservas y compras, ni al corregir deudas', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    const result = await page.evaluate(() => {
+        agregarCategoriaGasto("Servicios");
+        registrarApartadoConNomina("deuda", "d1", "100");
+        const gasto = { nominaId: "n1", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Servicio", fecha: "2026-11-22", monto: "1000" };
+        const exceso = registrarGastoBasico({ ...gasto, monto: "1000.01" });
+        const exacto = registrarGastoBasico(gasto);
+        const antes = resumenGastosNomina("n1").disponibleCentavos;
+        const corregido = deshacerUltimoCambio("Apartado equivocado", ultimaCorreccionDisponible().id);
+        const despues = resumenGastosNomina("n1").disponibleCentavos;
+        const bloqueado = registrarApartadoConNomina("deuda", "d1", "100.01");
+        return { exceso, exacto, antes, corregido, despues, bloqueado, gastos: gastosBasicos.length };
+    });
+    assert.deepEqual(result, { exceso: false, exacto: true, antes: 0, corregido: true, despues: 10000, bloqueado: false, gastos: 1 });
+});
+
+test('gastos: anulación con motivo y fallo al guardar conservan saldos', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    const result = await page.evaluate(() => {
+        agregarCategoriaGasto("Renta");
+        const gasto = { nominaId: "n1", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Pago", fecha: "2026-11-22", monto: "100" };
+        registrarGastoBasico(gasto);
+        const id = gastosBasicos[0].id;
+        const original = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => { throw new Error("Sin espacio"); };
+        const fallido = registrarGastoBasico(gasto);
+        const anulacionFallida = anularGastoBasico(id, "Error");
+        Storage.prototype.setItem = original;
+        const sinMotivo = anularGastoBasico(id, " ");
+        const antes = resumenGastosNomina("n1").disponibleCentavos;
+        const anulada = anularGastoBasico(id, "Error");
+        const repetida = anularGastoBasico(id, "Otra vez");
+        return { fallido, anulacionFallida, sinMotivo, antes, anulada, repetida,
+            despues: resumenGastosNomina("n1").disponibleCentavos, registros: gastosBasicos.length };
+    });
+    assert.deepEqual(result, { fallido: false, anulacionFallida: false, sinMotivo: false, antes: 100000,
+        anulada: true, repetida: false, despues: 110000, registros: 1 });
+});
+
+test('gastos: importación corrupta, copias antiguas y restablecimiento', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    const result = await page.evaluate(() => {
+        agregarCategoriaGasto("Comida");
+        registrarGastoBasico({ nominaId: "n1", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Comida", fecha: "2026-11-22", monto: "150" });
+        const paquete = copiar(construirPaquete());
+        const corrupto = copiar(paquete);
+        corrupto.gastosBasicos[0].montoCentavos = 110001;
+        const rechazado = !aplicarDatos(corrupto);
+        const intacto = gastosBasicos[0].montoCentavos === 15000;
+        const restaurado = aplicarDatos(paquete);
+        delete paquete.gastosBasicos;
+        delete paquete.categoriasGastos;
+        const antigua = aplicarDatos(paquete);
+        const vacios = gastosBasicos.length === 0 && categoriasGastos.length === 0;
+        const inicial = crearDatosIniciales();
+        return { rechazado, intacto, restaurado, antigua, vacios,
+            reinicio: inicial.gastosBasicos.length === 0 && inicial.categoriasGastos.length === 0 };
+    });
+    assert.deepEqual(result, { rechazado: true, intacto: true, restaurado: true, antigua: true, vacios: true, reinicio: true });
+});

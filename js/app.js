@@ -393,7 +393,9 @@ function construirPaquete() {
         deudas: deudas,
         gruposDeudas: gruposDeudas,
         nominas: nominas,
-        historialCorrecciones: historialCorrecciones
+        historialCorrecciones: historialCorrecciones,
+        categoriasGastos: categoriasGastos,
+        gastosBasicos: gastosBasicos
     };
 }
 
@@ -434,6 +436,11 @@ function guardar() {
             return false;
         }
 
+        if (!limpiarCategoriasGastos(categoriasGastos) ||
+            !limpiarGastosBasicos(gastosBasicos, categoriasGastos, nominas) ||
+            !validarDisponibilidadCompleta(nominas, deudas, gruposDeudas, gastosBasicos)) {
+            throw new Error("Los gastos y las reservas superan el saldo o no son válidos.");
+        }
         const historialNuevo = prepararHistorialGuardado();
         const paquete = construirPaquete();
         paquete.historialCorrecciones = historialNuevo;
@@ -453,6 +460,7 @@ function guardar() {
             "Datos guardados en este navegador.";
 
         mostrarHistorialCorrecciones();
+        mostrarGastos();
         return true;
     } catch (error) {
         deudas = copiar(estadoDeudasGuardado.deudas);
@@ -786,6 +794,12 @@ function aplicarDatos(datos) {
     );
     if (historialLimpio === null) return false;
 
+    const categoriasGastosLimpias = limpiarCategoriasGastos(datos.categoriasGastos);
+    const gastosLimpios = categoriasGastosLimpias &&
+        limpiarGastosBasicos(datos.gastosBasicos, categoriasGastosLimpias, nominasLimpias);
+    if (!categoriasGastosLimpias || !gastosLimpios ||
+        !validarDisponibilidadCompleta(nominasLimpias, deudasLimpias, gruposLimpios, gastosLimpios)) return false;
+
     campoFrecuencia.value = datos.frecuencia ?? "mensual";
     campoMonto.value = datos.monto === undefined ? "" : String(datos.monto);
     campoPeriodo.value = datos.periodo ?? "semanal";
@@ -799,6 +813,8 @@ function aplicarDatos(datos) {
     deudas = deudasLimpias;
     gruposDeudas = gruposLimpios;
     nominas = nominasLimpias;
+    categoriasGastos = categoriasGastosLimpias;
+    gastosBasicos = gastosLimpios;
     historialCorrecciones = historialLimpio;
     estadoDeudasGuardado = capturarEstadoDeudas();
 
@@ -843,7 +859,7 @@ function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
-        [1, 2, 3, 4].includes(contenido.version) &&
+        [1, 2, 3, 4, 5].includes(contenido.version) &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
         !Array.isArray(contenido.datos);
@@ -852,7 +868,7 @@ function esCopiaValida(contenido) {
 function exportarCopia() {
     const copia = {
         app: "finanzas-personal",
-        version: 4,
+        version: 5,
         datos: construirPaquete()
     };
 
@@ -893,7 +909,7 @@ function importarCopia(archivo) {
             }
 
             const aviso =
-                "Esta copia reemplazará presupuesto, ahorro, deudas y nóminas. " +
+                "Esta copia reemplazará presupuesto, ahorro, deudas, nóminas y gastos. " +
                 "Las secciones ausentes en una copia antigua quedarán vacías. " +
                 "¿Continuar?";
 
@@ -1432,6 +1448,7 @@ function restablecer() {
 }
 
 function cambiarVista(nombreVista) {
+    document.getElementById("vista-gastos").hidden = true;
     const vistas = [
         { nombre: "reparto", boton: botonReparto, panel: vistaReparto },
         { nombre: "ahorro", boton: botonAhorro, panel: vistaAhorro },
@@ -1624,7 +1641,9 @@ function crearDatosIniciales() {
         deudas: [],
         gruposDeudas: [],
         nominas: [],
-        historialCorrecciones: []
+        historialCorrecciones: [],
+        categoriasGastos: [],
+        gastosBasicos: []
     };
 }
 

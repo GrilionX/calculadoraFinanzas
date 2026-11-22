@@ -225,7 +225,7 @@ function mostrarHistorialNominas() {
             const disponible = calcularDisponibleCategoria(
                 nomina,
                 categoria.id,
-                obtenerApartadosNomina()
+                obtenerCompromisosNomina()
             );
 
             elemento.textContent =
@@ -234,11 +234,11 @@ function mostrarHistorialNominas() {
                 formatoMoneda.format(
                     disponible.asignadoCentavos / 100
                 ) +
-                " · Comprometido en deudas: " +
+                " · Gastado o reservado: " +
                 formatoMoneda.format(
                     disponible.utilizadoCentavos / 100
                 ) +
-                " · Disponible para apartados: " +
+                " · Disponible: " +
                 formatoMoneda.format(
                     disponible.disponibleCentavos / 100
                 );

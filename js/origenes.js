@@ -119,7 +119,7 @@ function registrarApartadoConNomina(
             );
         }
 
-        const anteriores = obtenerApartadosNomina();
+        const anteriores = obtenerCompromisosNomina();
 
         const disponible = calcularDisponibleCategoria(
             nomina,
@@ -341,7 +341,7 @@ function mostrarDisponibleOrigen() {
             const resumen = calcularDisponibleCategoria(
                 nomina,
                 categoria.id,
-                obtenerApartadosNomina()
+                obtenerCompromisosNomina()
             );
 
             texto =

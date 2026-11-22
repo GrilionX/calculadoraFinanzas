@@ -903,3 +903,24 @@ h3 {
 .panel-correcciones summary { cursor: pointer; font-weight: 600; }
 .panel-correcciones button:disabled { opacity: 0.6; cursor: not-allowed; }
 .panel-correcciones :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+
+/*Gastos básicos*/
+.acceso-gastos { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 4px solid #0f766e; }
+.etiqueta-gastos { font-size: 0.85rem; font-weight: 700; color: #0f766e; letter-spacing: 0.06em; text-transform: uppercase; }
+.cabecera-gastos { margin-block: 1.5rem; }
+.resumen-gastos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-block: 1.5rem; }
+.resumen-gastos > div { display: grid; gap: 0.75rem; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 14px; background: #fff; color: #172033; }
+.resumen-gastos strong { font-size: clamp(1.1rem, 3vw, 1.6rem); overflow-wrap: anywhere; }
+.resumen-gastos .saldo-gastos { background: #ecfdf5; border-color: #0f766e; }
+.columnas-gastos { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+#vista-gastos form { display: grid; gap: 0.65rem; }
+#vista-gastos input, #vista-gastos select { width: 100%; min-width: 0; box-sizing: border-box; font-size: 1rem; }
+#vista-gastos button, #abrir-gastos { min-height: 44px; white-space: normal; }
+#historial-gastos, #gastos-por-categoria { padding: 0; list-style: none; }
+#historial-gastos li, #gastos-por-categoria li { padding-block: 0.8rem; border-bottom: 1px solid #cbd5e1; overflow-wrap: anywhere; }
+#vista-gastos :focus-visible { outline: 3px solid #0f766e; outline-offset: 3px; }
+@media (max-width: 700px) {
+    .acceso-gastos { flex-direction: column; align-items: stretch; }
+    .resumen-gastos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .columnas-gastos { grid-template-columns: minmax(0, 1fr); }
+}
