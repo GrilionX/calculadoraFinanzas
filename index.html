@@ -37,14 +37,17 @@
         <section id="vista-gastos" hidden aria-labelledby="titulo-gastos">
             <button id="volver-gastos" type="button" class="boton-secundario">← Volver a Reparto</button>
             <header class="cabecera-gastos"><p class="etiqueta-gastos">Tu día a día</p>
-                <h2 id="titulo-gastos" tabindex="-1">Gastos básicos</h2>
-                <p>El 55% es el reparto inicial. Aquí se usa el importe que asignaste realmente en cada nómina.</p>
+                <h2 id="titulo-gastos" tabindex="-1">Mis gastos</h2>
+                <p>Gestiona básicos, ocio y tus otros presupuestos de gastos. Cada uno usa el importe asignado en la nómina seleccionada.</p>
             </header>
             <label for="gasto-nomina">¿De qué nómina sale el dinero?</label>
             <select id="gasto-nomina"></select>
+            <label for="gasto-origen">¿De qué presupuesto sale el gasto?</label>
+            <select id="gasto-origen"></select>
+            <p class="ayuda">Ahorro, deudas e inversiones mantienen sus propios gestores.</p>
             <p id="gastos-contexto" class="ayuda"></p>
             <div class="resumen-gastos" aria-label="Resumen de la nómina seleccionada">
-                <div><span>Asignado a básicos</span><strong id="gastos-asignado"></strong></div>
+                <div><span>Asignado a este presupuesto</span><strong id="gastos-asignado"></strong></div>
                 <div><span>Gastos registrados</span><strong id="gastos-total"></strong></div>
                 <div><span>Reservado para deudas</span><strong id="gastos-reservado"></strong></div>
                 <div class="saldo-gastos"><span>Te queda disponible</span><strong id="gastos-disponible"></strong></div>
@@ -67,11 +70,11 @@
                 </section>
                 <section class="tarjeta">
                     <h3>Mis categorías de gastos</h3>
-                    <p>Comparten el presupuesto de gastos básicos. No cambian los porcentajes de tu nómina.</p>
+                    <p>Comparten el presupuesto seleccionado. Puedes cambiar sus nombres, archivarlas y reactivarlas sin perder gastos. Las archivadas siguen contando en los totales.</p>
                     <form id="formulario-categoria-gasto">
                         <label for="nombre-categoria-gasto">Nombre de la categoría</label>
                         <input id="nombre-categoria-gasto" type="text" maxlength="60" required placeholder="Comida, transporte, renta…">
-                        <button type="submit" class="boton-secundario">Añadir categoría</button>
+                        <button id="crear-categoria-gasto" type="submit" class="boton-secundario">Añadir categoría</button>
                     </form>
                     <p id="categorias-gastos-vacias">Crea tu primera categoría para comenzar.</p>
                     <ul id="gastos-por-categoria"></ul>
@@ -79,14 +82,14 @@
             </div>
             <p id="mensaje-gasto" role="status" aria-live="polite"></p>
             <section class="tarjeta">
-                <h3>Gastos de esta nómina</h3>
-                <p id="gastos-vacios">Todavía no has registrado gastos en esta nómina.</p>
+                <h3>Gastos de este presupuesto</h3>
+                <p id="gastos-vacios">Todavía no has registrado gastos en este presupuesto de la nómina.</p>
                 <ul id="historial-gastos"></ul>
             </section>
         </section>
         <div id="vista-reparto">
             <section class="tarjeta acceso-gastos">
-                <div><p class="etiqueta-gastos">Tu día a día</p><h2>Gastos básicos</h2>
+                <div><p class="etiqueta-gastos">Tu día a día</p><h2>Mis gastos</h2>
                 <p>Organiza tus gastos por categorías y consulta cuánto queda de cada nómina.</p></div>
                 <button id="abrir-gastos" type="button" aria-controls="vista-gastos">Registrar mis gastos →</button>
             </section>

@@ -924,3 +924,8 @@ h3 {
     .resumen-gastos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .columnas-gastos { grid-template-columns: minmax(0, 1fr); }
 }
+
+/*Administrar categorías de gastos*/
+#gastos-por-categoria details { margin-block: 0.75rem; }
+#gastos-por-categoria summary { cursor: pointer; padding-block: 0.5rem; }
+#gastos-por-categoria form { margin-block: 0.75rem; }

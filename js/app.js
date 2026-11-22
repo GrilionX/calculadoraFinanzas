@@ -859,7 +859,7 @@ function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
-        [1, 2, 3, 4, 5].includes(contenido.version) &&
+        [1, 2, 3, 4, 5, 6].includes(contenido.version) &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
         !Array.isArray(contenido.datos);
@@ -868,7 +868,7 @@ function esCopiaValida(contenido) {
 function exportarCopia() {
     const copia = {
         app: "finanzas-personal",
-        version: 5,
+        version: 6,
         datos: construirPaquete()
     };
 

@@ -315,3 +315,103 @@ test('gastos: importación corrupta, copias antiguas y restablecimiento', async 
     });
     assert.deepEqual(result, { rechazado: true, intacto: true, restaurado: true, antigua: true, vacios: true, reinicio: true });
 });
+
+
+test('categorías: renombrar, archivar y reactivar conservan gastos e identidad', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        agregarCategoriaGasto("Comida");
+        const id = categoriasGastos[0].id;
+        const datos = { nominaId: "n1", subcategoriaId: id, concepto: "Compra", fecha: "2026-11-22", monto: "100" };
+        registrarGastoBasico(datos);
+        const renombrada = renombrarCategoriaGasto(id, "Supermercado");
+        const archivada = archivarCategoriaGasto(id, true);
+        const bloqueado = registrarGastoBasico(datos);
+        const saldoArchivada = resumenGastosNomina("n1").disponibleCentavos;
+        const reactivada = archivarCategoriaGasto(id, false);
+        const nuevo = registrarGastoBasico(datos);
+        return { renombrada, archivada, bloqueado, saldoArchivada, reactivada, nuevo,
+            nombre: categoriasGastos[0].nombre, identidad: gastosBasicos.every(g => g.subcategoriaId === id) };
+    }), { renombrada: true, archivada: true, bloqueado: false, saldoArchivada: 100000,
+        reactivada: true, nuevo: true, nombre: "Supermercado", identidad: true });
+    await page.reload();
+    assert.equal(await page.evaluate(() => categoriasGastos[0].nombre), "Supermercado");
+    assert.equal(await page.evaluate(() => gastosBasicos.length), 2);
+});
+
+test('categorías: nombres únicos por presupuesto y rechazo de cambios inválidos', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        const basicos = agregarCategoriaGasto("Compras");
+        const ocio = agregarCategoriaGasto("Compras", "ocio");
+        const duplicada = agregarCategoriaGasto(" compras ", "ocio");
+        agregarCategoriaGasto("Comida");
+        const renombrarDuplicada = renombrarCategoriaGasto(categoriasGastos.at(-1).id, "Compras");
+        const vacia = renombrarCategoriaGasto(categoriasGastos[0].id, " ");
+        const ahorro = agregarCategoriaGasto("Aportación", "ahorro");
+        return { basicos, ocio, duplicada, renombrarDuplicada, vacia, ahorro };
+    }), { basicos: true, ocio: true, duplicada: false, renombrarDuplicada: false, vacia: false, ahorro: false });
+});
+
+test('gastos: ocio respeta su saldo sin descontar básicos y rechaza categorías cruzadas', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        agregarCategoriaGasto("Salidas", "ocio");
+        const id = categoriasGastos[0].id;
+        const datos = { nominaId: "n1", categoriaId: "ocio", subcategoriaId: id,
+            concepto: "Cine", fecha: "2026-11-22", monto: "60" };
+        const registrado = registrarGastoBasico(datos);
+        const cruzado = registrarGastoBasico({ ...datos, categoriaId: "basicos" });
+        const exceso = registrarGastoBasico({ ...datos, monto: "40.01" });
+        const copia = copiar(construirPaquete());
+        copia.gastosBasicos[0].categoriaId = "basicos";
+        const importacion = aplicarDatos(copia);
+        return { registrado, cruzado, exceso, importacion,
+            basicos: resumenGastosNomina("n1").disponibleCentavos,
+            ocio: resumenGastosNomina("n1", "ocio").disponibleCentavos };
+    }), { registrado: true, cruzado: false, exceso: false, importacion: false, basicos: 110000, ocio: 4000 });
+});
+
+test('categorías: migración de versión anterior y guardado fallido', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        agregarCategoriaGasto("Comida");
+        registrarGastoBasico({ nominaId: "n1", subcategoriaId: categoriasGastos[0].id,
+            concepto: "Compra", fecha: "2026-11-22", monto: "10" });
+        const antigua = copiar(construirPaquete());
+        delete antigua.categoriasGastos[0].categoriaId;
+        delete antigua.categoriasGastos[0].archivada;
+        const migrada = aplicarDatos(antigua);
+        const id = categoriasGastos[0].id;
+        const original = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => { throw new Error("Sin espacio"); };
+        const nombre = renombrarCategoriaGasto(id, "Otro");
+        const archivo = archivarCategoriaGasto(id, true);
+        Storage.prototype.setItem = original;
+        return { migrada, nombre, archivo, actual: categoriasGastos[0].nombre,
+            presupuesto: categoriasGastos[0].categoriaId, archivada: categoriasGastos[0].archivada,
+            total: resumenGastosNomina("n1").gastadoCentavos };
+    }), { migrada: true, nombre: false, archivo: false, actual: "Comida", presupuesto: "basicos", archivada: false, total: 1000 });
+});
+
+test('gastos: interfaz móvil de ocio y categoría archivada', async t => {
+    const { page, errors } = await abrirGastosPrueba(t);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#abrir-gastos").click();
+    await page.locator("#gasto-origen").selectOption("ocio");
+    await page.locator("#nombre-categoria-gasto").fill("Cine");
+    await page.locator("#formulario-categoria-gasto button").click();
+    await page.locator("#gasto-concepto").fill("Entrada");
+    await page.locator("#gasto-monto").fill("50");
+    await page.locator("#gasto-registrar").click();
+    await page.getByRole("button", { name: "Archivar categoría: Cine", exact: true }).click();
+    assert.equal(await page.locator("#gasto-categoria option").count(), 1);
+    assert.match(await page.locator("#gastos-por-categoria").textContent(), /Archivada.*50/);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.getByRole("button", { name: "Reactivar categoría: Cine", exact: true }).click();
+    await page.locator("#gastos-por-categoria summary").click();
+    await page.locator("#gastos-por-categoria input").fill("Películas");
+    await page.getByRole("button", { name: "Guardar nombre", exact: true }).click();
+    assert.match(await page.locator("#historial-gastos").textContent(), /Películas/);
+    assert.deepEqual(errors, []);
+});
