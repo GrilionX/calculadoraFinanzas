@@ -58,3 +58,55 @@
     button, input, select, .tarjeta, .navegacion-vistas button[aria-pressed="true"] { border: 1px solid ButtonText; }
     .barra-distribucion { border: 1px solid CanvasText; }
 }
+
+/*Pantalla útil, texto ampliado y teclado de Android*/
+:root { --alto-nav-movil: 88px; }
+html { scroll-padding-bottom: calc(var(--alto-nav-movil) + 24px); }
+:where(input, select, textarea, button, summary, [tabindex="-1"]) { scroll-margin-block: 100px calc(var(--alto-nav-movil) + 28px); }
+.ayuda-tabla-movil { margin: .8rem 0 .4rem; font-size: .875rem; }
+.tabla-desplazable { border-inline-end: 3px solid var(--acento); }
+main, section, form, fieldset, .campo-formulario, .columnas-gastos > *, .espacio-ingresos > * { min-width: 0; }
+button, summary, h1, h2, h3, legend, label { overflow-wrap: anywhere; }
+input, select, textarea { min-width: 0; }
+@media (pointer: coarse) {
+    button, summary, select { min-height: 48px; touch-action: manipulation; }
+    input[type="checkbox"], input[type="radio"] { width: 24px; height: 24px; min-height: 24px; }
+    .destinos label, .extra label:has(input[type="checkbox"]) { min-height: 48px; padding-block: 8px; }
+}
+@media (max-width: 780px) {
+    main { padding-bottom: calc(var(--alto-nav-movil) + 48px + env(safe-area-inset-bottom)); }
+    .navegacion-vistas { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+    body.teclado-visible .navegacion-vistas { display: none; }
+    input, select, textarea { font-size: max(1rem, 16px) !important; }
+    #neto-nomina { font-size: max(1.4rem, 20px) !important; }
+    #formulario-correccion button, .ajustes-financieros button { width: 100%; }
+    .historial-ahorro .movimiento-ahorro { grid-template-columns: minmax(0, 1fr); }
+    .resumen-gastos strong, .tarjetas-financieras strong { overflow-wrap: anywhere; }
+    .cabecera-app > * { min-width: 0; }
+    main { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    .navegacion-vistas { position: static; margin-bottom: 1rem; box-shadow: none; }
+    .navegacion-vistas button { flex-direction: row; }
+    .titulo-app { margin-top: .5rem; }
+    main { padding-bottom: 32px; }
+}
+@media (max-width: 360px) {
+    .encabezado-vista > button { width: 100%; }
+    .metricas-nominas strong { font-size: 1.2rem; }
+    .cabecera-app { align-items: flex-start; padding-top: 16px; }
+    .marca-app { flex-shrink: 0; }
+    .marca-app small { max-width: 8rem; }
+    #estado-guardado { max-width: 48%; }
+    .acciones-deuda > button { width: 100%; }
+}
+
+/*Tarjetas que se adaptan también al tamaño de letra*/
+@media (max-width: 780px) {
+    #resumen-financiero .metricas-nominas,
+    #resumen-financiero .saldos-globales .tarjetas-financieras,
+    .tarjetas-financieras, .resumen-gastos {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+    }
+    .metricas-nominas > div > span, .tarjetas-financieras span { overflow-wrap: anywhere; min-width: 0; }
+}

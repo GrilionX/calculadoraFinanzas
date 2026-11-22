@@ -167,6 +167,7 @@ function registrarNomina(evento) {
             return nomina.id;
         });
 
+        const nominasAnteriores = [...nominas];
         nominas.push({
             version: 1,
             id: generarId(usados),
@@ -177,6 +178,11 @@ function registrarNomina(evento) {
         });
 
         const guardada = guardar();
+        if (!guardada) {
+            nominas = nominasAnteriores;
+            mostrarHistorialNominas();
+            throw new Error("No se pudo guardar el ingreso. Tus campos se conservan para reintentarlo.");
+        }
 
         formularioNomina.reset();
         prepararCategoriasNomina();

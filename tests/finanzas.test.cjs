@@ -717,3 +717,80 @@ test('diseño: importes largos, historial y teclado sin perder contenido', async
     assert.equal(await tabla.getAttribute("tabindex"), "0");
     assert.equal(await tabla.getAttribute("role"), "region");
 });
+
+test('móvil: atrás, adelante y enlace directo conservan el borrador', async t => {
+    const { page, errors } = await abrir(t);
+    await page.locator('#referencia-nomina').fill('Pendiente');
+    await page.locator('#boton-ahorro').click();
+    await page.locator('#boton-deudas').click();
+    await page.goBack();
+    assert.equal(await page.locator('#vista-ahorro').isVisible(), true);
+    await page.goBack();
+    assert.equal(await page.locator('#referencia-nomina').inputValue(), 'Pendiente');
+    await page.goForward();
+    assert.equal(await page.locator('#vista-ahorro').isVisible(), true);
+    await page.reload();
+    assert.equal(await page.locator('#vista-ahorro').isVisible(), true);
+    assert.equal(await page.locator('#boton-ahorro').getAttribute('aria-current'), 'page');
+    assert.equal(await page.evaluate(() => nominas.length), 1);
+    assert.deepEqual(errors, []);
+});
+
+test('móvil: criterio de teclado distingue zoom, escritorio y cambios pequeños', async t => {
+    const { page } = await abrir(t);
+    const values = await page.evaluate(() => {
+        const base = { tactil: true, editable: true, escala: 1, alturaBase: 850, alturaVisible: 450 };
+        return [base, {...base, escala: 2}, {...base, tactil: false},
+            {...base, editable: false}, {...base, alturaVisible: 800}].map(tecladoMovilVisible);
+    });
+    assert.deepEqual(values, [true, false, false, false, false]);
+});
+
+test('móvil: pantalla táctil, reducción simulada por teclado y recuperación', async t => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 850 }, isMobile: true, hasTouch: true });
+    t.after(() => context.close());
+    const page = await context.newPage();
+    await page.goto(url);
+    await page.locator('#referencia-nomina').focus();
+    await page.setViewportSize({ width: 390, height: 450 });
+    await page.waitForFunction(() => document.body.classList.contains('teclado-visible'));
+    assert.equal(await page.locator('.navegacion-vistas').isVisible(), false);
+    await page.setViewportSize({ width: 390, height: 850 });
+    await page.waitForFunction(() => !document.body.classList.contains('teclado-visible'));
+    assert.equal(await page.locator('.navegacion-vistas').isVisible(), true);
+    assert.ok(await page.locator('#referencia-nomina').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 16));
+});
+
+test('móvil: texto ampliado y orientación horizontal no desbordan', async t => {
+    const { page, errors } = await abrirGastosPrueba(t);
+    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+    for (const size of [{ width: 320, height: 850 }, { width: 850, height: 390 }]) {
+        await page.setViewportSize(size);
+        for (const id of ['boton-reparto', 'boton-ahorro', 'boton-deudas']) {
+            await page.locator('#' + id).click();
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, id + ' a ' + size.width);
+        }
+    }
+    assert.deepEqual(errors, []);
+});
+
+test('ingreso: fallo de almacenamiento conserva campos y permite reintento único', async t => {
+    const { page } = await abrir(t);
+    await page.locator('#referencia-nomina').fill('Ingreso nuevo');
+    await page.locator('#neto-nomina').fill('1200');
+    await page.locator('#periodo-nomina').selectOption('semanal');
+    await page.evaluate(() => {
+        window.guardarOriginalPrueba = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => { throw new DOMException('Sin espacio', 'QuotaExceededError'); };
+    });
+    await page.locator('#confirmar-nomina').click();
+    assert.equal(await page.evaluate(() => nominas.length), 1);
+    assert.equal(await page.locator('#referencia-nomina').inputValue(), 'Ingreso nuevo');
+    assert.equal(await page.locator('#neto-nomina').inputValue(), '1200');
+    assert.match(await page.locator('#mensaje-nomina').textContent(), /campos se conservan/);
+    await page.evaluate(() => { Storage.prototype.setItem = window.guardarOriginalPrueba; });
+    await page.locator('#confirmar-nomina').click();
+    assert.equal(await page.evaluate(() => nominas.length), 2);
+    await page.reload();
+    assert.equal(await page.evaluate(() => nominas.filter(n => n.referencia === 'Ingreso nuevo').length), 1);
+});

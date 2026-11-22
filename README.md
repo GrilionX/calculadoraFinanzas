@@ -118,6 +118,7 @@ js/ajustes.js              Objetivos y apartados concretos con motivo
 js/grupos.js               Renombrar, trasladar y eliminar grupos vacíos
 js/resumen.js              Conciliación de nóminas y saldos actuales
 js/interfaz.js             Navegación visual y distribución accesible
+js/movil.js                Teclado, rutas y comodidad móvil
 js/app.js                  Persistencia, presupuesto, ahorro y arranque
 js/pruebas.js              Comprobaciones existentes
 scripts/servir.cjs         Servidor local de archivos
@@ -150,3 +151,8 @@ Continuar validando la experiencia en dispositivos reales; incorporar cuentas, s
 La entrega de grupos y resumen se verificó con 34 escenarios de integración, incluidos los anteriores de gastos, ahorro, correcciones, copias y restablecimiento.
 
 El rediseño se comprobó con 37 escenarios de integración y revisión visual en navegador. Se verificaron anchos de 320, 390, 768 y 1440 píxeles, navegación táctil, acceso al formulario, tablas por teclado y continuidad de los cálculos existentes. Esto no equivale a una auditoría completa de accesibilidad ni a pruebas en todos los dispositivos físicos.
+
+
+La adaptación para Android incorpora rutas por sección y botones Atrás/Adelante, espacios para la navegación inferior, avisos de tablas desplazables y tarjetas adaptables al tamaño de letra. Si falla guardar un ingreso, conserva sus campos y revierte la incorporación para evitar duplicados al reintentar. Consulta la [comprobación pendiente en OPPO](docs/pruebas-movil.md).
+
+Esta fase pasó 42 pruebas de integración en Chromium y una revisión visual a 390 píxeles. Incluye texto ampliado, navegación del historial y teclado simulado; la comprobación en OPPO físico sigue pendiente.

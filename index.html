@@ -6,7 +6,7 @@
     <title>Mis finanzas · Ingresos, ahorro y deudas</title>
     <meta name="theme-color" content="#08786f">
     <meta name="description" content="Organiza tus ingresos, registra gastos y avanza con tu ahorro y tus deudas.">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="stylesheet" href="./css/styles.css">
     <link rel="stylesheet" href="./css/sistema.css">
     <link rel="stylesheet" href="./css/ingresos.css">
@@ -73,7 +73,7 @@
                         <label for="gasto-fecha">Fecha del gasto</label>
                         <input id="gasto-fecha" type="date" required>
                         <label for="gasto-monto">Importe en pesos</label>
-                        <input id="gasto-monto" type="number" inputmode="decimal" min="0.01" step="0.01" required placeholder="0.00">
+                        <input id="gasto-monto" aria-describedby="gasto-previa" type="number" inputmode="decimal" min="0.01" step="0.01" required placeholder="0.00">
                         <p id="gasto-previa" aria-live="polite"></p>
                         <button id="gasto-registrar" type="submit" disabled>Registrar gasto</button>
                     </form>
@@ -138,7 +138,7 @@
                         placeholder="Por ejemplo: Nómina primera semana de noviembre"></div>
 
                     <div class="campo-formulario campo-importe"><label for="neto-nomina">Importe neto recibido</label>
-                    <input id="neto-nomina" type="number" min="0.01" step="0.01" inputmode="decimal" required></div>
+                    <input id="neto-nomina" aria-describedby="aviso-nomina" type="number" min="0.01" step="0.01" inputmode="decimal" required></div>
 
                     <div class="campo-formulario"><label for="periodo-nomina">Periodo correspondiente</label>
                     <select id="periodo-nomina" required>
@@ -375,7 +375,7 @@
                 </select>
 
                 <label for="ahorro-nomina">Nómina de origen de la aportación</label>
-                <select id="ahorro-nomina"></select>
+                <select id="ahorro-nomina" aria-describedby="ahorro-origen-disponible"></select>
                 <p id="ahorro-origen-disponible" class="ayuda"></p>
                 <label for="concepto-ahorro">Concepto</label>
                 <input id="concepto-ahorro" type="text" maxlength="80" required
@@ -682,7 +682,7 @@
                 <form id="formulario-ajuste-objetivo">
                     <h3>Cambiar el objetivo de una deuda</h3>
                     <label for="ajuste-deuda">Deuda pendiente</label><select id="ajuste-deuda" required></select>
-                    <label for="ajuste-objetivo">Nuevo objetivo en pesos</label><input id="ajuste-objetivo" type="number" inputmode="decimal" min="0.01" step="0.01" required>
+                    <label for="ajuste-objetivo">Nuevo objetivo en pesos</label><input id="ajuste-objetivo" aria-describedby="previa-objetivo" type="number" inputmode="decimal" min="0.01" step="0.01" required>
                     <p id="previa-objetivo" aria-live="polite"></p>
                     <label for="motivo-objetivo">Motivo</label><input id="motivo-objetivo" maxlength="240" required>
                     <button type="submit">Guardar nuevo objetivo</button>
@@ -691,7 +691,7 @@
                     <h3>Corregir un apartado</h3>
                     <label for="ajuste-apartado">Apartado</label><select id="ajuste-apartado" required></select>
                     <p id="previa-apartado"></p>
-                    <label for="ajuste-importe">Importe correcto en pesos (0 para anular)</label><input id="ajuste-importe" type="number" inputmode="decimal" min="0" step="0.01" required>
+                    <label for="ajuste-importe">Importe correcto en pesos (0 para anular)</label><input id="ajuste-importe" aria-describedby="previa-apartado" type="number" inputmode="decimal" min="0" step="0.01" required>
                     <label for="motivo-apartado">Motivo</label><input id="motivo-apartado" maxlength="240" required>
                     <button type="submit">Corregir apartado</button>
                 </form>
@@ -731,6 +731,7 @@
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
     <script src="./js/interfaz.js"></script>
+    <script src="./js/movil.js"></script>
 </body>
 
 </html>
