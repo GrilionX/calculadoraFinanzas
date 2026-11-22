@@ -391,7 +391,8 @@ function cambiarModalidadGrupo(id, modalidad) {
     if (
         limpias === null ||
         gruposLimpios === null ||
-        !validarFondosGrupos(gruposLimpios, limpias)
+        !validarFondosGrupos(gruposLimpios, limpias) ||
+        !validarOrigenesNomina(nominas, limpias, gruposLimpios)
     ) {
         informarDeudas(
             "La transferencia no pasó la comprobación. No se aplicó.",
@@ -444,7 +445,7 @@ function cambiarModalidadGrupo(id, modalidad) {
 }
 
 function registrarApartadoGrupo(id, textoMonto) {
-    return registrarApartadoNomina(
+    return registrarApartadoConNomina(
         "grupo",
         id,
         textoMonto
@@ -686,17 +687,8 @@ function crearControlesFondo(grupo) {
             Math.abs(movimiento.montoCentavos) / 100
         );
 
-        if (
-            limpias === null ||
-            gruposLimpios === null ||
-            !validarFondosGrupos(gruposLimpios, limpias) ||
-            !validarOrigenesNomina(nominas, limpias, gruposLimpios)
-        ) {
-            informarDeudas(
-                "La transferencia no pasó la comprobación. No se aplicó.",
-                true
-            );
-            return;
+        if (movimiento.origenNomina) {
+            fila.textContent += " · Origen: " + describirOrigenNomina(movimiento.origenNomina);
         }
 
         lista.appendChild(fila);

@@ -13,7 +13,7 @@
     <section id="aviso-reinicio-externo" class="tarjeta" hidden aria-label="Recarga necesaria">
         <p id="texto-reinicio-externo" role="alert"></p>
 
-        <button id="recargar-reincio" type="button">
+        <button id="recargar-reinicio" type="button">
             Recargar Aplicacion
         </button>
     </section>
@@ -546,7 +546,7 @@
             </button>
 
             <form id="formulario-borrado-total">
-                <label for="configurar-borrado">
+                <label for="confirmar-borrado">
                     Escribe BORRAR para confrimar
                 </label>
 
@@ -559,6 +559,23 @@
 
             <p id="mensaje-borrado" role="status"></p>
         </section>
+        <section class="panel-correcciones" aria-labelledby="titulo-correcciones">
+            <h2 id="titulo-correcciones">Correcciones e historial</h2>
+            <p>Corrige los cambios de deudas del más reciente al más antiguo. Un pago confirmado no se deshace aquí.</p>
+            <p id="vista-previa-correccion" class="aviso"></p>
+            <form id="formulario-correccion">
+                <label for="motivo-correccion">¿Por qué corriges este cambio?</label>
+                <input id="motivo-correccion" type="text" maxlength="240" required
+                    placeholder="Por ejemplo: aparté una cantidad equivocada">
+                <button id="deshacer-cambio" type="submit" disabled>Deshacer último cambio</button>
+            </form>
+            <p id="mensaje-correccion" role="status" aria-live="polite"></p>
+            <details>
+                <summary>Ver historial reciente</summary>
+                <p>Se muestran hasta 30 movimientos. La copia de seguridad incluye el historial completo.</p>
+                <ol id="lista-correcciones"></ol>
+            </details>
+        </section>
         <p class="nota">
             Esta herramienta hace estimaciones para planear.
             No es asesoría financiera.
@@ -570,6 +587,7 @@
     <script src="./js/deudas.js"></script>
     <script src="./js/fondos.js"></script>
     <script src="./js/origenes.js"></script>
+    <script src="./js/correcciones.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
 </body>

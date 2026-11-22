@@ -881,3 +881,25 @@ h3 {
     line-height: 1.7;
     overflow-wrap: anywhere;
 }
+
+/*Correcciones*/
+.panel-correcciones {
+    margin-block: 1.5rem;
+    padding: clamp(1rem, 3vw, 1.75rem);
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    background: #f8fafc;
+    color: #172033;
+}
+
+#formulario-correccion {
+    display: grid;
+    gap: 0.75rem;
+}
+
+#motivo-correccion { width: 100%; box-sizing: border-box; }
+#lista-correcciones { padding-left: 1.5rem; }
+#lista-correcciones li { margin-block: 0.75rem; overflow-wrap: anywhere; }
+.panel-correcciones summary { cursor: pointer; font-weight: 600; }
+.panel-correcciones button:disabled { opacity: 0.6; cursor: not-allowed; }
+.panel-correcciones :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
