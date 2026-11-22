@@ -404,3 +404,131 @@ function calcularDisponibleCategoria(
         disponibleCentavos: asignadoCentavos - utilizadoCentavos
     };
 }
+
+function proyectarHorizonte(objetivos, presupuestoSemanalCentavos) {
+    const fallo = mensaje => ({
+        error: mensaje,
+        filas: [],
+        resumen: null
+    });
+
+    if (
+        !Array.isArray(objetivos) ||
+        !Number.isSafeInteger(presupuestoSemanalCentavos) ||
+        presupuestoSemanalCentavos < 0
+    ) {
+        return fallo(
+            "Revisa el presupuesto semanal y los objetivos."
+        );
+    }
+
+    const claves = new Set();
+
+    for (const objetivo of objetivos) {
+        if (
+            !objetivo ||
+            typeof objetivo !== "object" ||
+            !["deuda", "grupo"].includes(objetivo.tipo) ||
+            typeof objetivo.id !== "string" ||
+            objetivo.id.trim() === "" ||
+            typeof objetivo.nombre !== "string" ||
+            objetivo.nombre.trim() === "" ||
+            !Number.isInteger(objetivo.prioridad) ||
+            objetivo.prioridad < 1 ||
+            objetivo.prioridad > 999 ||
+            !Number.isSafeInteger(objetivo.objetivoCentavos) ||
+            objetivo.objetivoCentavos <= 0 ||
+            !Number.isSafeInteger(objetivo.apartadoCentavos) ||
+            objetivo.apartadoCentavos < 0 ||
+            objetivo.apartadoCentavos > objetivo.objetivoCentavos
+        ) {
+            return fallo("Hay un objetivo con datos inválidos.");
+        }
+
+        const clave = objetivo.tipo + ":" + objetivo.id;
+
+        if (claves.has(clave)) {
+            return fallo("Hay objetivos repetidos.");
+        }
+
+        claves.add(clave);
+    }
+
+    const ordenados = [...objetivos].sort(function (a, b) {
+        return a.prioridad - b.prioridad ||
+            a.nombre.localeCompare(b.nombre, "es") ||
+            a.tipo.localeCompare(b.tipo) ||
+            a.id.localeCompare(b.id);
+    });
+
+    const filas = [];
+    let objetivoTotal = 0;
+    let apartadoTotal = 0;
+    let faltaAcumulada = 0;
+
+    for (const objetivo of ordenados) {
+        const falta =
+            objetivo.objetivoCentavos -
+            objetivo.apartadoCentavos;
+
+        objetivoTotal += objetivo.objetivoCentavos;
+        apartadoTotal += objetivo.apartadoCentavos;
+        faltaAcumulada += falta;
+
+        if (
+            ![
+                objetivoTotal,
+                apartadoTotal,
+                faltaAcumulada
+            ].every(Number.isSafeInteger)
+        ) {
+            return fallo(
+                "Los importes superan el límite de cálculo."
+            );
+        }
+
+        let semanaObjetivo = null;
+
+        if (falta === 0) {
+            semanaObjetivo = 0;
+        } else if (presupuestoSemanalCentavos > 0) {
+            const resto =
+                faltaAcumulada % presupuestoSemanalCentavos;
+
+            const semanasCompletas =
+                (faltaAcumulada - resto) /
+                presupuestoSemanalCentavos;
+
+            semanaObjetivo =
+                semanasCompletas + (resto > 0 ? 1 : 0);
+        }
+
+        filas.push({
+            ...objetivo,
+            faltaCentavos: falta,
+            semanaObjetivo: semanaObjetivo
+        });
+    }
+
+    const semanas = filas
+        .map(fila => fila.semanaObjetivo)
+        .filter(semana => semana !== null);
+
+    return {
+        error: null,
+        filas: filas,
+        resumen: {
+            objetivoCentavos: objetivoTotal,
+            apartadoCentavos: apartadoTotal,
+            faltaCentavos: faltaAcumulada,
+            semanaFinal: faltaAcumulada === 0
+                ? 0
+                : presupuestoSemanalCentavos === 0
+                    ? null
+                    : semanas.reduce(
+                        (mayor, semana) => Math.max(mayor, semana),
+                        0
+                    )
+        }
+    };
+}

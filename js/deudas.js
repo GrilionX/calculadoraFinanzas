@@ -472,7 +472,7 @@ function crearTarjetaDeuda(deuda) {
         lista.appendChild(fila)
     }
 
-    for(const movimiento of deuda.aportacionesNomina ?? []){
+    for (const movimiento of deuda.aportacionesNomina ?? []) {
         const fila = document.createElement("li");
 
         fila.textContent =
@@ -924,71 +924,227 @@ function coincideConFiltroDeuda(deuda, filtro) {
     return true;
 }
 
+function construirObjetivosHorizonte(listaDeudas, listaGrupos) {
+    const deudasLimpias = limpiarDeudas(listaDeudas);
+    const gruposLimpios = limpiarGruposDeudas(listaGrupos);
+
+    if (deudasLimpias === null || gruposLimpios === null) {
+        throw new Error(
+            "No se pudieron revisar las deudas y los grupos."
+        );
+    }
+
+    const gruposPorId = new Map(
+        gruposLimpios.map(grupo => [grupo.id, grupo])
+    );
+
+    const hayGrupoInexistente = deudasLimpias.some(
+        deuda =>
+            deuda.grupoId !== null &&
+            !gruposPorId.has(deuda.grupoId)
+    );
+
+    if (
+        hayGrupoInexistente ||
+        !validarFondosGrupos(gruposLimpios, deudasLimpias)
+    ) {
+        throw new Error(
+            "Las deudas y los fondos no coinciden."
+        );
+    }
+
+    const objetivos = [];
+    const incluidos = new Set();
+
+    for (const deuda of deudasLimpias) {
+        if (deuda.liquidada) {
+            continue;
+        }
+
+        const grupo = gruposPorId.get(deuda.grupoId);
+
+        if (grupo?.modalidad === "grupo") {
+            if (incluidos.has(grupo.id)) {
+                continue;
+            }
+
+            incluidos.add(grupo.id);
+
+            const integrantes = deudasLimpias.filter(
+                elemento =>
+                    elemento.grupoId === grupo.id &&
+                    !elemento.liquidada
+            );
+
+            const resumen = resumirFondoGrupo(
+                grupo,
+                deudasLimpias
+            );
+
+            if (resumen === null) {
+                throw new Error(
+                    "No se pudo calcular el fondo de " +
+                    grupo.nombre + "."
+                );
+            }
+
+            objetivos.push({
+                tipo: "grupo",
+                id: grupo.id,
+                nombre: grupo.nombre,
+                prioridad: integrantes.reduce(
+                    (menor, elemento) =>
+                        Math.min(menor, elemento.prioridad),
+                    999
+                ),
+                objetivoCentavos: resumen.pendienteCentavos,
+                apartadoCentavos: resumen.apartadoCentavos,
+                cantidadDeudas: integrantes.length
+            });
+        } else {
+            const resumen = resumirDeuda(deuda);
+
+            objetivos.push({
+                tipo: "deuda",
+                id: deuda.id,
+                nombre: grupo
+                    ? grupo.nombre + " / " + deuda.nombre
+                    : deuda.nombre,
+                prioridad: deuda.prioridad,
+                objetivoCentavos: deuda.objetivoCentavos,
+                apartadoCentavos:
+                    resumen.apartadoDisponibleCentavos,
+                cantidadDeudas: 1
+            });
+        }
+    }
+
+    return objetivos;
+}
+
 function mostrarProyeccionDeudas(evento) {
     evento.preventDefault();
+    resultadoProyeccion.replaceChildren();
 
     const texto = campoPresupuestoApartados.value.trim();
     const esCero = /^0+(?:\.0{1,2})?$/.test(texto);
-    const presupuesto = esCero ? 0 : convertirPesosACentavos(texto);
 
-    resultadoProyeccion.replaceChildren();
+    const presupuesto = esCero
+        ? 0
+        : convertirPesosACentavos(texto);
 
-    if (presupuesto === null) {
-        mensajeProyeccion.className = "aviso error";
-        mensajeProyeccion.textContent =
-            "Escribe un importe válido, con un máximo de dos decimales.";
-        return;
-    }
-
-    const hayPendientesPorGrupo = deudas.some(function (deuda) {
-        return !deuda.liquidada && usaFondoGrupo(deuda);
-    });
-
-    if (hayPendientesPorGrupo) {
-        mensajeProyeccion.className = "ayuda";
-        mensajeProyeccion.textContent =
-            "El horizonte actual solo calcula apartados individuales. " +
-            "La proyección de fondos compartidos se incorporará en otro paso.";
-        return;
-    }
-
-    const proyeccion = proyectarApartados(deudas, presupuesto);
-
-    if (proyeccion.error !== null) {
-        mensajeProyeccion.className = "aviso error";
-        mensajeProyeccion.textContent = proyeccion.error;
-        return;
-    }
-
-    if (proyeccion.filas.length === 0) {
-        mensajeProyeccion.className = "ayuda";
-        mensajeProyeccion.textContent =
-            "No hay deudas pendientes para proyectar.";
-        return;
-    }
-
-    for (const fila of proyeccion.filas) {
-        const elemento = document.createElement("li");
-        let horizonte;
-
-        if (fila.semanaObjetivo === 0) {
-            horizonte = "Ya reuniste el objetivo.";
-        } else if (fila.semanaObjetivo === null) {
-            horizonte = "Sin estimación: el presupuesto semanal es cero.";
-        } else {
-            horizonte =
-                "Objetivo reunido en la semana " + fila.semanaObjetivo + ".";
+    try {
+        if (presupuesto === null) {
+            throw new Error(
+                "Escribe un importe válido con hasta dos decimales."
+            );
         }
 
-        elemento.textContent = fila.nombre + ": " + horizonte;
-        resultadoProyeccion.appendChild(elemento);
-    }
+        const objetivos = construirObjetivosHorizonte(
+            deudas,
+            gruposDeudas
+        );
 
-    mensajeProyeccion.className = "ayuda";
-    mensajeProyeccion.textContent =
-        "Escenario calculado con " +
-        formatoMoneda.format(presupuesto / 100) +
-        " semanales. No se registraron movimientos.";
+        const proyeccion = proyectarHorizonte(
+            objetivos,
+            presupuesto
+        );
+
+        if (proyeccion.error !== null) {
+            throw new Error(proyeccion.error);
+        }
+
+        if (proyeccion.filas.length === 0) {
+            mensajeProyeccion.className = "ayuda";
+            mensajeProyeccion.textContent =
+                "No hay deudas pendientes para proyectar.";
+            return;
+        }
+
+        for (const fila of proyeccion.filas) {
+            const elemento = document.createElement("li");
+
+            const titulo = document.createElement("h4");
+            titulo.textContent =
+                (fila.tipo === "grupo" ? "Grupo: " : "Deuda: ") +
+                fila.nombre;
+
+            const cifras = document.createElement("p");
+            cifras.textContent =
+                "Pendiente de pago: " +
+                formatoMoneda.format(
+                    fila.objetivoCentavos / 100
+                ) +
+                " · Ya apartado: " +
+                formatoMoneda.format(
+                    fila.apartadoCentavos / 100
+                ) +
+                " · Falta reunir: " +
+                formatoMoneda.format(
+                    fila.faltaCentavos / 100
+                );
+
+            const horizonte = document.createElement("p");
+            horizonte.className = "ayuda";
+
+            let plazo;
+
+            if (fila.semanaObjetivo === 0) {
+                plazo =
+                    "Importe ya reunido. Esto no confirma que esté pagado.";
+            } else if (fila.semanaObjetivo === null) {
+                plazo =
+                    "Sin plazo estimado: el aporte semanal supuesto es cero.";
+            } else {
+                plazo =
+                    "Reunirías el importe en la semana " +
+                    fila.semanaObjetivo +
+                    " del escenario.";
+            }
+
+            horizonte.textContent =
+                "Prioridad " + fila.prioridad +
+                (
+                    fila.tipo === "grupo"
+                        ? " · " + fila.cantidadDeudas +
+                          " deudas pendientes. "
+                        : ". "
+                ) +
+                plazo;
+
+            elemento.append(titulo, cifras, horizonte);
+            resultadoProyeccion.appendChild(elemento);
+        }
+
+        const resumen = proyeccion.resumen;
+
+        const cierre = resumen.semanaFinal === 0
+            ? "Todos los importes pendientes ya están reunidos."
+            : resumen.semanaFinal === null
+                ? "No hay una semana final estimada."
+                : "Reunirías todo lo pendiente en la semana " +
+                  resumen.semanaFinal + ".";
+
+        mensajeProyeccion.className = "ayuda";
+        mensajeProyeccion.textContent =
+            "Reservas registradas: " +
+            formatoMoneda.format(
+                resumen.apartadoCentavos / 100
+            ) +
+            ". Falta reunir: " +
+            formatoMoneda.format(
+                resumen.faltaCentavos / 100
+            ) +
+            ". Supuesto futuro: " +
+            formatoMoneda.format(presupuesto / 100) +
+            " por semana. " +
+            cierre +
+            " No se registraron apartados ni pagos.";
+    } catch (error) {
+        resultadoProyeccion.replaceChildren();
+        mensajeProyeccion.className = "aviso error";
+        mensajeProyeccion.textContent = error.message;
+    }
 }
 
 function invalidarProyeccionDeudas() {

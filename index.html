@@ -455,23 +455,33 @@
             <div id="lista-deudas" class="lista-deudas"></div>
 
             <section class="simulador-deudas" aria-labelledby="titulo-simulador-deudas">
-                <h3 id="titulo-simulador-deudas">Horizonte de mis apartados</h3>
+                <h3 id="titulo-simulador-deudas">
+                    Horizonte de mis apartados
+                </h3>
 
                 <p class="ayuda">
-                    Calcula cuándo reunirías el objetivo de cada deuda,
-                    siguiendo tus prioridades.
+                    Estima cuándo reunirías los importes pendientes.
+                    Utiliza tus reservas actuales y un aporte semanal supuesto.
+                </p>
+
+                <p class="ayuda">
+                    Los grupos con fondo compartido se calculan como una sola meta.
+                    Su prioridad es la menor de sus deudas pendientes.
+                    En modalidad individual, cada deuda conserva su prioridad.
                 </p>
 
                 <form id="formulario-proyeccion" class="formulario-deudas">
                     <label for="presupuesto-apartados">
-                        Disponible por semana para nuevos apartados
+                        Aporte semanal supuesto para este escenario
                     </label>
+
                     <input id="presupuesto-apartados" type="number" min="0" step="0.01" inputmode="decimal" value="0"
                         required aria-describedby="ayuda-presupuesto-apartados">
 
                     <p id="ayuda-presupuesto-apartados" class="ayuda">
-                        Escribe lo que queda después de los pagos requeridos
-                        y otros compromisos. No incluyas tu ahorro personal.
+                        La semana 1 representa la primera aportación futura.
+                        Escribe dinero adicional al que ya tienes apartado.
+                        Este supuesto no repite tus nóminas ni registra movimientos.
                     </p>
 
                     <button type="submit" class="boton-principal">
@@ -480,11 +490,19 @@
                 </form>
 
                 <p id="mensaje-proyeccion" class="aviso" role="status"></p>
+
                 <ol id="resultado-proyeccion" class="resultado-proyeccion"></ol>
 
                 <p class="ayuda">
-                    Esta estimación mantiene los saldos actuales.
-                    No calcula nuevos intereses, cargos ni ingresos extraordinarios.
+                    Los objetivos se atienden por prioridad.
+                    Los empates se ordenan por nombre.
+                    El sobrante de una semana continúa con el siguiente objetivo.
+                </p>
+
+                <p class="ayuda">
+                    La estimación mantiene los saldos actuales.
+                    No calcula nuevos intereses, cargos ni fechas de vencimiento.
+                    Reunir un importe no confirma su pago.
                 </p>
             </section>
         </section>

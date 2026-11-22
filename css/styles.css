@@ -861,3 +861,23 @@ h3 {
     border-left: 3px solid #2563eb;
     overflow-wrap: anywhere;
 }
+
+.resultado-proyeccion > li {
+    margin-block: 1rem;
+    padding: 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #172033;
+}
+
+.resultado-proyeccion h4 {
+    margin: 0 0 0.75rem;
+    overflow-wrap: anywhere;
+}
+
+.resultado-proyeccion p {
+    margin: 0.5rem 0;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
