@@ -51,12 +51,12 @@ function limpiarGastosBasicos(lista = [], subcategorias, pagos) {
     return resultado;
 }
 
-function obtenerCompromisosNomina(ds = deudas, gs = gruposDeudas, gastos = gastosBasicos) {
-    return [...obtenerApartadosNomina(ds, gs), ...gastos.filter(g => !g.anulacion)];
+function obtenerCompromisosNomina(ds = deudas, gs = gruposDeudas, gastos = gastosBasicos, ahorro = movimientosAhorros) {
+    return [...obtenerApartadosNomina(ds, gs), ...gastos.filter(g => !g.anulacion), ...compromisosAhorro(ahorro)];
 }
 
-function validarDisponibilidadCompleta(pagos, ds, gs, gastos) {
-    const movimientos = obtenerCompromisosNomina(ds, gs, gastos);
+function validarDisponibilidadCompleta(pagos, ds, gs, gastos, ahorro = movimientosAhorros) {
+    const movimientos = obtenerCompromisosNomina(ds, gs, gastos, ahorro);
     if (limpiarAportacionesNomina(movimientos) === null) return false;
     try {
         for (const m of movimientos) {

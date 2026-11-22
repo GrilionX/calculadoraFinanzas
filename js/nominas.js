@@ -234,7 +234,7 @@ function mostrarHistorialNominas() {
                 formatoMoneda.format(
                     disponible.asignadoCentavos / 100
                 ) +
-                " · Gastado o reservado: " +
+                " · Gastado, ahorrado o reservado: " +
                 formatoMoneda.format(
                     disponible.utilizadoCentavos / 100
                 ) +

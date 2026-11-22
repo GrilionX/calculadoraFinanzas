@@ -436,7 +436,8 @@ function guardar() {
             return false;
         }
 
-        if (!limpiarCategoriasGastos(categoriasGastos) ||
+        if (!limpiarRegistroAhorro(movimientosAhorros) || !validarOrigenAhorro(movimientosAhorros, nominas) ||
+            !limpiarCategoriasGastos(categoriasGastos) ||
             !limpiarGastosBasicos(gastosBasicos, categoriasGastos, nominas) ||
             !validarDisponibilidadCompleta(nominas, deudas, gruposDeudas, gastosBasicos)) {
             throw new Error("Los gastos y las reservas superan el saldo o no son válidos.");
@@ -461,6 +462,8 @@ function guardar() {
 
         mostrarHistorialCorrecciones();
         mostrarGastos();
+        actualizarOrigenAhorro();
+        mostrarAjustesFinancieros();
         return true;
     } catch (error) {
         deudas = copiar(estadoDeudasGuardado.deudas);
@@ -560,60 +563,7 @@ function limpiarExtras(lista, idsValidos) {
 }
 
 function limpiarMovimientosAhorro(lista) {
-    if (lista === undefined) {
-        return [];
-    }
-    if (!Array.isArray(lista)) {
-        return null;
-    }
-
-    const limpios = [];
-    let saldoCentavos = 0;
-
-    for (const movimiento of lista) {
-        if (
-            typeof movimiento !== "object" ||
-            movimiento === null ||
-            Array.isArray(movimiento)
-        ) {
-            return null;
-        }
-
-        const tipo = movimiento.tipo;
-        const concepto = movimiento.concepto;
-        const monto = movimiento.montoCentavos;
-
-        if (tipo !== "aportacion" && tipo !== "retiro") {
-            return null;
-        }
-
-        if (
-            typeof concepto !== "string" ||
-            concepto.trim() === "" ||
-            concepto.trim().length > 80 ||
-            !Number.isSafeInteger(monto) ||
-            monto <= 0
-        ) {
-            return null;
-        }
-
-        const siguienteSaldo = tipo === "aportacion"
-            ? saldoCentavos + monto
-            : saldoCentavos - monto;
-
-        if (!Number.isSafeInteger(siguienteSaldo) || siguienteSaldo < 0) {
-            return null;
-        }
-
-        limpios.push({
-            tipo: tipo,
-            concepto: concepto.trim(),
-            montoCentavos: monto
-        });
-
-        saldoCentavos = siguienteSaldo;
-    }
-    return limpios;
+    return limpiarRegistroAhorro(lista);
 }
 
 function aplicarDatos(datos) {
@@ -798,7 +748,7 @@ function aplicarDatos(datos) {
     const gastosLimpios = categoriasGastosLimpias &&
         limpiarGastosBasicos(datos.gastosBasicos, categoriasGastosLimpias, nominasLimpias);
     if (!categoriasGastosLimpias || !gastosLimpios ||
-        !validarDisponibilidadCompleta(nominasLimpias, deudasLimpias, gruposLimpios, gastosLimpios)) return false;
+        !validarDisponibilidadCompleta(nominasLimpias, deudasLimpias, gruposLimpios, gastosLimpios, ahorroLimpio) || !validarOrigenAhorro(ahorroLimpio, nominasLimpias)) return false;
 
     campoFrecuencia.value = datos.frecuencia ?? "mensual";
     campoMonto.value = datos.monto === undefined ? "" : String(datos.monto);
@@ -859,7 +809,7 @@ function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
-        [1, 2, 3, 4, 5, 6].includes(contenido.version) &&
+        [1, 2, 3, 4, 5, 6, 7].includes(contenido.version) &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
         !Array.isArray(contenido.datos);
@@ -868,7 +818,7 @@ function esCopiaValida(contenido) {
 function exportarCopia() {
     const copia = {
         app: "finanzas-personal",
-        version: 6,
+        version: 7,
         datos: construirPaquete()
     };
 
@@ -1503,6 +1453,7 @@ function mostrarAhorro() {
         detalle.appendChild(tipo);
         elemento.appendChild(detalle);
         elemento.appendChild(importe);
+        detalleOrigenAhorro(movimiento, elemento);
         historialAhorro.appendChild(elemento);
     }
 
@@ -1511,68 +1462,12 @@ function mostrarAhorro() {
 
 function registrarMovimientoAhorro(evento) {
     evento.preventDefault();
-
-    if (!guardadoHabilitado) {
-        mensajeAhorro.className = "aviso error";
-        mensajeAhorro.textContent =
-            "Recupera una copia de seguridad antes de registrar movimientos.";
-        return;
-    }
-
-    const tipo = campoTipoAhorro.value;
-    const concepto = campoConceptoAhorro.value.trim();
-    const montoCentavos = convertirPesosACentavos(campoMontoAhorro.value);
-
-    mensajeAhorro.className = "aviso error";
-
-    if (tipo !== "aportacion" && tipo !== "retiro") {
-        mensajeAhorro.textContent = "Selecciona un movimiento válido.";
-        return;
-    }
-
-    if (concepto === "" || concepto.length > 80) {
-        mensajeAhorro.textContent = "Escribe un concepto de hasta 80 caracteres.";
-        return;
-    }
-
-    if (
-        montoCentavos === null ||
-        !Number.isSafeInteger(montoCentavos) ||
-        montoCentavos <= 0
-    ) {
-        mensajeAhorro.textContent = "Escribe un monto válido mayor que cero.";
-        return;
-    }
-
-    const saldoActual = calcularSaldoAhorro(movimientosAhorros);
-
-    if (tipo === "retiro" && montoCentavos > saldoActual) {
-        mensajeAhorro.textContent = "El retiro supera el ahorro disponible.";
-        return;
-    }
-
-    if (
-        tipo === "aportacion" &&
-        !Number.isSafeInteger(saldoActual + montoCentavos)
-    ) {
-        mensajeAhorro.textContent = "El monto supera el límite permitido.";
-        return;
-    }
-
-    movimientosAhorros.push({
-        tipo: tipo,
-        concepto: concepto,
-        montoCentavos: montoCentavos
-    });
-
-    mostrarAhorro();
-    const guardadoCorrecto = guardar();
-    formularioAhorro.reset();
-
-    mensajeAhorro.className = guardadoCorrecto ? "aviso ok" : "aviso error";
-    mensajeAhorro.textContent = guardadoCorrecto
-        ? "Movimiento registrado y guardado."
-        : "Movimiento registrado solo en memoria. Descarga una copia.";
+    const ok = registrarAhorroVinculado(campoTipoAhorro.value, campoConceptoAhorro.value.trim(),
+        campoMontoAhorro.value, document.getElementById("ahorro-nomina").value);
+    if (ok) { campoConceptoAhorro.value = ""; campoMontoAhorro.value = ""; }
+    mensajeAhorro.className = ok ? "aviso ok" : "aviso error";
+    mensajeAhorro.textContent = ok ? "Movimiento registrado con su origen." :
+        "No se registró. Revisa la nómina, el concepto, el disponible y el guardado.";
 }
 
 //Eventos

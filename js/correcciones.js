@@ -131,7 +131,7 @@ function mostrarHistorialCorrecciones() {
         const fila = document.createElement("li");
         fila.textContent = new Date(entrada.fecha).toLocaleString("es-MX") + " · " +
             (entrada.revierteId ? "Corrección: " + entrada.motivo :
-                describirCambio(entrada.antes, entrada.despues));
+                describirCambio(entrada.antes, entrada.despues) + (entrada.motivo ? " · Motivo: " + entrada.motivo : ""));
         lista.appendChild(fila);
     }
     const entrada = ultimaCorreccionDisponible();

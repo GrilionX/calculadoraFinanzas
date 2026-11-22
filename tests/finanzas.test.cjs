@@ -415,3 +415,114 @@ test('gastos: interfaz móvil de ocio y categoría archivada', async t => {
     assert.match(await page.locator("#historial-gastos").textContent(), /Películas/);
     assert.deepEqual(errors, []);
 });
+
+
+test('ahorro: origen, límites y retiros sin liberar la nómina', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        const sinOrigen = registrarAhorroVinculado("aportacion", "Prueba", "10", "");
+        const aporte = registrarAhorroVinculado("aportacion", "Ahorro", "200", "n1");
+        const disponible = calcularDisponibleCategoria(nominas[0], "ahorro", obtenerCompromisosNomina()).disponibleCentavos;
+        const exceso = registrarAhorroVinculado("aportacion", "Exceso", "100.01", "n1");
+        const retiro = registrarAhorroVinculado("retiro", "Uso personal", "50", "");
+        const despues = calcularDisponibleCategoria(nominas[0], "ahorro", obtenerCompromisosNomina()).disponibleCentavos;
+        return { sinOrigen, aporte, disponible, exceso, retiro, despues, saldo: calcularSaldoAhorro(movimientosAhorros) };
+    }), { sinOrigen: false, aporte: true, disponible: 10000, exceso: false, retiro: true, despues: 10000, saldo: 15000 });
+    await page.reload();
+    assert.equal(await page.evaluate(() => movimientosAhorros[0].origenNomina.nominaId), "n1");
+});
+
+test('ahorro: anulación conserva cronología y permite corregir retiro primero', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarAhorroVinculado("aportacion", "Prueba", "100", "n1");
+        registrarAhorroVinculado("retiro", "Uso", "50", "");
+        const aporte = movimientosAhorros[0].id, retiro = movimientosAhorros[1].id;
+        const bloqueada = anularMovimientoAhorro(aporte, "Importe equivocado");
+        const corregidoRetiro = anularMovimientoAhorro(retiro, "Retiro equivocado");
+        const corregidoAporte = anularMovimientoAhorro(aporte, "Importe equivocado");
+        const repetida = anularMovimientoAhorro(aporte, "Otra vez");
+        return { bloqueada, corregidoRetiro, corregidoAporte, repetida,
+            saldo: calcularSaldoAhorro(movimientosAhorros), historial: movimientosAhorros.length,
+            disponible: calcularDisponibleCategoria(nominas[0], "ahorro", obtenerCompromisosNomina()).disponibleCentavos };
+    }), { bloqueada: false, corregidoRetiro: true, corregidoAporte: true, repetida: false, saldo: 0, historial: 2, disponible: 30000 });
+});
+
+test('ahorro: apartados y ahorro comparten disponibilidad y fallos no alteran datos', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        campoCategoriaOrigen.value = "ahorro";
+        registrarApartadoConNomina("deuda", "d1", "100");
+        const exceso = registrarAhorroVinculado("aportacion", "Prueba", "200.01", "n1");
+        const aporte = registrarAhorroVinculado("aportacion", "Prueba", "200", "n1");
+        const original = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => { throw new Error("Sin espacio"); };
+        const fallido = registrarAhorroVinculado("retiro", "Uso", "10", "");
+        Storage.prototype.setItem = original;
+        return { exceso, aporte, fallido, saldo: calcularSaldoAhorro(movimientosAhorros), cantidad: movimientosAhorros.length };
+    }), { exceso: false, aporte: true, fallido: false, saldo: 20000, cantidad: 1 });
+});
+
+test('ajustes: objetivos respetan reservas y conservan motivo al recargar', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoConNomina("deuda", "d1", "50");
+        const menor = ajustarObjetivoDeuda("d1", "49", "Saldo actualizado");
+        const mayor = ajustarObjetivoDeuda("d1", "200", "Intereses");
+        const motivo = historialCorrecciones.at(-1).motivo;
+        return { menor, mayor, motivo, objetivo: deudas[0].objetivoCentavos, reserva: calcularReservaDeuda(deudas[0]) };
+    }), { menor: false, mayor: true, motivo: "Intereses", objetivo: 20000, reserva: 5000 });
+    await page.reload();
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+});
+
+test('ajustes: corrección selectiva y anulación de apartado preservan historial', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoConNomina("deuda", "d1", "20");
+        registrarApartadoConNomina("deuda", "d1", "30");
+        const primero = deudas[0].aportacionesNomina[0].id;
+        const corregido = corregirApartadoConcreto(primero, "40", "Importe correcto");
+        const total = calcularReservaDeuda(deudas[0]);
+        const anulado = corregirApartadoConcreto(primero, "0", "No correspondía");
+        const original = historialCorrecciones.some(e => e.antes.deudas.some(d =>
+            d.aportacionesNomina.some(m => m.id === primero && m.montoCentavos === 2000)));
+        return { corregido, total, anulado, original, final: calcularReservaDeuda(deudas[0]) };
+    }), { corregido: true, total: 7000, anulado: true, original: true, final: 3000 });
+    await page.reload();
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+});
+
+test('ajustes: protección de fondos distribuidos y pagos confirmados', async t => {
+    const { page } = await abrir(t, true);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoGrupo("g1", "100");
+        const id = gruposDeudas[0].movimientosFondo[0].origenNomina.id;
+        const menor = ajustarObjetivoDeuda("d1", "99", "Cambio");
+        distribuirFondoGrupo("g1");
+        const bloqueado = corregirApartadoConcreto(id, "50", "Error");
+        liquidarDeuda("d1");
+        const pagada = ajustarObjetivoDeuda("d1", "200", "Cambio");
+        return { menor, bloqueado, pagada };
+    }), { menor: false, bloqueado: false, pagada: false });
+});
+
+test('ahorro: copias antiguas, origen corrupto y formulario móvil', async t => {
+    const { page, errors } = await abrirGastosPrueba(t);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#boton-ahorro").click();
+    await page.locator("#ahorro-nomina").selectOption("n1");
+    await page.locator("#concepto-ahorro").fill("Fondo personal");
+    await page.locator("#monto-ahorro").fill("100");
+    await page.locator("#formulario-ahorro button").click();
+    assert.equal(await page.evaluate(() => calcularSaldoAhorro(movimientosAhorros)), 10000);
+    assert.deepEqual(await page.evaluate(() => {
+        const copia = copiar(construirPaquete());
+        copia.movimientosAhorros[0].origenNomina.nominaId = "inexistente";
+        const rechazada = !aplicarDatos(copia);
+        copia.movimientosAhorros = [{ tipo: "aportacion", concepto: "Anterior", montoCentavos: 5000 }];
+        const antigua = aplicarDatos(copia);
+        return { rechazada, antigua, saldo: calcularSaldoAhorro(movimientosAhorros) };
+    }), { rechazada: true, antigua: true, saldo: 5000 });
+    assert.deepEqual(errors, []);
+});

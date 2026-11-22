@@ -342,6 +342,9 @@
                     <option value="retiro">Retiro</option>
                 </select>
 
+                <label for="ahorro-nomina">Nómina de origen de la aportación</label>
+                <select id="ahorro-nomina"></select>
+                <p id="ahorro-origen-disponible" class="ayuda"></p>
                 <label for="concepto-ahorro">Concepto</label>
                 <input id="concepto-ahorro" type="text" maxlength="80" required
                     placeholder="Por ejemplo: ahorro de esta semana">
@@ -620,6 +623,27 @@
         <section class="panel-correcciones" aria-labelledby="titulo-correcciones">
             <h2 id="titulo-correcciones">Correcciones e historial</h2>
             <p>Corrige los cambios de deudas del más reciente al más antiguo. Un pago confirmado no se deshace aquí.</p>
+            <details class="ajustes-financieros">
+                <summary>Ajustar objetivos y apartados concretos</summary>
+                <p>Los pagos confirmados y los apartados ya transferidos o distribuidos se mantienen protegidos.</p>
+                <form id="formulario-ajuste-objetivo">
+                    <h3>Cambiar el objetivo de una deuda</h3>
+                    <label for="ajuste-deuda">Deuda pendiente</label><select id="ajuste-deuda" required></select>
+                    <label for="ajuste-objetivo">Nuevo objetivo en pesos</label><input id="ajuste-objetivo" type="number" inputmode="decimal" min="0.01" step="0.01" required>
+                    <p id="previa-objetivo" aria-live="polite"></p>
+                    <label for="motivo-objetivo">Motivo</label><input id="motivo-objetivo" maxlength="240" required>
+                    <button type="submit">Guardar nuevo objetivo</button>
+                </form>
+                <form id="formulario-ajuste-apartado">
+                    <h3>Corregir un apartado</h3>
+                    <label for="ajuste-apartado">Apartado</label><select id="ajuste-apartado" required></select>
+                    <p id="previa-apartado"></p>
+                    <label for="ajuste-importe">Importe correcto en pesos (0 para anular)</label><input id="ajuste-importe" type="number" inputmode="decimal" min="0" step="0.01" required>
+                    <label for="motivo-apartado">Motivo</label><input id="motivo-apartado" maxlength="240" required>
+                    <button type="submit">Corregir apartado</button>
+                </form>
+                <p id="mensaje-ajustes" role="status"></p>
+            </details>
             <p id="vista-previa-correccion" class="aviso"></p>
             <form id="formulario-correccion">
                 <label for="motivo-correccion">¿Por qué corriges este cambio?</label>
@@ -647,6 +671,8 @@
     <script src="./js/origenes.js"></script>
     <script src="./js/gastos.js"></script>
     <script src="./js/correcciones.js"></script>
+    <script src="./js/ahorro.js"></script>
+    <script src="./js/ajustes.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
 </body>

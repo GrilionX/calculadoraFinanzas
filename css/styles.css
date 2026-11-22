@@ -929,3 +929,10 @@ h3 {
 #gastos-por-categoria details { margin-block: 0.75rem; }
 #gastos-por-categoria summary { cursor: pointer; padding-block: 0.5rem; }
 #gastos-por-categoria form { margin-block: 0.75rem; }
+
+/*Ajustes y origen de ahorro*/
+.ajustes-financieros form { display: grid; gap: .7rem; margin-block: 1.5rem; }
+.ajustes-financieros input, .ajustes-financieros select, #ahorro-nomina { width: 100%; min-width: 0; box-sizing: border-box; font-size: 1rem; }
+.ajustes-financieros button { min-height: 44px; white-space: normal; }
+.movimiento-ahorro { flex-wrap: wrap; }
+.movimiento-ahorro > p { flex-basis: 100%; overflow-wrap: anywhere; }

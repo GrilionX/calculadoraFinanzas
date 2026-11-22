@@ -31,6 +31,21 @@ Un gasto no puede superar el saldo disponible. El mismo dinero no puede financia
 
 Las categorías de gastos antiguas se migran automáticamente al presupuesto de básicos y comienzan activas. Los campos internos `gastosBasicos` y algunas funciones conservan su nombre anterior por compatibilidad, pero ahora almacenan gastos de los distintos presupuestos, identificados por `categoriaId`.
 
+## Ahorro vinculado
+
+Las nuevas aportaciones requieren elegir una nómina con categoría Ahorro. El importe consume su disponible y no puede reutilizarse en apartados. Los movimientos anteriores sin origen se conservan como ahorro previo; no se inventa una nómina para ellos.
+
+Los retiros salen del saldo de ahorro personal y no devuelven dinero a la nómina. Un retiro no registra automáticamente un gasto ni una transferencia a otro presupuesto. Para corregir una captura, usa **Anular movimiento** con motivo y registra la correcta. La anulación conserva el registro. Se rechaza si produce un saldo negativo en cualquier punto de la historia: primero deben corregirse los retiros que dependían de esa aportación. Los movimientos antiguos sin identificador no muestran anulación.
+
+## Ajustes de objetivos y apartados
+
+En **Correcciones e historial → Ajustar objetivos y apartados concretos**:
+
+- Cambia el objetivo de una deuda pendiente, indicando motivo. Se valida que cubra las reservas individuales y del grupo; las asignaciones ya distribuidas pueden exigir deshacer primero la distribución.
+- Corrige el importe de un apartado concreto vinculado a nómina. El nuevo importe sustituye al anterior y la diferencia actualiza la disponibilidad. Cero anula el apartado.
+- Solo se ofrecen apartados sin transferencias ni distribución; los pagos confirmados se mantienen protegidos. No se reconstruyen orígenes de movimientos antiguos.
+- Los estados anteriores y posteriores, junto con el motivo, se conservan en el historial y en la copia JSON. Los cambios selectivos no requieren deshacer operaciones independientes posteriores.
+
 ## Correcciones e historial
 
 El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del más reciente al más antiguo, con una vista previa y un motivo obligatorio. La operación original y su corrección permanecen en la copia de seguridad.
@@ -44,7 +59,7 @@ El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del
 
 Se muestran los últimos 30 registros, pero se guarda el historial completo. Esta primera versión guarda estados completos antes y después: el espacio utilizado crece con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
 
-Las copias nuevas usan la versión 6 e incluyen gastos, presupuesto de origen y estado de sus categorías. Se siguen leyendo las versiones 1, 2, 3, 4 y 5; si no contienen gastos, esa sección comienza vacía. El borrado total elimina también el historial, conserva otras claves del navegador y requiere escribir BORRAR. Las copias descargadas no se borran.
+Las copias nuevas usan la versión 7 e incluyen ahorro vinculado, anulaciones, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5 y 6; si no contienen gastos, esa sección comienza vacía. El borrado total elimina también el historial, conserva otras claves del navegador y requiere escribir BORRAR. Las copias descargadas no se borran.
 
 ## Archivos
 
@@ -58,6 +73,8 @@ js/fondos.js               Fondos, asignaciones y modalidades
 js/origenes.js             Vínculo de apartados con nóminas
 js/correcciones.js         Validación, historial y reversión
 js/gastos.js               Gastos por presupuesto, categorías y disponibilidad conjunta
+js/ahorro.js               Origen y correcciones del ahorro personal
+js/ajustes.js              Objetivos y apartados concretos con motivo
 js/app.js                  Persistencia, presupuesto, ahorro y arranque
 js/pruebas.js              Comprobaciones existentes
 scripts/servir.cjs         Servidor local de archivos
@@ -85,4 +102,4 @@ Las pruebas usan datos ficticios y perfiles temporales, sin acceder al almacenam
 
 ## Pendientes
 
-Profundizar en correcciones selectivas y ajustes de objetivos; vincular ahorro con nóminas, administrar grupos y unificar el resumen financiero; después mejorar diseño y accesibilidad. Cuentas, sincronización y una API quedan para una fase posterior. Excel queda fuera del alcance acordado.
+Administrar grupos de deudas y unificar el resumen financiero; después mejorar diseño y accesibilidad. Las correcciones de apartados transferidos o distribuidos requieren aún deshacer primero las operaciones dependientes. Cuentas, sincronización y una API quedan para una fase posterior. Excel queda fuera del alcance acordado.
