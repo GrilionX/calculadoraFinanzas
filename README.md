@@ -97,7 +97,7 @@ El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del
 
 Se muestran los últimos 30 registros, pero se guarda el historial completo. Esta primera versión guarda estados completos antes y después: el espacio utilizado crece con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
 
-Las copias nuevas usan la versión 7 e incluyen ahorro vinculado, anulaciones, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5 y 6; si no contienen gastos, esa sección comienza vacía. El borrado total elimina también el historial, conserva otras claves del navegador y requiere escribir BORRAR. Las copias descargadas no se borran.
+Las copias nuevas usan la versión 7 e incluyen ahorro vinculado, anulaciones, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5 y 6; si no contienen gastos, esa sección comienza vacía. El botón **Borrar datos anteriores** abre el panel de eliminación. Es necesario escribir **BORRAR**. Se elimina la clave de almacenamiento de esta aplicación mediante removeItem, incluido el historial, y se recarga con un estado nuevo sin movimientos ni ingresos de ejemplo. Las claves de otras aplicaciones se conservan. Las copias descargadas y la nube no se borran.
 
 ## Archivos
 
@@ -178,3 +178,21 @@ No se atraviesan pagos confirmados. Tampoco se reconstruyen estados que no esté
 La fase de cuentas y correcciones pasó **53 pruebas de integración** en navegador. Los casos de nube usan una API simulada: la migración SQL, el aislamiento real entre cuentas y el correo quedan pendientes de validación en el proyecto Supabase. Se mantiene la adaptación general por ancho de pantalla, sin detección de marcas.
 
 Para actualizar tu copia del código, consulta [docs/actualizar-vscode.md](docs/actualizar-vscode.md).
+
+
+## Eliminar datos anteriores y seguir guardando
+1. Actualiza el código y abre la web en la misma dirección y navegador donde aparecen los registros antiguos.
+2. Pulsa **Borrar datos anteriores**, cerca del encabezado.
+3. Revisa el resumen y la dirección indicada. Puedes descargar una copia si quieres conservar los registros.
+4. Escribe **BORRAR** y pulsa **Eliminar datos de este navegador**.
+5. Al recargar verás la confirmación. Los registros nuevos se guardan normalmente y sobreviven a próximas recargas.
+
+La eliminación también funciona con una copia local dañada. No necesita escribir una copia vacía antes de borrar, por lo que puede liberar la copia anterior aunque el almacenamiento no admita nuevas escrituras. Si el navegador impide eliminarla, se muestra el error y no se reinicia la aplicación. Tras eliminar, otras pestañas con registros anteriores quedan bloqueadas para evitar que vuelvan a guardarlos.
+
+El almacenamiento pertenece a una dirección y navegador. Por ejemplo, localhost y 127.0.0.1, puertos diferentes y GitHub Pages pueden tener copias separadas. Abre cada ubicación donde existan registros y repite el borrado con la versión actualizada. La web no puede borrar desde una dirección el almacenamiento de otra ni eliminar tus archivos JSON descargados. Si utilizabas un archivo HTML directamente, abre ese mismo archivo actualizado en el mismo navegador.
+
+Se mantiene el guardado permanente para los datos nuevos; no se incorpora un modo temporal. La sesión de nube y su comparación se descartan en esta página al borrar, sin eliminar la copia remota.
+
+Referencia sobre el alcance del almacenamiento: [localStorage en MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
+
+La revisión del borrado pasó 59 pruebas de integración, incluidas eliminación de datos corruptos, error de permisos, almacenamiento sin capacidad de escritura, pestañas antiguas y persistencia de ingresos nuevos.

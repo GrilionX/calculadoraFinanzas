@@ -212,3 +212,10 @@ document.getElementById("consultar-nube").addEventListener("click", () => accion
 document.getElementById("subir-nube").addEventListener("click", () => accionNube(subirCopiaNube));
 document.getElementById("bajar-nube").addEventListener("click", () => accionNube(bajarCopiaNube));
 actualizarPanelNube();
+
+//Descartar la sesión y las copias en memoria al borrar los datos locales
+function limpiarSesionNubeLocal() {
+    sesionNube = null;
+    consultaNube = null;
+    document.getElementById("comparacion-nube").textContent = "";
+}

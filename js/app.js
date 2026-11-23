@@ -420,7 +420,7 @@ function guardar() {
             ? null
             : leerIdReinicio(JSON.parse(anterior));
 
-        if (idGuardado !== reinicioActual) {
+        if (anterior !== null && idGuardado !== reinicioActual) {
             bloquearPantallaPorReinicio(
                 "Los datos se restablecieron en otra pestaña. " +
                 "Recarga antes de continuar."
@@ -782,6 +782,9 @@ function cargar() {
         ultimoTextoGuardado = texto;
 
         if (texto === null) {
+            const iniciales = crearDatosIniciales();
+            aplicarDatos(iniciales);
+            reinicioActual = iniciales.reinicioId;
             return;
         }
 
@@ -1564,48 +1567,67 @@ function recargarTrasReinicio() {
 
 function restablecerTodosLosDatos(evento) {
     evento.preventDefault();
-
-    if (reinicioDetectado) {
-        return;
-    }
-
+    if (reinicioDetectado) return;
     if (campoConfirmarBorrado.value.trim() !== "BORRAR") {
-        mensajeBorrado.textContent =
-            "Escribe BORRAR para confirmar";
-
+        mensajeBorrado.textContent = "Escribe BORRAR para confirmar.";
         campoConfirmarBorrado.focus();
         return;
     }
 
-    const nuevosDatos = crearDatosIniciales();
-
+    //Eliminar la copia anterior, incluso si está dañada o no queda espacio
     try {
-        localStorage.setItem(
-            CLAVE_GUARDADO,
-            JSON.stringify(nuevosDatos)
-        );
+        localStorage.removeItem(CLAVE_GUARDADO);
+        if (localStorage.getItem(CLAVE_GUARDADO) !== null) {
+            throw new Error("La copia sigue almacenada.");
+        }
     } catch (error) {
         mensajeBorrado.textContent =
-            "No se pudo completar el guardado " +
-            "Los datos anteriores siguen guardados";
-
-        console.warn("No se pudo restablcer: ", error);
+            "No se pudo eliminar la copia guardada. No se ha reiniciado la aplicación. " +
+            "Revisa los permisos de almacenamiento de este sitio e inténtalo de nuevo.";
         return;
     }
 
-    bloquearPantallaPorReinicio(
-        "Los datos se han restablecido" +
-        "Recarga para empezar de cero"
-    );
-
+    const iniciales = crearDatosIniciales();
+    aplicarDatos(iniciales);
+    reinicioActual = iniciales.reinicioId;
+    ultimoTextoGuardado = null;
+    correccionPendiente = null;
+    if (typeof limpiarSesionNubeLocal === "function") limpiarSesionNubeLocal();
+    try { sessionStorage.setItem("finanzas-aviso-borrado", "1"); } catch {}
+    bloquearPantallaPorReinicio("Datos anteriores eliminados. Recarga para empezar de cero.");
     recargarTrasReinicio();
 }
+
+function mostrarResumenBorrado() {
+    const resumen = document.getElementById("resumen-borrado");
+    resumen.textContent = guardadoHabilitado
+        ? "Se eliminarán " + nominas.length + " ingresos, " + deudas.length + " deudas, " +
+          gruposDeudas.length + " grupos, " + gastosBasicos.length + " gastos y " +
+          movimientosAhorros.length + " movimientos de ahorro, junto con sus fondos, categorías e historial."
+        : "La copia guardada no se puede recuperar. Puedes eliminarla igualmente para empezar de cero.";
+    document.getElementById("ubicacion-borrado").textContent = location.protocol === "file:"
+        ? "Estás abriendo un archivo local. El borrado afecta a los datos que este navegador asigna a esta página."
+        : "Este borrado corresponde a: " + location.origin;
+}
+
+document.getElementById("gestionar-datos").addEventListener("click", () => {
+    document.getElementById("panel-borrado").open = true;
+    mostrarResumenBorrado();
+    document.getElementById("titulo-borrado").focus({ preventScroll: true });
+    document.getElementById("panel-borrado").scrollIntoView({ block: "start" });
+});
+document.getElementById("panel-borrado").addEventListener("toggle", mostrarResumenBorrado);
 
 function revisarReinicioEnOtraPestana(evento) {
     if (
         evento.storageArea !== localStorage ||
-        evento.key !== CLAVE_GUARDADO
+        (evento.key !== CLAVE_GUARDADO && evento.key !== null)
     ) {
+        return;
+    }
+
+    if (evento.key === null || evento.newValue === null) {
+        bloquearPantallaPorReinicio("Los datos de esta web se eliminaron en otra pestaña. Recarga para empezar con los datos actuales.");
         return;
     }
 
@@ -1662,3 +1684,15 @@ prepararCategoriasNomina();
 construirTabla();
 construirExtras();
 actualizarPantalla();
+
+mostrarResumenBorrado();
+try {
+    if (sessionStorage.getItem("finanzas-aviso-borrado") === "1") {
+        sessionStorage.removeItem("finanzas-aviso-borrado");
+        const aviso = document.getElementById("aviso-datos-borrados");
+        aviso.hidden = false;
+        aviso.textContent = guardadoHabilitado
+            ? "Datos anteriores eliminados. Ya puedes registrar y guardar tus nuevos datos."
+            : "Datos anteriores eliminados. El navegador aún no permite guardar nuevos datos; revisa sus permisos.";
+    }
+} catch {}

@@ -1011,3 +1011,104 @@ test('nube: fallo de escritura al descargar conserva local e historial', async t
     assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
     assert.equal(await page.evaluate(() => nominas[0].referencia), 'Pago de prueba');
 });
+
+test('borrado: acceso visible y confirmación obligatoria sin eliminar por accidente', async t => {
+    const { page } = await abrir(t);
+    await page.locator('#gestionar-datos').click();
+    assert.equal(await page.locator('#panel-borrado').getAttribute('open'), '');
+    assert.match(await page.locator('#resumen-borrado').textContent(), /1 ingresos, 1 deudas/);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'titulo-borrado');
+    const antes = await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO));
+    await page.locator('#confirmar-borrado').fill('borrar');
+    await page.locator('#formulario-borrado-total button').click();
+    assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
+    assert.match(await page.locator('#mensaje-borrado').textContent(), /Escribe BORRAR/);
+});
+
+test('borrado: elimina la clave y la memoria incluso si no permite escribir', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoConNomina('deuda', 'd1', '50');
+        localStorage.setItem('otra-aplicacion', 'conservar');
+        sesionNube = { token: 'ficticio', id: 'prueba' };
+        consultaNube = { remota: { copia: construirPaquete() } };
+        recargarTrasReinicio = () => {};
+        Storage.prototype.setItem = () => { throw new Error('Cuota agotada'); };
+        campoConfirmarBorrado.value = 'BORRAR';
+        restablecerTodosLosDatos(new Event('submit'));
+        return { copia: localStorage.getItem(CLAVE_GUARDADO), otra: localStorage.getItem('otra-aplicacion'),
+            nominas: nominas.length, deudas: deudas.length, historial: historialCorrecciones.length,
+            extras: otrosIngresos.length, ahorro: movimientosAhorros.length, grupos: gruposDeudas.length,
+            gastos: gastosBasicos.length, nube: sesionNube, consulta: consultaNube, bloqueado: reinicioDetectado };
+    }), { copia: null, otra: 'conservar', nominas: 0, deudas: 0, historial: 0, extras: 0,
+        ahorro: 0, grupos: 0, gastos: 0, nube: null, consulta: null, bloqueado: true });
+});
+
+test('borrado: una copia corrupta se elimina y los nuevos ingresos sí persisten', async t => {
+    const { page } = await abrir(t);
+    await page.evaluate(() => localStorage.setItem(CLAVE_GUARDADO, '{copia-dañada'));
+    await page.reload();
+    assert.equal(await page.evaluate(() => guardadoHabilitado), false);
+    await page.locator('#gestionar-datos').click();
+    assert.match(await page.locator('#resumen-borrado').textContent(), /no se puede recuperar/);
+    await page.locator('#confirmar-borrado').fill('BORRAR');
+    await Promise.all([page.waitForEvent('load'), page.locator('#formulario-borrado-total button').click()]);
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+    assert.match(await page.locator('#aviso-datos-borrados').textContent(), /Datos anteriores eliminados/);
+    assert.equal(await page.evaluate(() => otrosIngresos.length), 0);
+    await page.locator('#referencia-nomina').fill('Mi primer ingreso nuevo');
+    await page.locator('#neto-nomina').fill('2500');
+    await page.locator('#periodo-nomina').selectOption('semanal');
+    await page.locator('#confirmar-nomina').click();
+    await page.reload();
+    assert.deepEqual(await page.evaluate(() => ({ nombres: nominas.map(n => n.referencia),
+        importe: nominas[0].montoCentavos, deudas: deudas.length, historial: historialCorrecciones.length })),
+        { nombres: ['Mi primer ingreso nuevo'], importe: 250000, deudas: 0, historial: 0 });
+});
+
+test('borrado: un fallo al eliminar conserva los datos y permite reintentar', async t => {
+    const { page } = await abrir(t);
+    const antes = await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO));
+    await page.evaluate(() => {
+        window.removeOriginalPrueba = Storage.prototype.removeItem;
+        Storage.prototype.removeItem = () => { throw new Error('Sin permiso'); };
+    });
+    await page.locator('#gestionar-datos').click();
+    await page.locator('#confirmar-borrado').fill('BORRAR');
+    await page.locator('#formulario-borrado-total button').click();
+    assert.match(await page.locator('#mensaje-borrado').textContent(), /No se pudo eliminar/);
+    assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
+    assert.equal(await page.evaluate(() => nominas.length), 1);
+    assert.equal(await page.evaluate(() => reinicioDetectado), false);
+    await page.evaluate(() => { Storage.prototype.removeItem = window.removeOriginalPrueba; });
+    await Promise.all([page.waitForEvent('load'), page.locator('#formulario-borrado-total button').click()]);
+    assert.equal(await page.evaluate(() => nominas.length), 0);
+});
+
+test('borrado: eliminación externa bloquea pestañas antiguas sin marca de reinicio', async t => {
+    const { page } = await abrir(t);
+    await page.evaluate(() => {
+        const datos = JSON.parse(localStorage.getItem(CLAVE_GUARDADO));
+        delete datos.reinicioId;
+        localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos));
+    });
+    await page.reload();
+    const otra = await page.context().newPage();
+    await otra.goto(url);
+    await page.evaluate(() => localStorage.removeItem(CLAVE_GUARDADO));
+    await otra.waitForFunction(() => reinicioDetectado);
+    assert.equal(await otra.evaluate(() => guardar()), false);
+    assert.equal(await otra.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), null);
+});
+
+test('borrado: vaciar almacenamiento desde otra pestaña tampoco restaura datos', async t => {
+    const { page } = await abrir(t);
+    const otra = await page.context().newPage();
+    await otra.goto(url);
+    await page.evaluate(() => localStorage.clear());
+    await otra.waitForFunction(() => reinicioDetectado);
+    assert.equal(await otra.evaluate(() => guardar()), false);
+    await otra.reload();
+    assert.equal(await otra.evaluate(() => nominas.length + deudas.length), 0);
+    assert.equal(await otra.evaluate(() => guardadoHabilitado), true);
+});

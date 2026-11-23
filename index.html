@@ -45,6 +45,9 @@
         <h1 class="titulo-app">Tu dinero, en orden.</h1>
         <p class="subtitulo-app">Decide con claridad qué gastar, qué guardar y qué pagar.</p>
 
+        <button id="gestionar-datos" type="button" class="boton-secundario">Borrar datos anteriores</button>
+        <p id="aviso-datos-borrados" class="aviso" role="status" hidden></p>
+
         <section id="vista-gastos" hidden aria-labelledby="titulo-gastos">
             <button id="volver-gastos" type="button" class="boton-secundario">Volver a ingresos</button>
             <header class="cabecera-gastos"><p class="etiqueta-gastos">Tu día a día</p>
@@ -674,17 +677,20 @@
             Restablecer solo el presupuesto
         </button>
 
-        <details class="tarjeta zona-borrado"><summary>Empezar de cero</summary>
+        <details id="panel-borrado" class="tarjeta zona-borrado"><summary>Borrar datos y empezar de cero</summary>
         <section aria-labelledby="titulo-borrado">
-            <h2 id="titulo-borrado">Empezar de cero</h2>
+            <h2 id="titulo-borrado" tabindex="-1">Eliminar los datos de esta web</h2>
+            <p id="resumen-borrado" aria-live="polite"></p>
+            <p id="ubicacion-borrado" class="ayuda"></p>
 
             <p>
-                Se borran las nóminas, ahorro, deudas, grupos, fondos, gastos, ingresos extras y categorías personalizadas
-                Se recuperarán las categorías iniciales.
+                Se elimina la copia guardada de esta aplicación en este navegador. Después podrás guardar nuevos registros.
+                Se recuperan únicamente las categorías iniciales, sin movimientos de ejemplo.
             </p>
 
             <p>
-                Las copias descargadas, la copia de la nube y los datos de otros navegadores no se borran
+                Esto no borra los archivos del proyecto, las copias JSON descargadas ni la copia de la nube.
+                Si también usaste otra dirección, puerto o navegador, abre allí la web actualizada y repite el borrado.
             </p>
 
             <button id="respaldo-antes-borrar" type="button">
@@ -699,7 +705,7 @@
                 <input id="confirmar-borrado" type="text" autocomplete="off" spellcheck="false" required>
 
                 <button type="submit" class="boton-peligro">
-                    Borrar todos mis datos
+                    Eliminar datos de este navegador
                 </button>
             </form>
 
