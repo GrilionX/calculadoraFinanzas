@@ -13,6 +13,7 @@ Los estilos se cargan en este orden:
 - `css/sistema.css`: colores, tipografía, componentes y estados compartidos.
 - `css/ingresos.css`: resumen, formulario, reparto e historial.
 - `css/movil.css`: adaptación por tamaño de pantalla y preferencias de accesibilidad.
+- `css/cuenta.css`: cuenta y confirmaciones de corrección.
 
 `js/interfaz.js` añade navegación de presentación y la barra de distribución; no modifica los importes ni el almacenamiento. No se añadieron fuentes remotas, librerías visuales ni rastreadores.
 
@@ -28,7 +29,7 @@ node scripts/servir.cjs
 
 Abre http://127.0.0.1:5173. No necesitas instalar dependencias para usar la aplicación. El servidor solo sirve los archivos en tu ordenador; no es una API ni una base de datos. Detén el servidor con Ctrl+C.
 
-Los datos se guardan en el navegador, no en GitHub. Usa siempre la misma dirección y navegador. Cambiar de dirección, puerto o navegador muestra un almacenamiento diferente: exporta una copia JSON e impórtala en la nueva ubicación para trasladar tus datos.
+Los datos se guardan en el navegador, no en GitHub. La sincronización privada con Supabase es opcional y debe activarse. Usa siempre la misma dirección y navegador. Cambiar de dirección, puerto o navegador muestra un almacenamiento diferente: exporta una copia JSON e impórtala en la nueva ubicación para trasladar tus datos.
 
 ## Gastos y categorías
 
@@ -106,12 +107,14 @@ css/styles.css             Estilos funcionales existentes
 css/sistema.css            Identidad y componentes compartidos
 css/ingresos.css           Vista de ingresos y reparto
 css/movil.css              Adaptación móvil y accesibilidad
+css/cuenta.css             Cuenta y confirmaciones
 js/calculos.js             Operaciones monetarias y reparto
 js/nominas.js              Registro de nóminas
 js/deudas.js               Deudas, grupos y horizonte
 js/fondos.js               Fondos, asignaciones y modalidades
 js/origenes.js             Vínculo de apartados con nóminas
 js/correcciones.js         Validación, historial y reversión
+js/correcciones-avanzadas.js Reconstrucción con vista previa
 js/gastos.js               Gastos por presupuesto, categorías y disponibilidad conjunta
 js/ahorro.js               Origen y correcciones del ahorro personal
 js/ajustes.js              Objetivos y apartados concretos con motivo
@@ -119,6 +122,8 @@ js/grupos.js               Renombrar, trasladar y eliminar grupos vacíos
 js/resumen.js              Conciliación de nóminas y saldos actuales
 js/interfaz.js             Navegación visual y distribución accesible
 js/movil.js                Teclado, rutas y comodidad móvil
+js/configuracion.js        URL y clave pública opcionales
+js/sincronizacion.js       Cuenta y sincronización manual
 js/app.js                  Persistencia, presupuesto, ahorro y arranque
 js/pruebas.js              Comprobaciones existentes
 scripts/servir.cjs         Servidor local de archivos
@@ -146,13 +151,30 @@ Las pruebas usan datos ficticios y perfiles temporales, sin acceder al almacenam
 
 ## Pendientes
 
-Continuar validando la experiencia en dispositivos reales; incorporar cuentas, sincronización y una API en la siguiente fase. Las correcciones de apartados transferidos o distribuidos siguen requiriendo deshacer primero las operaciones dependientes. Excel permanece fuera del alcance acordado.
+Activar Supabase y ejecutar sus pruebas SQL y el recorrido con dos cuentas y dispositivos reales. La conexión está desactivada hasta configurar el servicio. Quedan para una fase posterior la recuperación de contraseña desde la web, la sincronización automática con resolución de conflictos y las correcciones que conserven selectivamente cambios posteriores independientes. Excel permanece fuera del alcance acordado.
 
 La entrega de grupos y resumen se verificó con 34 escenarios de integración, incluidos los anteriores de gastos, ahorro, correcciones, copias y restablecimiento.
 
 El rediseño se comprobó con 37 escenarios de integración y revisión visual en navegador. Se verificaron anchos de 320, 390, 768 y 1440 píxeles, navegación táctil, acceso al formulario, tablas por teclado y continuidad de los cálculos existentes. Esto no equivale a una auditoría completa de accesibilidad ni a pruebas en todos los dispositivos físicos.
 
 
-La adaptación para Android incorpora rutas por sección y botones Atrás/Adelante, espacios para la navegación inferior, avisos de tablas desplazables y tarjetas adaptables al tamaño de letra. Si falla guardar un ingreso, conserva sus campos y revierte la incorporación para evitar duplicados al reintentar. Consulta la [comprobación pendiente en OPPO](docs/pruebas-movil.md).
+La adaptación móvil incorpora rutas por sección y botones Atrás/Adelante, espacios para la navegación inferior, avisos de tablas desplazables y tarjetas adaptables al tamaño de letra. Si falla guardar un ingreso, conserva sus campos y revierte la incorporación para evitar duplicados al reintentar. Consulta la [comprobación pendiente en dispositivos móviles](docs/pruebas-movil.md).
 
-Esta fase pasó 42 pruebas de integración en Chromium y una revisión visual a 390 píxeles. Incluye texto ampliado, navegación del historial y teclado simulado; la comprobación en OPPO físico sigue pendiente.
+Esta fase pasó 42 pruebas de integración en Chromium y una revisión visual a 390 píxeles. Incluye texto ampliado, navegación del historial y teclado simulado; la comprobación en dispositivos físicos sigue pendiente.
+
+
+## Cuenta y sincronización opcional
+
+La implementación de registro, inicio y cierre de sesión, comparación, envío y recuperación de copias está disponible en **Mi cuenta y sincronización**. No realiza peticiones mientras la configuración esté vacía. La activación y las comprobaciones del servicio se explican en [docs/sincronizacion.md](docs/sincronizacion.md).
+
+Cada cuenta tiene una copia privada y una revisión. El guardado compara esa revisión para rechazar escrituras desactualizadas. No hay mezcla automática de movimientos. Recuperar la copia remota solicita descargar la local y valida el contenido antes de reemplazarlo. Cerrar sesión conserva los datos locales; Empezar de cero no borra la nube.
+
+## Corrección de apartados con dependencias
+
+En **Correcciones e historial → Corregir apartados transferidos o distribuidos**, selecciona el apartado y el importe correcto, prepara la vista previa y revisa la lista completa. Se vuelve al estado previo a las transferencias y se corrige el apartado en una sola escritura. Esto revierte también los cambios posteriores independientes de deudas y grupos mostrados en la lista. Los ingresos, gastos y ahorro se conservan y se comprueba la disponibilidad conjunta.
+
+No se atraviesan pagos confirmados. Tampoco se reconstruyen estados que no estén documentados en el historial. Una vista previa obsoleta se rechaza. La operación queda registrada con motivo y puede deshacerse como último cambio; las entradas originales no se eliminan.
+
+La fase de cuentas y correcciones pasó **53 pruebas de integración** en navegador. Los casos de nube usan una API simulada: la migración SQL, el aislamiento real entre cuentas y el correo quedan pendientes de validación en el proyecto Supabase. Se mantiene la adaptación general por ancho de pantalla, sin detección de marcas.
+
+Para actualizar tu copia del código, consulta [docs/actualizar-vscode.md](docs/actualizar-vscode.md).

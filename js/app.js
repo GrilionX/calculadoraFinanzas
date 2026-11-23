@@ -464,6 +464,7 @@ function guardar() {
         mostrarGastos();
         actualizarOrigenAhorro();
         mostrarAjustesFinancieros();
+        if (typeof mostrarApartadosAvanzados === 'function') mostrarApartadosAvanzados();
         mostrarAdministradorGrupos();
         mostrarResumenFinanciero();
         return true;
@@ -568,7 +569,7 @@ function limpiarMovimientosAhorro(lista) {
     return limpiarRegistroAhorro(lista);
 }
 
-function aplicarDatos(datos) {
+function aplicarDatos(datos, soloValidar = false) {
     if (
         !datos ||
         typeof datos !== "object" ||
@@ -751,6 +752,8 @@ function aplicarDatos(datos) {
         limpiarGastosBasicos(datos.gastosBasicos, categoriasGastosLimpias, nominasLimpias);
     if (!categoriasGastosLimpias || !gastosLimpios ||
         !validarDisponibilidadCompleta(nominasLimpias, deudasLimpias, gruposLimpios, gastosLimpios, ahorroLimpio) || !validarOrigenAhorro(ahorroLimpio, nominasLimpias)) return false;
+
+    if (soloValidar) return true;
 
     campoFrecuencia.value = datos.frecuencia ?? "mensual";
     campoMonto.value = datos.monto === undefined ? "" : String(datos.monto);

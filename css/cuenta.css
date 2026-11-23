@@ -1,0 +1,15 @@
+/*Cuenta y confirmaciones*/
+.panel-nube input { width: 100%; min-width: 0; }
+.panel-nube p, .correccion-avanzada li { overflow-wrap: anywhere; }
+.panel-nube form { max-width: 42rem; }
+#comparacion-nube:not(:empty), #lista-avanzada:not(:empty) {
+    padding: 1rem; border: 1px solid var(--linea); border-radius: 12px; background: #f7faf9;
+}
+#lista-avanzada { padding-left: 2rem; }
+#lista-avanzada li { margin-block: .65rem; }
+.confirmacion-avanzada { display: flex; align-items: center; gap: .75rem; min-height: 48px; }
+.confirmacion-avanzada input { flex: 0 0 24px; width: 24px; height: 24px; }
+@media (max-width: 780px) {
+    .panel-nube .fila-botones { flex-direction: column; }
+    .panel-nube button { width: 100%; min-height: 48px; }
+}

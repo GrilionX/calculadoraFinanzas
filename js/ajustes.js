@@ -27,17 +27,17 @@ function ajustarObjetivoDeuda(id, monto, motivo) {
     return guardarAjusteDeudas(estado, motivo);
 }
 
-function apartadosCorregibles() {
+function apartadosCorregibles(estado = { deudas, gruposDeudas }) {
     const filas = [];
-    for (const d of deudas) {
+    for (const d of estado.deudas) {
         if (d.liquidada || (d.transferencias ?? []).length) continue;
         for (const m of d.aportacionesNomina ?? []) {
             filas.push({ id: m.id, tipo: "deuda", destinoId: d.id, nombre: d.nombre, montoCentavos: m.montoCentavos });
         }
     }
-    for (const g of gruposDeudas) {
+    for (const g of estado.gruposDeudas) {
         if ((g.movimientosFondo ?? []).some(m => m.tipo !== "apartado") ||
-            deudas.some(d => d.grupoId === g.id && d.liquidada)) continue;
+            estado.deudas.some(d => d.grupoId === g.id && d.liquidada)) continue;
         for (const m of g.movimientosFondo ?? []) {
             if (m.origenNomina) filas.push({ id: m.origenNomina.id, tipo: "grupo", destinoId: g.id,
                 nombre: g.nombre, montoCentavos: m.montoCentavos });

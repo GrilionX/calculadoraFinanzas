@@ -59,7 +59,7 @@
     .barra-distribucion { border: 1px solid CanvasText; }
 }
 
-/*Pantalla útil, texto ampliado y teclado de Android*/
+/*Pantalla útil, texto ampliado y teclado en pantallas táctiles*/
 :root { --alto-nav-movil: 88px; }
 html { scroll-padding-bottom: calc(var(--alto-nav-movil) + 24px); }
 :where(input, select, textarea, button, summary, [tabindex="-1"]) { scroll-margin-block: 100px calc(var(--alto-nav-movil) + 28px); }
