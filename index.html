@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./css/ingresos.css">
     <link rel="stylesheet" href="./css/movil.css">
     <link rel="stylesheet" href="./css/cuenta.css">
+    <link rel="stylesheet" href="./css/mejoras.css">
 </head>
 
 <body>
@@ -94,7 +95,18 @@
                     <ul id="gastos-por-categoria"></ul>
                 </section>
             </div>
-            <p id="mensaje-gasto" role="status" aria-live="polite"></p>
+            <p id="mensaje-gasto" role="status" aria-live="polite"></p><section class="tarjeta" aria-labelledby="titulo-recurrentes">
+<div class="cabecera-mejora"><div><p class="sobretitulo">SIN OLVIDOS</p><h3 id="titulo-recurrentes">Tus gastos recurrentes</h3></div></div>
+<p>Programa lo que se repite. Cada pago queda pendiente hasta que lo confirmes y elijas qué ingreso lo financia.</p>
+<details class="panel-mejora" id="editor-recurrente"><summary>Programar un gasto</summary><form id="formulario-recurrente">
+<div class="campos-mejora"><div><label for="recurrente-nombre">Concepto</label><input id="recurrente-nombre" maxlength="120" required placeholder="Renta, internet, suscripción…"></div>
+<div><label for="recurrente-importe">Importe por pago</label><input id="recurrente-importe" type="number" min=".01" step=".01" inputmode="decimal" required></div>
+<div><label for="recurrente-categoria">Categoría de gastos</label><select id="recurrente-categoria" required></select></div>
+<div><label for="recurrente-frecuencia">Frecuencia</label><select id="recurrente-frecuencia"><option value="mensual">Mensual</option><option value="semanal">Semanal</option><option value="catorcenal">Cada 14 días</option><option value="anual">Anual</option></select></div>
+<div><label for="recurrente-inicio">Primer vencimiento</label><input id="recurrente-inicio" type="date" required></div></div>
+<p class="ayuda">Crea primero una categoría en Mis categorías de gastos. Para cambiar importe o calendario, pausa la programación anterior y crea otra; su historial se conserva.</p>
+<button type="submit">Crear programación</button></form></details>
+<div id="lista-recurrentes" class="rejilla-mejoras"></div><p id="mensaje-recurrentes" role="status"></p></section>
             <section class="tarjeta">
                 <h3>Gastos de este presupuesto</h3>
                 <p id="gastos-vacios">Todavía no has registrado gastos en este presupuesto de la nómina.</p>
@@ -141,6 +153,7 @@
                     <input id="referencia-nomina" type="text" maxlength="80" required
                         placeholder="Por ejemplo: Nómina primera semana de noviembre"></div>
 
+                    <div class="campo-formulario"><label for="fecha-nomina">Fecha en que recibiste el pago</label><input id="fecha-nomina" type="date" required></div>
                     <div class="campo-formulario campo-importe"><label for="neto-nomina">Importe neto recibido</label>
                     <input id="neto-nomina" aria-describedby="aviso-nomina" type="number" min="0.01" step="0.01" inputmode="decimal" required></div>
 
@@ -201,10 +214,46 @@
 
             <section class="tarjeta historial-ingresos" aria-labelledby="titulo-historial-nominas">
                 <p class="sobretitulo">TU HISTORIAL</p><h2 id="titulo-historial-nominas">Ingresos registrados</h2><p class="ayuda">Cada pago conserva el reparto que elegiste al registrarlo.</p>
-                <div id="historial-nominas"></div>
+                <div id="historial-nominas"></div><details class="panel-mejora" id="editor-ingresos">
+<summary>Corregir o anular un ingreso</summary>
+<p class="ayuda">El motivo queda registrado. Los ingresos utilizados conservan su importe y reparto.</p>
+<form id="formulario-editar-ingreso" class="formulario-mejora">
+<label for="editar-ingreso-id">Ingreso</label><select id="editar-ingreso-id" required></select>
+<p id="ayuda-editar-ingreso" class="ayuda">Selecciona un ingreso.</p>
+<div class="campos-mejora"><div><label for="editar-ingreso-nombre">Referencia</label><input id="editar-ingreso-nombre" maxlength="80" required></div>
+<div><label for="editar-ingreso-fecha">Fecha de recepción</label><input id="editar-ingreso-fecha" type="date" required></div>
+<div><label for="editar-ingreso-importe">Importe neto</label><input id="editar-ingreso-importe" type="number" min=".01" step=".01" inputmode="decimal" required></div>
+<div><label for="editar-ingreso-periodo">Periodo de pago</label><select id="editar-ingreso-periodo">
+<option value="unico">Pago único</option><option value="semanal">Semanal</option><option value="catorcenal">Catorcenal</option><option value="quincenal">Quincenal</option><option value="mensual">Mensual</option></select></div></div>
+<fieldset><legend>Reparto de este ingreso</legend><div id="editar-ingreso-reparto"></div></fieldset>
+<label for="editar-ingreso-motivo">Motivo</label><input id="editar-ingreso-motivo" maxlength="240" required>
+<div class="fila-botones"><button id="guardar-edicion-ingreso" type="submit" disabled>Guardar corrección</button>
+<button id="anular-ingreso" type="button" class="boton-peligro" disabled>Anular ingreso</button></div>
+</form><p id="mensaje-editar-ingreso" role="status"></p></details>
             </section>
 
             </div>
+<section class="tarjeta centro-actividad" aria-labelledby="titulo-actividad">
+<div class="cabecera-mejora"><div><p class="sobretitulo">TU ACTIVIDAD</p><h2 id="titulo-actividad">Cada movimiento, en su lugar</h2></div>
+<span class="insignia-mejora">Datos registrados</span></div>
+<details class="panel-mejora"><summary>Resumen por mes o por pago</summary>
+<div class="campos-mejora"><div><label for="resumen-modo">Qué quieres consultar</label><select id="resumen-modo"><option value="mes">Movimientos del mes</option><option value="nomina">Uso de un ingreso</option></select></div>
+<div id="campo-mes-resumen"><label for="resumen-mes">Mes</label><input id="resumen-mes" type="month"></div>
+<div id="campo-nomina-resumen" hidden><label for="periodo-nomina-resumen">Ingreso y periodo de pago</label><select id="periodo-nomina-resumen"></select></div></div>
+<div id="metricas-periodo" class="metricas-mejora"></div><p id="nota-periodo" class="ayuda" role="status"></p></details>
+<details class="panel-mejora" id="panel-actividad"><summary>Historial unificado y búsqueda</summary>
+<label for="actividad-buscar">Buscar un concepto, ingreso o acreedor</label><input id="actividad-buscar" type="search" placeholder="Por ejemplo: renta, emergencia o nombre del acreedor">
+<div class="campos-mejora filtros-actividad">
+<div><label for="actividad-tipo">Movimiento</label><select id="actividad-tipo"><option value="">Todos</option><option value="ingreso">Ingresos</option><option value="gasto">Gastos</option><option value="ahorro">Aportaciones al ahorro</option><option value="retiro">Retiros del ahorro</option><option value="apartado">Apartados de deudas</option><option value="pago">Pagos confirmados</option><option value="ajuste">Correcciones</option></select></div>
+<div><label for="actividad-nomina">Ingreso de origen</label><select id="actividad-nomina"></select></div>
+<div><label for="actividad-categoria">Presupuesto</label><select id="actividad-categoria"></select></div>
+<div><label for="actividad-estado">Estado</label><select id="actividad-estado"><option value="">Activos y anulados</option><option value="activo">Activos</option><option value="anulado">Anulados</option></select></div>
+<div><label for="actividad-desde">Desde</label><input id="actividad-desde" type="date"></div>
+<div><label for="actividad-hasta">Hasta</label><input id="actividad-hasta" type="date"></div></div>
+<button id="actividad-limpiar" type="button">Limpiar filtros</button>
+<p id="conteo-actividad" role="status"></p><p class="ayuda">Los registros antiguos sin fecha se conservan. Puedes completar su fecha cuando la conozcas. Las correcciones no son cargos nuevos.</p>
+<ol id="lista-actividad" class="lista-actividad"></ol><button id="actividad-mas" type="button">Mostrar más movimientos</button>
+<p id="mensaje-actividad" role="status"></p></details></section>
             <details class="simulador-anterior">
                 <summary>Simulador de sueldo constante y categorías generales</summary>
 
@@ -372,6 +421,8 @@
             </div>
 
             <form id="formulario-ahorro">
+                <label for="fecha-ahorro">Fecha de la operación</label><input id="fecha-ahorro" type="date" required>
+                <label for="ahorro-meta">Destino del ahorro</label><select id="ahorro-meta"></select><p id="saldo-meta-seleccionada" class="ayuda"></p>
                 <label for="tipo-movimiento-ahorro">Movimiento</label>
                 <select id="tipo-movimiento-ahorro">
                     <option value="aportacion">Aportación</option>
@@ -393,6 +444,19 @@
 
             <p id="mensaje-ahorro" class="aviso" role="status"></p>
 
+<section class="panel-mejora" aria-labelledby="titulo-metas">
+<div class="cabecera-mejora"><div><p class="sobretitulo">TUS OBJETIVOS</p><h3 id="titulo-metas">Dale un destino a tu ahorro</h3></div></div>
+<p>Las metas forman parte del ahorro personal mostrado arriba; no se suman de nuevo ni utilizan fondos de deudas.</p>
+<p class="saldo-general">Ahorro general sin meta: <strong id="saldo-ahorro-general"></strong></p>
+<details id="editor-meta"><summary>Crear o editar una meta</summary><form id="formulario-meta">
+<input id="meta-id" type="hidden"><label for="meta-nombre">Nombre de la meta</label><input id="meta-nombre" maxlength="60" required placeholder="Por ejemplo: fondo de emergencia">
+<label for="meta-objetivo">Objetivo en pesos</label><input id="meta-objetivo" type="number" inputmode="decimal" min=".01" step=".01" required>
+<div class="fila-botones"><button type="submit">Guardar meta</button><button id="meta-nueva" type="button">Limpiar para crear otra</button></div></form></details>
+<div id="lista-metas" class="rejilla-mejoras"></div>
+<details><summary>Asignar ahorro ya registrado</summary><p class="ayuda">Reclasifica un movimiento sin añadir dinero. No se permite dejar una meta o el ahorro general con saldo negativo, tampoco en su historial.</p>
+<form id="formulario-asignar-meta"><label for="asignar-movimiento">Movimiento de ahorro</label><select id="asignar-movimiento" required></select>
+<label for="asignar-meta">Destino</label><select id="asignar-meta"></select><button type="submit">Actualizar destino</button></form></details>
+<p id="mensaje-metas" role="status"></p></section>
             <h3>Mis movimientos</h3>
             <p id="ahorro-vacio" class="ayuda">
                 Todavía no has registrado movimientos.
@@ -406,7 +470,14 @@
                 Reúne el dinero por acreedor y confirma la liquidación
                 después de realizar el pago.
             </p>
-            <p id="resumen-deudas" class="resumen"></p>
+            <p id="resumen-deudas" class="resumen"></p><section class="panel-mejora" aria-labelledby="titulo-vencimientos">
+<p class="sobretitulo">LO QUE SIGUE</p><h3 id="titulo-vencimientos">Fechas de tus deudas</h3>
+<p class="ayuda">Un vencimiento no confirma un pago ni añade intereses. Tu regla sigue igual: reunir el total y confirmar solo cuando hayas pagado.</p>
+<details id="editor-vencimiento"><summary>Asignar o cambiar vencimiento</summary>
+<form id="formulario-vencimiento"><label for="vencimiento-deuda">Deuda pendiente</label><select id="vencimiento-deuda" required></select>
+<label for="vencimiento-fecha">Fecha de vencimiento</label><input id="vencimiento-fecha" type="date">
+<p class="ayuda">Deja la fecha vacía para quitar el vencimiento.</p><button type="submit">Guardar vencimiento</button></form></details>
+<ul id="lista-vencimientos" class="lista-vencimientos"></ul><p id="mensaje-vencimientos" role="status"></p></section>
 
             <details class="deudas-registro">
                 <summary>Crear un Grupo</summary>
@@ -534,6 +605,7 @@
             <h3>Apartar dinero</h3>
 
             <form id="formulario-apartado" class="formulario-deudas">
+                <label for="fecha-apartado">Fecha del apartado</label><input id="fecha-apartado" type="date" required>
                 <label for="destino-apartado">Deuda de destino</label>
                 <select id="destino-apartado" required></select>
 
@@ -788,12 +860,17 @@
     <script src="./js/ajustes.js"></script>
     <script src="./js/grupos.js"></script>
     <script src="./js/resumen.js"></script>
+    <script src="./js/datos-mejoras.js"></script>
+    <script src="./js/ingresos-edicion.js"></script>
+    <script src="./js/metas-recurrentes.js"></script>
+    <script src="./js/actividad.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
     <script src="./js/interfaz.js"></script>
     <script src="./js/configuracion.js"></script>
     <script src="./js/sincronizacion.js"></script>
     <script src="./js/correcciones-avanzadas.js"></script>
+    <script src="./js/paneles-mejoras.js"></script>
     <script src="./js/movil.js"></script>
 </body>
 

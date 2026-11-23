@@ -55,13 +55,20 @@ function guardarCambioAhorro(lista) {
     return true;
 }
 
-function registrarAhorroVinculado(tipo, concepto, monto, nominaId) {
+function registrarAhorroVinculado(tipo, concepto, monto, nominaId, metaId = "", fecha = fechaLocalGasto()) {
     const centavos = convertirPesosACentavos(monto);
-    if (centavos === null || !["aportacion", "retiro"].includes(tipo)) return false;
+    if (centavos === null || !["aportacion", "retiro"].includes(tipo) || !fechaGastoValida(fecha)) return false;
     const movimiento = { id: generarId([...obtenerCompromisosNomina().map(m => m.id),
         ...movimientosAhorros.map(m => m.id).filter(Boolean)]), tipo, concepto, montoCentavos: centavos };
     if (tipo === "aportacion") movimiento.origenNomina = { nominaId, categoriaId: "ahorro" };
-    return guardarCambioAhorro([...movimientosAhorros, movimiento]);
+    try {
+        return guardarOperacionMejora(datos => {
+            if (metaId && !datos.mejoras.metas.some(m => m.id === metaId && !m.archivada)) throw new Error("Meta no disponible.");
+            datos.movimientosAhorros.push(movimiento);
+            if (metaId) datos.mejoras.destinosAhorro.push({ movimientoId: movimiento.id, metaId });
+            fijarFechaMovimiento(datos.mejoras, "ahorro", movimiento.id, fecha);
+        });
+    } catch { return false; }
 }
 
 function anularMovimientoAhorro(id, motivo) {

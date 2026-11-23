@@ -6,7 +6,7 @@ GitHub almacena los archivos de la web. Supabase almacenará las cuentas y las c
 ## 1. Crear el servicio
 1. Crea un proyecto en [Supabase](https://supabase.com/dashboard).
 2. Guarda la contraseña de la base de datos en tu gestor de contraseñas; no va en JavaScript.
-3. En SQL Editor ejecuta una sola vez el contenido de `supabase/migrations/001_sincronizacion.sql`.
+3. En SQL Editor ejecuta una sola vez `supabase/migrations/001_sincronizacion.sql` y después `supabase/migrations/002_copias_version_8.sql`. Si ya aplicaste 001, ejecuta solo 002. La segunda migración conserva las copias existentes y permite las versiones 7 y 8.
 4. Ejecuta `supabase/tests/seguridad.sql`. Comprueba que termine sin errores: ensaya dos usuarios, acceso anónimo, escrituras directas y revisión obsoleta. La transacción se revierte al terminar y no guarda esas cuentas de prueba. Si falla, no habilites la conexión hasta resolverlo.
 
 La tabla tiene una copia por usuario. La lectura usa Row Level Security. Las escrituras directas están revocadas: la función de guardado obtiene el usuario de la sesión y compara la revisión dentro de la misma operación. La función no acepta un identificador de otra persona. Su privilegio elevado está limitado mediante usuario autenticado, nombres de tablas completos, search_path vacío y permisos de ejecución restringidos.
@@ -62,6 +62,7 @@ Las pruebas de navegador usan una API simulada para comprobar los flujos del cli
 - `js/app.js`: validación sin modificar el estado mediante `aplicarDatos(datos, true)`.
 - `css/cuenta.css`: presentación del panel.
 - `supabase/migrations/001_sincronizacion.sql`: tabla, políticas y función de escritura.
+- `supabase/migrations/002_copias_version_8.sql`: compatibilidad con las copias de las seis mejoras.
 - `supabase/tests/seguridad.sql`: comprobaciones de aislamiento y concurrencia.
 
 Referencias: [claves de API](https://supabase.com/docs/guides/getting-started/api-keys), [autenticación con contraseña](https://supabase.com/docs/guides/auth/passwords), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [funciones de base de datos](https://supabase.com/docs/guides/database/functions).

@@ -1,0 +1,39 @@
+/*Actividad, metas y planificación*/
+.cabecera-mejora { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.cabecera-mejora h2, .cabecera-mejora h3 { margin: 0; }
+.insignia-mejora, .etiqueta-movimiento { display: inline-block; font-size: .8rem; font-weight: 650; background: #e7f3ef; color: #15554e; padding: .35rem .65rem; border-radius: 1rem; }
+.panel-mejora { margin-block: 1.25rem; padding-block: 1rem; border-top: 1px solid var(--linea); }
+.panel-mejora > summary { font-weight: 650; min-height: 48px; padding-block: .8rem; }
+.campos-mejora, .rejilla-mejoras, .metricas-mejora { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
+.campos-mejora > *, .rejilla-mejoras > *, .metricas-mejora > * { min-width: 0; }
+.centro-actividad input, .centro-actividad select, .panel-mejora input:not([type="checkbox"]),
+.panel-mejora select, .recurrente-tarjeta input, .recurrente-tarjeta select { width: 100%; min-width: 0; box-sizing: border-box; }
+.metricas-mejora { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); margin-block: 1.25rem; }
+.metricas-mejora > div { padding: 1rem; background: #f1f6f7; border: 1px solid #dce7e9; border-radius: 14px; }
+.metricas-mejora span, .metricas-mejora strong { display: block; overflow-wrap: anywhere; }
+.metricas-mejora strong { font-size: 1.45rem; margin-top: .5rem; color: #163f3b; }
+.lista-actividad, .lista-vencimientos { list-style: none; padding: 0; }
+.movimiento-unificado, .vencimiento-fila { border: 1px solid var(--linea); border-radius: 14px; padding: 1rem; margin-block: .8rem; background: #fff; overflow-wrap: anywhere; }
+.actividad-cabecera { display: flex; justify-content: space-between; gap: 1rem; margin-top: .6rem; flex-wrap: wrap; }
+.actividad-cabecera strong { flex: 1 1 12rem; }
+.actividad-importe { font-weight: 700; color: #214e49; overflow-wrap: anywhere; }
+.meta-tarjeta, .recurrente-tarjeta { padding: 1.15rem; border: 1px solid #cfdeda; border-radius: 16px; background: linear-gradient(145deg, #f4faf6, #fff); overflow-wrap: anywhere; }
+.meta-tarjeta h4, .recurrente-tarjeta h4 { margin-top: 0; font-size: 1.1rem; }
+.meta-tarjeta progress { width: 100%; height: 12px; accent-color: #08786f; }
+.meta-tarjeta button, .recurrente-tarjeta button { margin-right: .4rem; }
+.estado-fecha { display: inline-block; padding: .3rem .6rem; border-radius: .5rem; margin-left: .6rem; font-size: .85rem; background: #eef2f4; }
+.estado-fecha.urgente { background: #ffebe5; color: #8b2e18; }
+.estado-fecha.proxima { background: #fff2ca; color: #765315; }
+.saldo-general { padding: 1rem; background: #eaf5f0; border-radius: 12px; }
+.estado-vacio { padding: 1.25rem; color: var(--secundario); border: 1px dashed #bdcec8; border-radius: 12px; }
+input[readonly] { background: #eef2f4; color: #43565f; }
+@media (prefers-reduced-motion: no-preference) {
+    .panel-mejora[open] > :not(summary), .meta-tarjeta, .recurrente-tarjeta { animation: entrada-suave .18s ease-out; }
+    @keyframes entrada-suave { from { opacity: .5; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+}
+@media (max-width: 780px) {
+    .campos-mejora, .rejilla-mejoras { grid-template-columns: minmax(0, 1fr); }
+    .panel-mejora button, .recurrente-tarjeta button { min-height: 48px; }
+    .estado-fecha { display: table; margin: .5rem 0; }
+    .actividad-cabecera { gap: .4rem; }
+}

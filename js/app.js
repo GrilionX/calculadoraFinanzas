@@ -383,6 +383,7 @@ function revisarReparto() {
 function construirPaquete() {
     return {
         reinicioId: reinicioActual,
+        mejoras,
         frecuencia: campoFrecuencia.value,
         monto: campoMonto.value,
         periodo: campoPeriodo.value,
@@ -448,9 +449,15 @@ function guardar() {
         const estadoLimpio = validarEstadoCorreccion(capturarEstadoDeudas(), nominas);
         paquete.deudas = estadoLimpio.deudas;
         paquete.gruposDeudas = estadoLimpio.gruposDeudas;
+        paquete.mejoras = prepararFechasNuevas(paquete, baseFechasMejoras);
+        const mejorasLimpias = limpiarMejoras(paquete.mejoras, paquete);
+        if (!mejorasLimpias) throw new Error("Revisa las metas, fechas y gastos recurrentes.");
+        paquete.mejoras = mejorasLimpias;
         const textoNuevo = JSON.stringify(paquete);
         localStorage.setItem(CLAVE_GUARDADO, textoNuevo);
         ultimoTextoGuardado = textoNuevo;
+        mejoras = mejorasLimpias;
+        baseFechasMejoras = copiar({ nominas, movimientosAhorros, deudas, gruposDeudas });
         deudas = estadoLimpio.deudas;
         gruposDeudas = estadoLimpio.gruposDeudas;
         historialCorrecciones = historialNuevo;
@@ -467,6 +474,7 @@ function guardar() {
         if (typeof mostrarApartadosAvanzados === 'function') mostrarApartadosAvanzados();
         mostrarAdministradorGrupos();
         mostrarResumenFinanciero();
+        if (typeof mostrarPanelesMejoras === 'function') mostrarPanelesMejoras();
         return true;
     } catch (error) {
         deudas = copiar(estadoDeudasGuardado.deudas);
@@ -753,6 +761,11 @@ function aplicarDatos(datos, soloValidar = false) {
     if (!categoriasGastosLimpias || !gastosLimpios ||
         !validarDisponibilidadCompleta(nominasLimpias, deudasLimpias, gruposLimpios, gastosLimpios, ahorroLimpio) || !validarOrigenAhorro(ahorroLimpio, nominasLimpias)) return false;
 
+    const mejorasLimpias = limpiarMejoras(datos.mejoras, {
+        nominas: nominasLimpias, movimientosAhorros: ahorroLimpio, gastosBasicos: gastosLimpios,
+        categoriasGastos: categoriasGastosLimpias
+    });
+    if (!mejorasLimpias) return false;
     if (soloValidar) return true;
 
     campoFrecuencia.value = datos.frecuencia ?? "mensual";
@@ -771,6 +784,8 @@ function aplicarDatos(datos, soloValidar = false) {
     categoriasGastos = categoriasGastosLimpias;
     gastosBasicos = gastosLimpios;
     historialCorrecciones = historialLimpio;
+    mejoras = mejorasLimpias;
+    baseFechasMejoras = copiar({ nominas, movimientosAhorros, deudas, gruposDeudas });
     estadoDeudasGuardado = capturarEstadoDeudas();
 
     return true;
@@ -817,16 +832,16 @@ function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
-        [1, 2, 3, 4, 5, 6, 7].includes(contenido.version) &&
+        [1, 2, 3, 4, 5, 6, 7, 8].includes(contenido.version) &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
-        !Array.isArray(contenido.datos);
+        !Array.isArray(contenido.datos) && (contenido.version !== 8 || contenido.datos.mejoras?.version === 1);
 }
 
 function exportarCopia() {
     const copia = {
         app: "finanzas-personal",
-        version: 7,
+        version: 8,
         datos: construirPaquete()
     };
 
@@ -1471,11 +1486,12 @@ function mostrarAhorro() {
 function registrarMovimientoAhorro(evento) {
     evento.preventDefault();
     const ok = registrarAhorroVinculado(campoTipoAhorro.value, campoConceptoAhorro.value.trim(),
-        campoMontoAhorro.value, document.getElementById("ahorro-nomina").value);
+        campoMontoAhorro.value, document.getElementById("ahorro-nomina").value,
+        document.getElementById("ahorro-meta").value, document.getElementById("fecha-ahorro").value);
     if (ok) { campoConceptoAhorro.value = ""; campoMontoAhorro.value = ""; }
     mensajeAhorro.className = ok ? "aviso ok" : "aviso error";
     mensajeAhorro.textContent = ok ? "Movimiento registrado con su origen." :
-        "No se registró. Revisa la nómina, el concepto, el disponible y el guardado.";
+        "No se registró. Revisa la fecha, el concepto, la nómina y el saldo del destino de ahorro elegido.";
 }
 
 //Eventos
@@ -1534,6 +1550,7 @@ function leerIdReinicio(datos) {
 function crearDatosIniciales() {
     return {
         reinicioId: generarId([]),
+        mejoras: mejorasIniciales(),
         frecuencia: "mensual",
         monto: "",
         periodo: "semanal",

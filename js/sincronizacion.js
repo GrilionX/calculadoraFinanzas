@@ -90,7 +90,7 @@ function copiaLocalNube() {
         localStorage.getItem(CLAVE_GUARDADO) !== ultimoTextoGuardado) {
         throw new Error("Recarga y recupera el guardado local antes de sincronizar.");
     }
-    const copia = { app: "finanzas-personal", version: 7, datos: copiar(construirPaquete()) };
+    const copia = { app: "finanzas-personal", version: 8, datos: copiar(construirPaquete()) };
     if (!aplicarDatos(copia.datos, true)) throw new Error("Los datos locales no superaron la validación.");
     if (new TextEncoder().encode(JSON.stringify(copia)).length > 3500000) {
         throw new Error("La copia supera el tamaño admitido. Descarga una copia JSON; no se envió nada.");
@@ -99,7 +99,7 @@ function copiaLocalNube() {
 }
 
 function validarCopiaNube(copia) {
-    return esCopiaValida(copia) && copia.version === 7 && aplicarDatos(copia.datos, true);
+    return esCopiaValida(copia) && [7, 8].includes(copia.version) && aplicarDatos(copia.datos, true);
 }
 
 function resumenCopiaNube(copia) {

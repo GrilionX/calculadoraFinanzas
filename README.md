@@ -97,7 +97,7 @@ El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del
 
 Se muestran los últimos 30 registros, pero se guarda el historial completo. Esta primera versión guarda estados completos antes y después: el espacio utilizado crece con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
 
-Las copias nuevas usan la versión 7 e incluyen ahorro vinculado, anulaciones, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5 y 6; si no contienen gastos, esa sección comienza vacía. El botón **Borrar datos anteriores** abre el panel de eliminación. Es necesario escribir **BORRAR**. Se elimina la clave de almacenamiento de esta aplicación mediante removeItem, incluido el historial, y se recarga con un estado nuevo sin movimientos ni ingresos de ejemplo. Las claves de otras aplicaciones se conservan. Las copias descargadas y la nube no se borran.
+Las copias nuevas usan la versión 8 e incluyen fechas, metas, recurrencias y correcciones de ingresos, además de ahorro, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5, 6 y 7; si no contienen gastos, esa sección comienza vacía. El botón **Borrar datos anteriores** abre el panel de eliminación. Es necesario escribir **BORRAR**. Se elimina la clave de almacenamiento de esta aplicación mediante removeItem, incluido el historial, y se recarga con un estado nuevo sin movimientos ni ingresos de ejemplo. Las claves de otras aplicaciones se conservan. Las copias descargadas y la nube no se borran.
 
 ## Archivos
 
@@ -108,6 +108,7 @@ css/sistema.css            Identidad y componentes compartidos
 css/ingresos.css           Vista de ingresos y reparto
 css/movil.css              Adaptación móvil y accesibilidad
 css/cuenta.css             Cuenta y confirmaciones
+css/mejoras.css            Actividad, metas y planificación
 js/calculos.js             Operaciones monetarias y reparto
 js/nominas.js              Registro de nóminas
 js/deudas.js               Deudas, grupos y horizonte
@@ -124,6 +125,11 @@ js/interfaz.js             Navegación visual y distribución accesible
 js/movil.js                Teclado, rutas y comodidad móvil
 js/configuracion.js        URL y clave pública opcionales
 js/sincronizacion.js       Cuenta y sincronización manual
+js/datos-mejoras.js        Datos complementarios y guardado completo
+js/ingresos-edicion.js     Corrección y anulación de ingresos
+js/metas-recurrentes.js    Metas, programación y vencimientos
+js/actividad.js            Historial y resumen por fechas
+js/paneles-mejoras.js      Interfaz de las seis mejoras
 js/app.js                  Persistencia, presupuesto, ahorro y arranque
 js/pruebas.js              Comprobaciones existentes
 scripts/servir.cjs         Servidor local de archivos
@@ -196,3 +202,29 @@ Se mantiene el guardado permanente para los datos nuevos; no se incorpora un mod
 Referencia sobre el alcance del almacenamiento: [localStorage en MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
 
 La revisión del borrado pasó 59 pruebas de integración, incluidas eliminación de datos corruptos, error de permisos, almacenamiento sin capacidad de escritura, pestañas antiguas y persistencia de ingresos nuevos.
+
+
+## Mejoras de uso diario
+La [guía de las seis mejoras](docs/mejoras-uso.md) explica dónde encontrar cada función y sus límites.
+
+| Función | Ubicación |
+| --- | --- |
+| Corregir o anular ingresos | Ingresos → Ingresos registrados |
+| Historial y buscador | Ingresos → Cada movimiento, en su lugar |
+| Resumen mensual o por pago | Ingresos → Cada movimiento, en su lugar |
+| Vencimientos | Deudas → Fechas de tus deudas |
+| Metas personales | Ahorro → Dale un destino a tu ahorro |
+| Gastos recurrentes | Gastos → Tus gastos recurrentes |
+
+Los ingresos utilizados conservan su importe y reparto; se permite corregir referencia, fecha y periodo. Los ingresos sin referencias pueden cambiar su importe/reparto o anularse con motivo. Las metas no duplican el ahorro y las recurrencias solo descuentan cuando se confirma cada pago. Los registros antiguos sin fecha se conservan como tales.
+
+## Próximos trabajos
+- Activar Supabase, aplicar las migraciones 001 y 002, y validar aislamiento y sincronización con cuentas y dispositivos reales.
+- Recuperación de contraseña y eliminación de cuenta/copia remota desde la interfaz.
+- Resolver conflictos entre copias sin reemplazar una versión completa.
+- Corregir movimientos relacionados conservando operaciones posteriores independientes; estudiar el ajuste de ingresos ya utilizados.
+- Automatizar las pruebas y publicación en GitHub, ampliar pruebas en distintos navegadores y dispositivos.
+- Reducir el crecimiento del historial de estados completos y mejorar el almacenamiento para uso prolongado.
+- Instalación de la web, funcionamiento sin conexión y avisos de vencimiento fuera de la página.
+
+Esta entrega pasó **79 pruebas de integración**: las 59 anteriores y 20 escenarios de las nuevas funciones. Se revisaron visualmente los paneles en móvil y escritorio, con datos ficticios. Las comprobaciones de nube siguen usando una API simulada; la ejecución de las migraciones y las pruebas de aislamiento real dependen de activar Supabase.

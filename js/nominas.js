@@ -162,11 +162,13 @@ function registrarNomina(evento) {
         }
 
         const resultado = leerRepartoNomina();
+        if (!fechaGastoValida(document.getElementById("fecha-nomina").value)) throw new Error("Selecciona la fecha de recepción.");
 
         const usados = nominas.map(function (nomina) {
             return nomina.id;
         });
 
+        usados.push(...mejoras.ingresosAnulados.map(a => a.nomina.id));
         const nominasAnteriores = [...nominas];
         nominas.push({
             version: 1,
@@ -224,7 +226,7 @@ function mostrarHistorialNominas() {
         titulo.textContent = nomina.referencia;
         const periodo = document.createElement("span");
         periodo.className = "nomina-periodo";
-        periodo.textContent = PERIODOS_NOMINA[nomina.periodo];
+        periodo.textContent = PERIODOS_NOMINA[nomina.periodo] + ' · ' + nombreFecha(fechaMovimiento('ingreso', nomina.id));
         const importe = document.createElement("span");
         importe.className = "nomina-importe";
         importe.textContent = formatoMoneda.format(nomina.montoCentavos / 100);

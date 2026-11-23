@@ -1112,3 +1112,306 @@ test('borrado: vaciar almacenamiento desde otra pestaña tampoco restaura datos'
     assert.equal(await otra.evaluate(() => nominas.length + deudas.length), 0);
     assert.equal(await otra.evaluate(() => guardadoHabilitado), true);
 });
+
+test('mejoras: copias antiguas no inventan fechas y las nuevas conservan versión 8', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        const viejo = copiar(construirPaquete()); delete viejo.mejoras;
+        const ok = aplicarDatos(viejo) && guardar();
+        const sinFecha = movimientosUnificados().find(m => m.tipo === 'ingreso').fecha;
+        const invalida = { app: 'finanzas-personal', version: 8, datos: viejo };
+        return { ok, sinFecha, metas: mejoras.metas.length, rechazada: !esCopiaValida(invalida),
+            copia8: copiaLocalNube().version };
+    }), { ok: true, sinFecha: '', metas: 0, rechazada: true, copia8: 8 });
+    await page.reload();
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+});
+
+test('mejoras: ingreso nuevo con fecha, edición de importe y reparto, anulación conservada', async t => {
+    const { page } = await abrir(t);
+    const resultado = await page.evaluate(() => {
+        editarIngreso('n1', { referencia: 'Corregido', monto: '1500', periodo: 'quincenal', fecha: '2026-11-01',
+            reparto: [{ id:'basicos', nombre:'Básicos', porcentaje:60 }, { id:'ahorro', nombre:'Ahorro', porcentaje:40 }] }, 'Error de captura');
+        const importe = nominas[0].montoCentavos;
+        const fecha = fechaMovimiento('ingreso', 'n1');
+        const reparto = nominas[0].reparto.map(c => c.montoCentavos);
+        anularIngreso('n1', 'Registro de prueba');
+        return { importe, fecha, reparto, activos: nominas.length, anulados: mejoras.ingresosAnulados.length,
+            historial: mejoras.cambiosIngresos.length, saldo: calcularResumenFinanciero().ingresos,
+            fila: movimientosUnificados().find(m => m.tipo === 'ingreso').estado };
+    });
+    assert.deepEqual(resultado, { importe:150000, fecha:'2026-11-01', reparto:[90000,60000], activos:0,
+        anulados:1, historial:2, saldo:0, fila:'anulado' });
+    await page.reload();
+    assert.equal(await page.evaluate(() => mejoras.ingresosAnulados.length), 1);
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+});
+
+test('mejoras: ingreso utilizado protege importes y permite referencia y fecha', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoConNomina('deuda', 'd1', '50');
+        const campos = { referencia:'Referencia corregida', monto:'1000', periodo:'semanal', fecha:'2026-11-02' };
+        editarIngreso('n1', campos, 'Completar datos');
+        let importe = false, anular = false;
+        try { editarIngreso('n1', {...campos, monto:'2000'}, 'No permitido'); } catch { importe = true; }
+        try { anularIngreso('n1', 'No permitido'); } catch { anular = true; }
+        return { importe, anular, nombre:nominas[0].referencia, disponible:calcularResumenFinanciero().disponible,
+            fecha:fechaMovimiento('ingreso', 'n1') };
+    }), { importe:true, anular:true, nombre:'Referencia corregida', disponible:95000, fecha:'2026-11-02' });
+});
+
+test('mejoras: fallo de almacenamiento revierte ingreso y datos complementarios completos', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        const antes = JSON.stringify(construirPaquete());
+        const set = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => { throw new Error('Sin espacio'); };
+        let rechazado = false;
+        try { editarIngreso('n1', { referencia:'No persistir', monto:'900', periodo:'unico', fecha:'2026-11-01' }, 'Prueba'); }
+        catch { rechazado = true; }
+        Storage.prototype.setItem = set;
+        return { rechazado, intacto:antes === JSON.stringify(construirPaquete()) };
+    }), { rechazado:true, intacto:true });
+});
+
+test('mejoras: formulario corrige ingreso y rechaza referencias duplicadas', async t => {
+    const { page } = await abrir(t);
+    await page.locator('#editor-ingresos > summary').click();
+    await page.locator('#editar-ingreso-id').selectOption('n1');
+    await page.locator('#editar-ingreso-nombre').fill('Mi ingreso corregido');
+    await page.locator('#editar-ingreso-importe').fill('1300');
+    await page.locator('#editar-ingreso-fecha').fill('2026-11-03');
+    await page.locator('#editar-ingreso-motivo').fill('Captura inicial incorrecta');
+    await page.locator('#guardar-edicion-ingreso').click();
+    assert.match(await page.locator('#mensaje-editar-ingreso').textContent(), /Ingreso corregido/);
+    assert.equal(await page.evaluate(() => nominas[0].montoCentavos), 130000);
+    assert.equal(await page.evaluate(() => {
+        const n = copiar(nominas[0]); n.id = 'n2'; n.referencia = 'Segundo';
+        nominas.push(n); guardar();
+        try { editarIngreso('n2', {referencia:'Mi ingreso corregido',monto:'1300',periodo:'semanal',fecha:'2026-11-03'}, 'Duplicar'); return false; }
+        catch { return true; }
+    }), true);
+});
+
+test('mejoras: vencimientos no pagan deudas y distinguen hoy, vencida y próxima', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        guardarVencimiento('d1','2026-11-25');
+        const estados = ['2026-11-20','2026-11-23','2026-11-25'].map(f => estadoVencimiento(f,'2026-11-23').clase);
+        return { estados, fecha:mejoras.vencimientos[0].fecha, liquidada:deudas[0].liquidada,
+            libre:calcularResumenFinanciero().disponible };
+    }), { estados:['urgente','urgente','proxima'], fecha:'2026-11-25', liquidada:false, libre:100000 });
+    await page.reload();
+    assert.equal(await page.evaluate(() => mejoras.vencimientos[0].fecha), '2026-11-25');
+});
+
+test('mejoras: metas clasifican ahorro, rechazan retiro excesivo y preservan el total', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        guardarMetaAhorro('', 'Emergencia','1000');
+        const id = mejoras.metas[0].id;
+        const aporte = registrarAhorroVinculado('aportacion','Fondo','200','n1',id,'2026-11-01');
+        const retiro = registrarAhorroVinculado('retiro','Uso','50','',id,'2026-11-02');
+        const excesivo = registrarAhorroVinculado('retiro','No alcanza','151','',id,'2026-11-03');
+        const sinGeneral = registrarAhorroVinculado('retiro','General vacío','1','','','2026-11-03');
+        const saldo = saldosMetas().get(id), general = saldosMetas().get('');
+        return { aporte,retiro,excesivo,sinGeneral,saldo,general,total:calcularSaldoAhorro(movimientosAhorros),
+            disponible:calcularResumenFinanciero().disponible };
+    }), { aporte:true,retiro:true,excesivo:false,sinGeneral:false,saldo:15000,general:0,total:15000,disponible:180000 });
+    await page.reload();
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+});
+
+test('mejoras: asignación de ahorro existente no crea dinero y protege retiros históricos', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarAhorroVinculado('aportacion','Previo','200','n1');
+        guardarMetaAhorro('', 'Viaje','500');
+        const id = mejoras.metas[0].id, m = movimientosAhorros[0].id;
+        asignarMovimientoMeta(m,id);
+        const meta = saldosMetas().get(id), total = calcularSaldoAhorro(movimientosAhorros);
+        registrarAhorroVinculado('retiro','Reserva','50','',id);
+        let bloqueado = false;
+        try { asignarMovimientoMeta(m,''); } catch { bloqueado = true; }
+        const anulacion = anularMovimientoAhorro(m,'No debe dejar negativo');
+        return { meta,total,bloqueado,anulacion,saldo:saldosMetas().get(id) };
+    }), { meta:20000,total:20000,bloqueado:true,anulacion:false,saldo:15000 });
+});
+
+test('mejoras: recurrencias mensuales mantienen el día ancla y años bisiestos', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        const mensual = {inicio:'2024-01-31',frecuencia:'mensual',ocurrencias:[]};
+        const anual = {inicio:'2024-02-29',frecuencia:'anual',ocurrencias:[]};
+        return [fechaOcurrencia(mensual,1),fechaOcurrencia(mensual,2),fechaOcurrencia(anual,1),fechaOcurrencia(anual,4)];
+    }), ['2024-02-29','2024-03-31','2025-02-28','2028-02-29']);
+});
+
+test('mejoras: gasto recurrente no descuenta hasta confirmar y rechaza doble pago', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        agregarCategoriaGasto('Servicios');
+        crearGastoRecurrente({nombre:'Internet',monto:'100',subcategoriaId:categoriasGastos[0].id,inicio:'2026-01-01',frecuencia:'mensual'});
+        const id = mejoras.recurrentes[0].id;
+        const antes = calcularResumenFinanciero().disponible;
+        confirmarRecurrente(id,0,'n1','2026-01-02');
+        let doble = false; try { confirmarRecurrente(id,0,'n1','2026-01-02'); } catch { doble = true; }
+        confirmarRecurrente(id,1,'','2026-02-01',true);
+        return { antes,despues:calcularResumenFinanciero().disponible,doble,gastos:gastosBasicos.length,
+            ocurrencias:mejoras.recurrentes[0].ocurrencias.length,proxima:fechaOcurrencia(mejoras.recurrentes[0]) };
+    }), { antes:200000,despues:190000,doble:true,gastos:1,ocurrencias:2,proxima:'2026-03-01' });
+    await page.reload();
+    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+});
+
+test('mejoras: recurrencias bloquean saldo insuficiente, categoría archivada y fallo de guardado', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        agregarCategoriaGasto('Renta');
+        crearGastoRecurrente({nombre:'Renta',monto:'1200',subcategoriaId:categoriasGastos[0].id,inicio:'2026-01-01',frecuencia:'mensual'});
+        const id = mejoras.recurrentes[0].id;
+        let sinSaldo = false, archivada = false, fallo = false;
+        try { confirmarRecurrente(id,0,'n1','2026-01-01'); } catch { sinSaldo = true; }
+        archivarCategoriaGasto(categoriasGastos[0].id,true);
+        try { confirmarRecurrente(id,0,'n1','2026-01-01'); } catch { archivada = true; }
+        const original = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => { throw new Error('No guardar'); };
+        try { confirmarRecurrente(id,0,'','2026-01-01',true); } catch { fallo = true; }
+        Storage.prototype.setItem = original;
+        return { sinSaldo,archivada,fallo,gastos:gastosBasicos.length,ocurrencias:mejoras.recurrentes[0].ocurrencias.length };
+    }), {sinSaldo:true,archivada:true,fallo:true,gastos:0,ocurrencias:0});
+});
+
+test('mejoras: actividad filtra concepto, fecha, categoría, nómina y excluye anulados de resumen', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar();
+        agregarCategoriaGasto('Comida');
+        registrarGastoBasico({nominaId:'n1',subcategoriaId:categoriasGastos[0].id,concepto:'Café',fecha:'2026-11-02',monto:'100'});
+        registrarGastoBasico({nominaId:'n1',subcategoriaId:categoriasGastos[0].id,concepto:'Otro mes',fecha:'2026-10-02',monto:'50'});
+        const filas = filtrarActividad(movimientosUnificados(),{buscar:'cafe',desde:'2026-11-01',hasta:'2026-11-30',nominaId:'n1',categoriaId:'basicos'});
+        const mes = resumenMes('2026-11');
+        anularGastoBasico(gastosBasicos[0].id,'Duplicado');
+        return { encontrados:filas.length,ingresos:mes.ingresos,gastos:mes.gastos,
+            despues:resumenMes('2026-11').gastos,activos:filtrarActividad(movimientosUnificados(),{tipo:'gasto',estado:'activo'}).length };
+    }), {encontrados:1,ingresos:200000,gastos:10000,despues:0,activos:1});
+});
+
+test('mejoras: fechas de apartados y pagos no cuentan transferencias como dinero nuevo', async t => {
+    const { page } = await abrir(t,true);
+    assert.deepEqual(await page.evaluate(() => {
+        registrarApartadoGrupo('g1','100'); distribuirFondoGrupo('g1'); liquidarDeuda('d1');
+        const filas = movimientosUnificados();
+        const mes = resumenMes(fechaLocalGasto().slice(0,7));
+        return {apartados:filas.filter(f=>f.tipo==='apartado').length,pagos:filas.filter(f=>f.tipo==='pago').length,
+            apartado:mes.apartados,pago:mes.pagos,sinFecha:mes.sinFecha};
+    }), {apartados:1,pagos:1,apartado:10000,pago:10000,sinFecha:1});
+});
+
+test('mejoras: copias inválidas se rechazan sin borrar metas ni saldos', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        guardarMetaAhorro('','Fondo','100');
+        const antes = JSON.stringify(construirPaquete());
+        const mala = copiar(construirPaquete());
+        mala.mejoras.destinosAhorro.push({movimientoId:'inexistente',metaId:mejoras.metas[0].id});
+        return {rechazada:!aplicarDatos(mala),intacto:antes===JSON.stringify(construirPaquete())};
+    }), {rechazada:true,intacto:true});
+});
+
+test('mejoras: borrado total elimina fechas, metas, programaciones y anulaciones', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    await page.evaluate(() => {
+        guardarMetaAhorro('','Borrar','100');
+        agregarCategoriaGasto('Servicios');
+        crearGastoRecurrente({nombre:'Borrar',monto:'10',subcategoriaId:categoriasGastos[0].id,inicio:'2026-01-01',frecuencia:'mensual'});
+        guardarVencimiento('d1','2026-12-01');
+        fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar();
+    });
+    await page.locator('#gestionar-datos').click();
+    await page.locator('#confirmar-borrado').fill('BORRAR');
+    await Promise.all([page.waitForEvent('load'),page.locator('#formulario-borrado-total button').click()]);
+    assert.equal(await page.evaluate(() => JSON.stringify(mejoras)===JSON.stringify(mejorasIniciales())), true);
+});
+
+test('mejoras: paneles abiertos son accesibles y no desbordan en móvil', async t => {
+    const { page, errors } = await abrirGastosPrueba(t);
+    await page.setViewportSize({width:320,height:850});
+    await page.locator('#editor-ingresos > summary').click();
+    await page.locator('#editar-ingreso-id').selectOption('n1');
+    await page.locator('#panel-actividad > summary').click();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth>innerWidth),false);
+    await page.locator('#boton-ahorro').click();
+    await page.locator('#editor-meta > summary').click();
+    await page.locator('#meta-nombre').fill('Emergencia');
+    await page.locator('#meta-objetivo').fill('1000');
+    await page.locator('#formulario-meta button[type=submit]').click();
+    assert.equal(await page.locator('#lista-metas article').count(),1);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth>innerWidth),false);
+    assert.deepEqual(errors,[]);
+});
+
+test('mejoras: interfaz de recurrentes confirma un pago y rechaza una plantilla duplicada', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    await page.evaluate(() => agregarCategoriaGasto('Servicios'));
+    await page.locator('#abrir-gastos').click();
+    await page.locator('#editor-recurrente > summary').click();
+    await page.locator('#recurrente-nombre').fill('Internet');
+    await page.locator('#recurrente-importe').fill('100');
+    const categoria = await page.evaluate(() => categoriasGastos[0].id);
+    await page.locator('#recurrente-categoria').selectOption(categoria);
+    await page.locator('#recurrente-inicio').fill('2026-01-01');
+    await page.locator('#formulario-recurrente button').click();
+    assert.equal(await page.locator('#lista-recurrentes article').count(),1);
+    assert.equal(await page.evaluate(() => gastosBasicos.length),0);
+    await page.locator('#lista-recurrentes select').selectOption('n1');
+    await page.locator('#lista-recurrentes form button[type=submit]').click();
+    assert.match(await page.locator('#mensaje-recurrentes').textContent(), /una sola vez/);
+    assert.equal(await page.evaluate(() => gastosBasicos.length),1);
+    assert.equal(await page.evaluate(() => {
+        try { crearGastoRecurrente({nombre:'Internet',monto:'100',subcategoriaId:categoriasGastos[0].id,
+            inicio:'2026-01-01',frecuencia:'mensual'}); return false; } catch { return true; }
+    }),true);
+});
+
+test('mejoras: resumen mensual y de ingreso se actualizan desde los controles', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    await page.evaluate(() => { fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar(); });
+    await page.locator('.centro-actividad > details').first().locator('summary').click();
+    await page.locator('#resumen-mes').fill('2026-11');
+    await page.locator('#resumen-mes').dispatchEvent('change');
+    assert.match(await page.locator('#metricas-periodo').textContent(), /2,000/);
+    await page.locator('#resumen-modo').selectOption('nomina');
+    await page.locator('#periodo-nomina-resumen').selectOption('n1');
+    assert.match(await page.locator('#nota-periodo').textContent(), /Uso actual/);
+    assert.match(await page.locator('#metricas-periodo').textContent(), /Disponible/);
+});
+
+test('mejoras: copia versión 8 conserva metas y fechas en el flujo de nube simulado', async t => {
+    const { page, api } = await prepararNubePrueba(t);
+    await page.evaluate(() => { guardarMetaAhorro('','Meta de prueba','500'); fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar(); });
+    await page.locator('#consultar-nube').click();
+    await page.waitForFunction(() => !document.querySelector('#subir-nube').disabled);
+    await page.locator('#subir-nube').click();
+    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('Copia enviada'));
+    assert.equal(api.copia.version,8);
+    assert.equal(api.copia.datos.mejoras.metas[0].nombre,'Meta de prueba');
+    assert.equal(api.copia.datos.mejoras.fechas[0].fecha,'2026-11-01');
+});
+
+test('mejoras: registro recurrente adulterado y movimientos futuros no descuentan dinero', async t => {
+    const { page } = await abrirGastosPrueba(t);
+    assert.deepEqual(await page.evaluate(() => {
+        agregarCategoriaGasto('Servicios');
+        crearGastoRecurrente({nombre:'Internet',monto:'100',subcategoriaId:categoriasGastos[0].id,inicio:'2026-01-01',frecuencia:'mensual'});
+        confirmarRecurrente(mejoras.recurrentes[0].id,0,'n1','2026-01-01');
+        const datos = copiar(construirPaquete());
+        datos.mejoras.recurrentes[0].ocurrencias[0].gastoId = 'inexistente';
+        const invalido = !aplicarDatos(datos);
+        crearGastoRecurrente({nombre:'Futuro',monto:'100',subcategoriaId:categoriasGastos[0].id,inicio:'2099-01-01',frecuencia:'mensual'});
+        let futuro = false;
+        try { confirmarRecurrente(mejoras.recurrentes[1].id,0,'n1',fechaLocalGasto()); } catch { futuro = true; }
+        return {invalido,futuro,gastos:gastosBasicos.length};
+    }), {invalido:true,futuro:true,gastos:1});
+});
