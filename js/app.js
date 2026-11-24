@@ -766,6 +766,14 @@ function aplicarDatos(datos, soloValidar = false) {
         categoriasGastos: categoriasGastosLimpias
     });
     if (!mejorasLimpias) return false;
+    if (soloValidar === "normalizar") return {
+        frecuencia: datos.frecuencia ?? "mensual", monto: datos.monto === undefined ? "" : String(datos.monto),
+        periodo: datos.periodo ?? "semanal", semanasMostrar: datos.semanasMostrar === undefined ? "26" : String(datos.semanasMostrar),
+        categorias: categoriasLimpias, otrosIngresos: extrasLimpios, movimientosAhorros: ahorroLimpio,
+        deudas: deudasLimpias, gruposDeudas: gruposLimpios, nominas: nominasLimpias,
+        categoriasGastos: categoriasGastosLimpias, gastosBasicos: gastosLimpios,
+        historialCorrecciones: historialLimpio, mejoras: mejorasLimpias
+    };
     if (soloValidar) return true;
 
     campoFrecuencia.value = datos.frecuencia ?? "mensual";
@@ -838,99 +846,83 @@ function esCopiaValida(contenido) {
         !Array.isArray(contenido.datos) && (contenido.version !== 8 || contenido.datos.mejoras?.version === 1);
 }
 
-function exportarCopia() {
-    const copia = {
-        app: "finanzas-personal",
-        version: 8,
-        datos: construirPaquete()
-    };
-
-    const texto = JSON.stringify(copia, null, 2);
-    const archivo = new Blob([texto], { type: "application/json" });
-    const direccion = URL.createObjectURL(archivo);
-    const enlace = document.createElement("a");
-
-    enlace.href = direccion;
-    enlace.download = "copia-finanzas.json";
-    document.body.appendChild(enlace);
-    enlace.click();
-    enlace.remove();
-
-    setTimeout(function () {
-        URL.revokeObjectURL(direccion);
-    }, 1000);
-
-    mostrarMensajeCopia(
-        "Copia descargada ✔ Guárdala en un lugar seguro.",
-        false
-    );
+function crearCopiaLocal() {
+    if (!guardadoHabilitado || reinicioDetectado || localStorage.getItem(CLAVE_GUARDADO) !== ultimoTextoGuardado) {
+        throw new Error("Recupera o recarga los datos antes de crear una copia.");
+    }
+    const datos = copiar(construirPaquete());
+    if (!aplicarDatos(datos, true)) throw new Error("Los datos no superaron la validación.");
+    return { app: "finanzas-personal", version: 8, creadaEn: new Date().toISOString(), datos };
 }
 
+function actualizarEstadoRespaldo() {
+    const aviso = document.getElementById("estado-respaldo");
+    try {
+        const fecha = localStorage.getItem("finanzas-respaldo-info-v1");
+        aviso.textContent = fecha && Number.isFinite(Date.parse(fecha))
+            ? "Última descarga solicitada: " + new Date(fecha).toLocaleString("es-MX") + ". Comprueba que conservas el archivo."
+            : "Todavía no has descargado una copia desde esta versión. Guarda una antes de cambiar de dispositivo.";
+    } catch { aviso.textContent = "Descarga una copia para conservar tus datos fuera del navegador."; }
+}
+function exportarCopia() {
+    try {
+        const copia = crearCopiaLocal();
+        const texto = JSON.stringify(copia, null, 2);
+        const archivo = new Blob([texto], { type: "application/json" });
+        const direccion = URL.createObjectURL(archivo);
+        const enlace = document.createElement("a");
+        enlace.href = direccion;
+        enlace.download = "mis-finanzas-" + fechaLocalGasto() + "-" + Date.now() + ".json";
+        document.body.appendChild(enlace); enlace.click(); enlace.remove();
+        setTimeout(() => URL.revokeObjectURL(direccion), 1000);
+        try { localStorage.setItem("finanzas-respaldo-info-v1", copia.creadaEn); } catch {}
+        actualizarEstadoRespaldo();
+        mostrarMensajeCopia("Descarga solicitada. Comprueba el archivo en Descargas y guárdalo fuera del navegador.", false);
+    } catch (error) { mostrarMensajeCopia(error.message, true); }
+}
+function restaurarCopiaLocal(contenido) {
+    if (reinicioDetectado) throw new Error("Recarga antes de restaurar una copia.");
+    if (!esCopiaValida(contenido) || !aplicarDatos(contenido.datos, true)) {
+        throw new Error("La copia contiene datos inválidos o incompatibles. No se aplicó.");
+    }
+    if (localStorage.getItem(CLAVE_GUARDADO) !== ultimoTextoGuardado) {
+        throw new Error("Otra pestaña cambió los datos. Recarga antes de restaurar.");
+    }
+    const normalizados = aplicarDatos(contenido.datos, "normalizar");
+    normalizados.reinicioId = generarId([]);
+    const texto = JSON.stringify(normalizados);
+    try { localStorage.setItem(CLAVE_GUARDADO, texto); }
+    catch { throw new Error("No se pudo guardar la copia. Los datos anteriores se conservan."); }
+    aplicarDatos(normalizados);
+    reinicioActual = normalizados.reinicioId;
+    ultimoTextoGuardado = texto;
+    guardadoHabilitado = true;
+    construirTabla(); construirExtras(); actualizarPantalla(); cerrarEditorDeuda(); invalidarProyeccionDeudas();
+    formularioAhorro.reset(); formularioDeuda.reset(); formularioApartado.reset(); formularioNomina.reset();
+    prepararCategoriasNomina(); mostrarAhorro(); mostrarDeudas(); mostrarHistorialNominas();
+    mensajeAhorro.textContent = ""; mensajeDeudas.textContent = ""; mensajeNomina.textContent = "";
+    if (typeof mostrarPanelesMejoras === "function") mostrarPanelesMejoras();
+    return true;
+}
 function importarCopia(archivo) {
+    if (archivo.size > 8 * 1024 * 1024) { mostrarMensajeCopia("La copia supera los 8 MB admitidos.", true); return; }
     const lector = new FileReader();
-
     lector.onload = function () {
         try {
             const contenido = JSON.parse(lector.result);
-
-            if (!esCopiaValida(contenido)) {
-                mostrarMensajeCopia(
-                    "Ese archivo no parece una copia compatible de esta herramienta.",
-                    true
-                );
-                return;
+            if (!esCopiaValida(contenido) || !aplicarDatos(contenido.datos, true)) {
+                throw new Error("Ese archivo no contiene una copia válida y compatible.");
             }
-
-            const aviso =
-                "Esta copia reemplazará presupuesto, ahorro, deudas, nóminas y gastos. " +
-                "Las secciones ausentes en una copia antigua quedarán vacías. " +
-                "¿Continuar?";
-
-            if (!confirm(aviso)) {
-                return;
-            }
-
-            if (!aplicarDatos(contenido.datos)) {
-                mostrarMensajeCopia(
-                    "La copia contiene datos inválidos. No se aplicó.",
-                    true
-                );
-                return;
-            }
-
-            guardadoHabilitado = true;
-            construirTabla();
-            construirExtras();
-            actualizarPantalla();
-            cerrarEditorDeuda();
-            invalidarProyeccionDeudas();
-
-            formularioAhorro.reset();
-            mensajeAhorro.textContent = "";
-            formularioDeuda.reset();
-            formularioApartado.reset();
-            mensajeDeudas.textContent = "";
-
-            formularioNomina.reset();
-            prepararCategoriasNomina();
-            mensajeNomina.textContent = "";
-
-            mostrarMensajeCopia(
-                "Copia aplicada. Revisa el aviso de guardado de la página.",
-                false
-            );
-        } catch (error) {
-            mostrarMensajeCopia(
-                "No se pudo leer el archivo. ¿Es una copia de esta herramienta?",
-                true
-            );
-        }
+            const datos = contenido.datos;
+            const resumen = (datos.nominas ?? []).length + " ingresos, " + (datos.deudas ?? []).length + " deudas, " +
+                (datos.gastosBasicos ?? []).length + " gastos y " + (datos.mejoras?.metas ?? []).length + " metas.";
+            if (!confirm("Vas a cargar: " + resumen + "\nSe reemplazarán los datos de este dispositivo, no se mezclarán. " +
+                "Las secciones ausentes en copias antiguas quedarán vacías. Descarga antes la copia actual si quieres conservarla. ¿Continuar?")) return;
+            restaurarCopiaLocal(contenido);
+            mostrarMensajeCopia("Copia restaurada y guardada en este dispositivo.", false);
+        } catch (error) { mostrarMensajeCopia(error.message || "No se pudo leer la copia.", true); }
     };
-
-    lector.onerror = function () {
-        mostrarMensajeCopia("No se pudo abrir el archivo.", true);
-    };
-
+    lector.onerror = () => mostrarMensajeCopia("No se pudo abrir el archivo.", true);
     lector.readAsText(archivo);
 }
 
@@ -1609,7 +1601,7 @@ function restablecerTodosLosDatos(evento) {
     reinicioActual = iniciales.reinicioId;
     ultimoTextoGuardado = null;
     correccionPendiente = null;
-    if (typeof limpiarSesionNubeLocal === "function") limpiarSesionNubeLocal();
+    try { localStorage.removeItem("finanzas-respaldo-info-v1"); } catch {}
     try { sessionStorage.setItem("finanzas-aviso-borrado", "1"); } catch {}
     bloquearPantallaPorReinicio("Datos anteriores eliminados. Recarga para empezar de cero.");
     recargarTrasReinicio();
@@ -1713,3 +1705,5 @@ try {
             : "Datos anteriores eliminados. El navegador aún no permite guardar nuevos datos; revisa sus permisos.";
     }
 } catch {}
+
+actualizarEstadoRespaldo();

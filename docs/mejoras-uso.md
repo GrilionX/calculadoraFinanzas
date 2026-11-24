@@ -60,7 +60,7 @@ Las copias nuevas usan la versión 8. Las versiones 1 a 7 siguen siendo compatib
 La sección `mejoras` almacena fechas, vencimientos, metas, destinos de ahorro, programaciones, ingresos anulados y correcciones de ingresos.
 El borrado total elimina también estos datos.
 
-Para Supabase ejecuta `002_copias_version_8.sql` después de `001_sincronizacion.sql`. La nube continúa desactivada mientras la configuración esté vacía.
+El funcionamiento es local. Exporta una copia JSON para trasladar registros a otro dispositivo; importar reemplaza la copia local y no mezcla historiales.
 
 ## Organización técnica
 - `js/datos-mejoras.js`: validación, fechas y cambios completos con restauración si falla el guardado.

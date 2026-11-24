@@ -1,5 +1,5 @@
 # Actualizar el proyecto desde VS Code
-Git actualiza los archivos del código. No traslada ingresos, deudas ni ahorros entre navegadores; para eso se usa una copia JSON o la sincronización opcional.
+Git actualiza los archivos del código. No traslada ingresos, deudas ni ahorros entre navegadores; para eso se usa una copia JSON.
 
 ## Con el repositorio ya clonado
 Abre en VS Code la carpeta que contiene `index.html` y `package.json`. En la terminal:
@@ -51,6 +51,9 @@ Con Node.js instalado:
 node scripts/servir.cjs
 ```
 
-Abre http://127.0.0.1:5173 y recarga la pestaña. El comando mantiene el servidor activo; Ctrl+C lo detiene. Usa la misma dirección para conservar el almacenamiento local del navegador.
+Abre http://127.0.0.1:5173 y usa **Buscar actualización**, seguido de **Actualizar aplicación** cuando se ofrezca. El comando mantiene el servidor activo; Ctrl+C lo detiene. Usa la misma dirección para conservar el almacenamiento local del navegador.
 
 Referencias: [git pull](https://git-scm.com/docs/git-pull), [git stash](https://git-scm.com/docs/git-stash).
+
+## Publicar cambios de la aplicación instalada
+Cuando cambies archivos de la aplicación, incrementa `VERSION` en `sw.js`. Si añades o retiras recursos, actualiza `ARCHIVOS`. Publica juntos el worker y todos sus recursos. La nueva versión solo se ofrece cuando termina de descargarse; confirmarla recarga la página y descarta formularios sin registrar, pero conserva los datos guardados.

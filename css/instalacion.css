@@ -1,0 +1,7 @@
+.panel-dispositivo { border: 1px solid #c8dfd7; background: #eef7f2; border-radius: 14px; padding: 1rem; margin-block: 1rem; }
+.estado-dispositivo { display: flex; align-items: center; gap: .6rem 1rem; flex-wrap: wrap; font-size: .875rem; }
+#estado-offline { overflow-wrap: anywhere; }
+.panel-dispositivo > details { margin-top: .6rem; }
+.panel-dispositivo summary { font-size: .875rem; min-height: 44px; }
+.panel-dispositivo button { min-height: 44px; }
+@media (max-width: 780px) { .panel-dispositivo .fila-botones { flex-direction: column; } }

@@ -5,17 +5,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 let server, browser, url;
+let versionWorkerPrueba = 0;
 
 before(async () => {
     const root = path.resolve(__dirname, '..');
     server = http.createServer((req, res) => {
         const pathname = new URL(req.url, 'http://localhost').pathname;
-        const file = path.resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname));
+        const ruta = pathname.startsWith('/app-prueba/') ? pathname.slice('/app-prueba'.length) : pathname;
+        const file = path.resolve(root, '.' + (ruta === '/' ? '/index.html' : ruta));
         if (!file.startsWith(root + path.sep)) { res.writeHead(403).end(); return; }
         fs.readFile(file, (error, data) => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
-                file.endsWith('.css') ? 'text/css' : 'text/html');
+                file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-23-local-1', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -890,128 +893,6 @@ test('avanzadas: formulario exige vista previa y confirmación de todos los camb
     assert.equal(await page.evaluate(() => resumirFondoGrupo(gruposDeudas[0]).fondoCentavos), 7500);
 });
 
-test('nube: sin configurar no envía peticiones y la validación no modifica datos', async t => {
-    const { page } = await abrir(t);
-    assert.deepEqual(await page.evaluate(() => {
-        const antes = JSON.stringify(construirPaquete());
-        const buena = copiar(construirPaquete());
-        buena.nominas[0].referencia = 'Otra referencia';
-        const validada = aplicarDatos(buena, true);
-        const mala = copiar(buena); mala.nominas[0].montoCentavos = -1;
-        return { validada, rechazada: !aplicarDatos(mala, true), intacta: antes === JSON.stringify(construirPaquete()),
-            bloqueada: document.getElementById('entrar-cuenta').disabled };
-    }), { validada: true, rechazada: true, intacta: true, bloqueada: true });
-});
-
-async function prepararNubePrueba(t) {
-    const { page, errors } = await abrir(t);
-    const api = { copia: null, revision: 0, escrituras: 0, conflicto: false, errorRed: false };
-    await page.route('**/js/configuracion.js', route => route.fulfill({
-        contentType: 'text/javascript',
-        body: 'window.FINANZAS_NUBE={url:"https://finanzas-prueba.supabase.co",clavePublica:"sb_publishable_prueba"};'
-    }));
-    await page.route('https://finanzas-prueba.supabase.co/**', async route => {
-        const req = route.request(); const ruta = new URL(req.url()).pathname;
-        const json = (obj, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(obj) });
-        if (api.errorRed) return route.abort('failed');
-        if (ruta === '/auth/v1/token') return json({ access_token: 'sesion-ficticia', expires_in: 3600,
-            user: { id: 'usuario-prueba', email: 'prueba@example.test' } });
-        if (ruta === '/auth/v1/logout') return json({});
-        if (ruta === '/auth/v1/signup') return json({ user: { id: 'usuario-prueba' } });
-        assert.equal(req.headers().authorization, 'Bearer sesion-ficticia');
-        if (ruta === '/rest/v1/finanzas_copias') return json(api.copia
-            ? [{ revision: api.revision, copia: api.copia, actualizado_en: '2026-11-22T12:00:00Z' }] : []);
-        if (ruta === '/rest/v1/rpc/guardar_copia_finanzas') {
-            const body = req.postDataJSON();
-            if (api.conflicto || body.revision_esperada !== api.revision) return json({ code: '40001' }, 409);
-            api.copia = body.nueva_copia; api.revision++; api.escrituras++;
-            return json([{ revision: api.revision, actualizado_en: '2026-11-22T12:00:00Z' }]);
-        }
-        return json({}, 404);
-    });
-    await page.reload();
-    await page.locator('#panel-nube > summary').click();
-    await page.locator('#correo-cuenta').fill('prueba@example.test');
-    await page.locator('#clave-cuenta').fill('clave-solo-pruebas');
-    await page.locator('#entrar-cuenta').click();
-    await page.waitForFunction(() => document.querySelector('#nube-cuenta').textContent.includes('prueba@example.test'));
-    return { page, errors, api };
-}
-
-test('nube: inicio de sesión, subida manual y sesión solo en memoria', async t => {
-    const { page, errors, api } = await prepararNubePrueba(t);
-    assert.equal(await page.locator('#clave-cuenta').inputValue(), '');
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => !document.querySelector('#subir-nube').disabled);
-    await page.locator('#subir-nube').click();
-    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('Copia enviada'));
-    assert.equal(api.escrituras, 1);
-    assert.equal(api.copia.datos.nominas.length, 1);
-    assert.equal(await page.evaluate(() => JSON.stringify(localStorage).includes('sesion-ficticia')), false);
-    await page.reload();
-    assert.equal(await page.evaluate(() => sesionNube), null);
-    assert.equal(await page.evaluate(() => nominas.length), 1);
-    assert.deepEqual(errors, []);
-});
-
-test('nube: conflicto entre dispositivos y cambio local bloquean reemplazo', async t => {
-    const { page, api } = await prepararNubePrueba(t);
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => !document.querySelector('#subir-nube').disabled);
-    api.conflicto = true;
-    await page.locator('#subir-nube').click();
-    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('Otro dispositivo'));
-    assert.equal(api.escrituras, 0);
-    api.conflicto = false;
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => !document.querySelector('#subir-nube').disabled);
-    await page.evaluate(() => { nominas[0].referencia = 'Edición posterior'; guardar(); });
-    await page.locator('#subir-nube').click();
-    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('datos cambiaron'));
-    assert.equal(api.escrituras, 0);
-});
-
-test('nube: descargar valida, conserva respaldo descargable y aplica una sola copia', async t => {
-    const { page, api } = await prepararNubePrueba(t);
-    api.copia = await page.evaluate(() => copiaLocalNube());
-    api.copia.datos.nominas[0].referencia = 'Desde otro dispositivo'; api.revision = 2;
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => !document.querySelector('#bajar-nube').disabled);
-    const descarga = page.waitForEvent('download');
-    await page.locator('#bajar-nube').click();
-    assert.equal((await descarga).suggestedFilename(), 'copia-finanzas.json');
-    await page.waitForFunction(() => typeof nominas !== 'undefined' && nominas[0]?.referencia === 'Desde otro dispositivo');
-    assert.equal(await page.evaluate(() => nominas.length), 1);
-    assert.equal(await page.evaluate(() => guardadoHabilitado), true);
-});
-
-test('nube: copia inválida y conexión fallida conservan el estado local', async t => {
-    const { page, api } = await prepararNubePrueba(t);
-    const antes = await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO));
-    api.copia = { app: 'finanzas-personal', version: 7, datos: { nominas: [] } }; api.revision = 1;
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('no es compatible'));
-    assert.equal(await page.locator('#bajar-nube').isDisabled(), true);
-    api.errorRed = true;
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('No hay respuesta'));
-    assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
-});
-
-test('nube: fallo de escritura al descargar conserva local e historial', async t => {
-    const { page, api } = await prepararNubePrueba(t);
-    api.copia = await page.evaluate(() => copiaLocalNube()); api.revision = 1;
-    api.copia.datos.nominas[0].referencia = 'Remota';
-    const antes = await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO));
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => !document.querySelector('#bajar-nube').disabled);
-    await page.evaluate(() => { Storage.prototype.setItem = () => { throw new Error('Sin espacio'); }; });
-    await page.locator('#bajar-nube').click();
-    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('Sin espacio'));
-    assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
-    assert.equal(await page.evaluate(() => nominas[0].referencia), 'Pago de prueba');
-});
-
 test('borrado: acceso visible y confirmación obligatoria sin eliminar por accidente', async t => {
     const { page } = await abrir(t);
     await page.locator('#gestionar-datos').click();
@@ -1030,8 +911,6 @@ test('borrado: elimina la clave y la memoria incluso si no permite escribir', as
     assert.deepEqual(await page.evaluate(() => {
         registrarApartadoConNomina('deuda', 'd1', '50');
         localStorage.setItem('otra-aplicacion', 'conservar');
-        sesionNube = { token: 'ficticio', id: 'prueba' };
-        consultaNube = { remota: { copia: construirPaquete() } };
         recargarTrasReinicio = () => {};
         Storage.prototype.setItem = () => { throw new Error('Cuota agotada'); };
         campoConfirmarBorrado.value = 'BORRAR';
@@ -1039,9 +918,9 @@ test('borrado: elimina la clave y la memoria incluso si no permite escribir', as
         return { copia: localStorage.getItem(CLAVE_GUARDADO), otra: localStorage.getItem('otra-aplicacion'),
             nominas: nominas.length, deudas: deudas.length, historial: historialCorrecciones.length,
             extras: otrosIngresos.length, ahorro: movimientosAhorros.length, grupos: gruposDeudas.length,
-            gastos: gastosBasicos.length, nube: sesionNube, consulta: consultaNube, bloqueado: reinicioDetectado };
+            gastos: gastosBasicos.length, bloqueado: reinicioDetectado };
     }), { copia: null, otra: 'conservar', nominas: 0, deudas: 0, historial: 0, extras: 0,
-        ahorro: 0, grupos: 0, gastos: 0, nube: null, consulta: null, bloqueado: true });
+        ahorro: 0, grupos: 0, gastos: 0, bloqueado: true });
 });
 
 test('borrado: una copia corrupta se elimina y los nuevos ingresos sí persisten', async t => {
@@ -1121,7 +1000,7 @@ test('mejoras: copias antiguas no inventan fechas y las nuevas conservan versió
         const sinFecha = movimientosUnificados().find(m => m.tipo === 'ingreso').fecha;
         const invalida = { app: 'finanzas-personal', version: 8, datos: viejo };
         return { ok, sinFecha, metas: mejoras.metas.length, rechazada: !esCopiaValida(invalida),
-            copia8: copiaLocalNube().version };
+            copia8: crearCopiaLocal().version };
     }), { ok: true, sinFecha: '', metas: 0, rechazada: true, copia8: 8 });
     await page.reload();
     assert.equal(await page.evaluate(() => guardadoHabilitado), true);
@@ -1388,18 +1267,6 @@ test('mejoras: resumen mensual y de ingreso se actualizan desde los controles', 
     assert.match(await page.locator('#metricas-periodo').textContent(), /Disponible/);
 });
 
-test('mejoras: copia versión 8 conserva metas y fechas en el flujo de nube simulado', async t => {
-    const { page, api } = await prepararNubePrueba(t);
-    await page.evaluate(() => { guardarMetaAhorro('','Meta de prueba','500'); fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar(); });
-    await page.locator('#consultar-nube').click();
-    await page.waitForFunction(() => !document.querySelector('#subir-nube').disabled);
-    await page.locator('#subir-nube').click();
-    await page.waitForFunction(() => document.querySelector('#mensaje-nube').textContent.includes('Copia enviada'));
-    assert.equal(api.copia.version,8);
-    assert.equal(api.copia.datos.mejoras.metas[0].nombre,'Meta de prueba');
-    assert.equal(api.copia.datos.mejoras.fechas[0].fecha,'2026-11-01');
-});
-
 test('mejoras: registro recurrente adulterado y movimientos futuros no descuentan dinero', async t => {
     const { page } = await abrirGastosPrueba(t);
     assert.deepEqual(await page.evaluate(() => {
@@ -1414,4 +1281,147 @@ test('mejoras: registro recurrente adulterado y movimientos futuros no descuenta
         try { confirmarRecurrente(mejoras.recurrentes[1].id,0,'n1',fechaLocalGasto()); } catch { futuro = true; }
         return {invalido,futuro,gastos:gastosBasicos.length};
     }), {invalido:true,futuro:true,gastos:1});
+});
+
+test('local: validación y copia no modifican los datos; no quedan cuentas ni nube', async t => {
+    const { page, errors } = await abrir(t);
+    assert.equal(await page.locator('#panel-nube').count(), 0);
+    assert.equal(await page.locator('script[src*="sincronizacion"]').count(), 0);
+    assert.deepEqual(await page.evaluate(() => {
+        const antes = JSON.stringify(construirPaquete());
+        const copia = crearCopiaLocal();
+        return {version:copia.version,fecha:Number.isFinite(Date.parse(copia.creadaEn)),
+            valida:aplicarDatos(copia.datos,true),intacta:antes===JSON.stringify(construirPaquete())};
+    }), {version:8,fecha:true,valida:true,intacta:true});
+    assert.deepEqual(errors,[]);
+});
+
+test('offline: preparar, cerrar y reabrir sin red conserva ingresos nuevos', async t => {
+    const { page, errors } = await abrir(t);
+    await page.waitForFunction(() => document.querySelector('#estado-offline').dataset.listo === 'true');
+    await page.context().setOffline(true);
+    await page.reload();
+    assert.match(await page.locator('#estado-conexion').textContent(), /Sin conexión/);
+    await page.locator('#referencia-nomina').fill('Ingreso sin internet');
+    await page.locator('#neto-nomina').fill('750');
+    await page.locator('#periodo-nomina').selectOption('semanal');
+    await page.locator('#confirmar-nomina').click();
+    const nueva = await page.context().newPage();
+    await page.close();
+    await nueva.goto(url);
+    assert.equal(await nueva.evaluate(() => nominas.some(n=>n.referencia==='Ingreso sin internet')),true);
+    assert.equal(await nueva.evaluate(() => guardadoHabilitado),true);
+    assert.deepEqual(errors,[]);
+});
+
+test('offline: funciona dentro de una subcarpeta como GitHub Pages', async t => {
+    const context = await browser.newContext(); t.after(() => context.close());
+    const page = await context.newPage(); await page.goto(url + '/app-prueba/');
+    await page.waitForFunction(() => document.querySelector('#estado-offline').dataset.listo === 'true');
+    const alcance = await page.evaluate(async()=> (await navigator.serviceWorker.getRegistration()).scope);
+    assert.ok(alcance.endsWith('/app-prueba/'));
+    await context.setOffline(true); await page.reload();
+    assert.equal(await page.locator('#referencia-nomina').isVisible(),true);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+});
+
+test('offline: caché contiene solo archivos, borrar datos no impide reabrir', async t => {
+    const { page } = await abrir(t);
+    await page.waitForFunction(() => document.querySelector('#estado-offline').dataset.listo === 'true');
+    const urls = await page.evaluate(async()=>{
+        const nombre=(await caches.keys()).find(k=>k.startsWith('mis-finanzas-app:'));
+        return (await (await caches.open(nombre)).keys()).map(r=>new URL(r.url).pathname);
+    });
+    assert.ok(urls.some(p=>p.endsWith('/index.html')));
+    assert.ok(urls.every(p=>!p.endsWith('.json')&&!p.includes('/api/')));
+    await page.context().setOffline(true);
+    await page.locator('#gestionar-datos').click();
+    await page.locator('#confirmar-borrado').fill('BORRAR');
+    await Promise.all([page.waitForEvent('load'),page.locator('#formulario-borrado-total button').click()]);
+    assert.equal(await page.evaluate(()=>nominas.length+deudas.length),0);
+    await page.reload();
+    assert.equal(await page.evaluate(()=>guardadoHabilitado),true);
+});
+
+test('offline: actualización espera confirmación, conserva datos y cachés ajenas', async t => {
+    const { page } = await abrir(t);
+    await page.waitForFunction(() => document.querySelector('#estado-offline').dataset.listo === 'true');
+    await page.evaluate(async()=>{const c=await caches.open('cache-ajena');await c.put('/prueba-ajena',new Response('Conservar'));});
+    versionWorkerPrueba = 1;
+    try {
+        await page.evaluate(async()=>{await (await navigator.serviceWorker.getRegistration()).update();});
+        await page.waitForFunction(async()=>!!(await navigator.serviceWorker.getRegistration()).waiting);
+        assert.equal(await page.evaluate(()=>nominas.length),1);
+        await page.waitForFunction(()=>!document.getElementById('actualizar-app').hidden);
+        await Promise.all([page.waitForEvent('load'),page.locator('#actualizar-app').click()]);
+        assert.equal(await page.evaluate(()=>nominas.length),1);
+        assert.equal(await page.evaluate(async()=> (await caches.keys()).includes('cache-ajena')),true);
+        await page.context().setOffline(true);await page.reload();
+        assert.equal(await page.evaluate(()=>nominas.length),1);
+    } finally {versionWorkerPrueba=0;}
+});
+
+test('copias locales: descarga versión 8 y restaura metas sin conexión', async t => {
+    const { page } = await abrir(t);
+    await page.evaluate(()=>guardarMetaAhorro('','Fondo personal','500'));
+    await page.waitForFunction(()=>document.querySelector('#estado-offline').dataset.listo==='true');
+    await page.context().setOffline(true);
+    const copia=await page.evaluate(()=>crearCopiaLocal());
+    const descarga=page.waitForEvent('download');
+    await page.locator('#exportar-copia').click();
+    assert.match((await descarga).suggestedFilename(), /^mis-finanzas-.*\.json$/);
+    copia.datos.nominas[0].referencia='Restaurada desde archivo';
+    await page.locator('#archivo-copia').setInputFiles({name:'copia.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(copia))});
+    await page.waitForFunction(()=>document.querySelector('#mensaje-copia').textContent.includes('restaurada y guardada'));
+    await page.reload();
+    assert.equal(await page.evaluate(()=>nominas[0].referencia),'Restaurada desde archivo');
+    assert.equal(await page.evaluate(()=>mejoras.metas[0].nombre),'Fondo personal');
+});
+
+test('copias locales: archivo corrupto y fallo de guardado conservan datos y memoria', async t => {
+    const { page } = await abrir(t);
+    const original=await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO));
+    await page.locator('#archivo-copia').setInputFiles({name:'mala.json',mimeType:'application/json',buffer:Buffer.from('{"app":"otra"}')});
+    await page.waitForFunction(()=>document.querySelector('#mensaje-copia').className.includes('error'));
+    assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),original);
+    assert.deepEqual(await page.evaluate(()=>{
+        const copia=crearCopiaLocal();copia.datos.nominas[0].referencia='No guardar';
+        const antes=JSON.stringify(construirPaquete()),set=Storage.prototype.setItem;
+        Storage.prototype.setItem=()=>{throw new Error('Sin espacio');};
+        let fallo=false;try{restaurarCopiaLocal(copia);}catch{fallo=true;}
+        Storage.prototype.setItem=set;
+        return {fallo,intacto:antes===JSON.stringify(construirPaquete())};
+    }),{fallo:true,intacto:true});
+});
+
+test('copias locales: recuperar almacenamiento corrupto y rechazar una pestaña desactualizada', async t => {
+    const { page } = await abrir(t);
+    const copia=await page.evaluate(()=>crearCopiaLocal());
+    await page.evaluate(()=>localStorage.setItem(CLAVE_GUARDADO,'{invalido'));
+    await page.reload();
+    assert.equal(await page.evaluate(()=>guardadoHabilitado),false);
+    await page.evaluate(c=>restaurarCopiaLocal(c),copia);
+    assert.equal(await page.evaluate(()=>guardadoHabilitado),true);
+    assert.equal(await page.evaluate(()=>nominas.length),1);
+    assert.equal(await page.evaluate(c=>{
+        localStorage.setItem(CLAVE_GUARDADO,localStorage.getItem(CLAVE_GUARDADO)+' ');
+        try{restaurarCopiaLocal(c);return false;}catch{return true;}
+    },copia),true);
+});
+
+test('instalación: manifiesto e iconos válidos y controles móviles sin desbordamiento', async t => {
+    const { page } = await abrir(t);
+    const manifest=await page.evaluate(async()=>await(await fetch('./manifest.webmanifest')).json());
+    assert.equal(manifest.display,'standalone');assert.equal(manifest.scope,'./');
+    assert.deepEqual(manifest.icons.map(i=>i.sizes),['192x192','512x512']);
+    const dimensiones=await page.evaluate(async()=>{
+        const result=[];
+        for(const src of ['./icons/icon-192.png','./icons/icon-512.png']){
+            const img=new Image();img.src=src;await img.decode();result.push(img.naturalWidth);
+        }return result;
+    });
+    assert.deepEqual(dimensiones,[192,512]);
+    await page.setViewportSize({width:320,height:850});
+    await page.locator('#panel-dispositivo summary').click();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
 });

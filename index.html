@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <title>Mis finanzas · Ingresos, ahorro y deudas</title>
     <meta name="theme-color" content="#08786f">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icons/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Mis finanzas">
     <meta name="description" content="Organiza tus ingresos, registra gastos y avanza con tu ahorro y tus deudas.">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="stylesheet" href="./css/styles.css">
@@ -13,6 +18,7 @@
     <link rel="stylesheet" href="./css/movil.css">
     <link rel="stylesheet" href="./css/cuenta.css">
     <link rel="stylesheet" href="./css/mejoras.css">
+    <link rel="stylesheet" href="./css/instalacion.css">
 </head>
 
 <body>
@@ -46,6 +52,19 @@
         <h1 class="titulo-app">Tu dinero, en orden.</h1>
         <p class="subtitulo-app">Decide con claridad qué gastar, qué guardar y qué pagar.</p>
 
+        <section id="panel-dispositivo" class="panel-dispositivo" aria-label="Aplicación en este dispositivo">
+            <div class="estado-dispositivo"><span id="estado-conexion" class="etiqueta-movimiento">Comprobando conexión</span>
+            <span id="estado-offline" role="status">Preparando uso sin conexión…</span></div>
+            <div class="fila-botones"><button id="instalar-app" type="button" hidden>Instalar en mi teléfono</button>
+                <button id="actualizar-app" type="button" hidden>Aplicar actualización disponible</button></div>
+            <details><summary>Instalación, actualizaciones y datos</summary>
+                <p id="instrucciones-instalacion">Abre esta web con internet una primera vez. Cuando aparezca “Lista para usar sin conexión”, usa el menú de tu navegador para instalarla o añadirla a la pantalla de inicio. En iPhone: Compartir → Añadir a pantalla de inicio.</p>
+                <p>Los datos se quedan en este dispositivo. No hay cuentas ni sincronización automática. Descarga copias antes de cambiar de teléfono o borrar los datos del navegador.</p>
+                <button id="buscar-actualizacion" type="button">Buscar actualización</button>
+                <button id="proteger-almacenamiento" type="button">Solicitar conservación de datos</button>
+                <p id="mensaje-instalacion" role="status"></p>
+            </details>
+        </section>
         <button id="gestionar-datos" type="button" class="boton-secundario">Borrar datos anteriores</button>
         <p id="aviso-datos-borrados" class="aviso" role="status" hidden></p>
 
@@ -696,9 +715,10 @@
         </section>
 
         <section class="tarjeta">
-            <h2>Copia de seguridad</h2>
+            <h2>Copia de seguridad y cambio de teléfono</h2>
+            <p id="estado-respaldo" class="ayuda"></p>
             <p class="ayuda">
-                Tus datos se guardan en este navegador. La sincronización con tu cuenta es opcional.
+                Tus datos se guardan solo en este dispositivo, también cuando estás sin conexión.
                 Descarga una copia para no perderlos o para pasarlos a otro aparato.
                 El archivo contiene tus datos personales:
                 guárdalo en un lugar seguro y no lo compartas.
@@ -711,39 +731,8 @@
 
             <input id="archivo-copia" type="file" accept=".json,application/json" hidden>
             <p id="mensaje-copia" class="aviso" role="status"></p>
+            <p class="ayuda">Para pasar tus datos a otro dispositivo, descarga el archivo aquí y cárgalo allí. Cargar una copia reemplaza los datos de ese dispositivo; no mezcla dos historiales.</p>
         </section>
-
-        <details id="panel-nube" class="tarjeta panel-nube">
-            <summary>Mi cuenta y sincronización</summary>
-            <h2>Tu copia entre dispositivos</h2>
-            <p>Elige cuándo enviar o recuperar tu copia completa. No se mezclan registros automáticamente.
-                GitHub contiene el código de la web; tus cuentas y movimientos privados se guardan en el servicio de sincronización.</p>
-            <p id="nube-sin-configurar" class="aviso">La nube todavía no está activada. Puedes seguir usando esta web y descargar copias.
-                La persona que administra la web debe completar <a href="./docs/sincronizacion.md">la configuración del servicio</a>.</p>
-            <p id="nube-cuenta" role="status"></p>
-            <form id="formulario-cuenta">
-                <label for="correo-cuenta">Correo electrónico</label>
-                <input id="correo-cuenta" type="email" autocomplete="username" maxlength="254" required>
-                <label for="clave-cuenta">Contraseña de tu cuenta</label>
-                <input id="clave-cuenta" type="password" autocomplete="current-password" minlength="12" maxlength="128" required>
-                <p class="ayuda">Para crear una cuenta, usa al menos 12 caracteres. Confirma tu correo antes de iniciar sesión.
-                    La sesión termina al recargar o cerrar esta página. Los datos locales permanecen.</p>
-                <div class="fila-botones">
-                    <button id="entrar-cuenta" type="submit">Iniciar sesión</button>
-                    <button id="crear-cuenta" type="submit">Crear cuenta</button>
-                    <button id="salir-nube" type="button">Cerrar sesión</button>
-                </div>
-            </form>
-            <button id="consultar-nube" type="button">Comparar con la nube</button>
-            <p id="comparacion-nube" aria-live="polite"></p>
-            <div class="fila-botones">
-                <button id="subir-nube" type="button">Enviar esta copia a mi cuenta</button>
-                <button id="bajar-nube" type="button">Usar la copia de mi cuenta aquí</button>
-            </div>
-            <p id="mensaje-nube" role="status" aria-live="polite"></p>
-            <p class="ayuda">Cerrar sesión no borra este dispositivo. Antes de cambiar de persona, descarga su copia y usa
-                Empezar de cero. El borrado local no elimina la copia de la nube.</p>
-        </details>
 
         <button id="restablecer" type="button">
             Restablecer solo el presupuesto
@@ -761,7 +750,7 @@
             </p>
 
             <p>
-                Esto no borra los archivos del proyecto, las copias JSON descargadas ni la copia de la nube.
+                Esto no borra los archivos del proyecto ni las copias JSON descargadas.
                 Si también usaste otra dirección, puerto o navegador, abre allí la web actualizada y repite el borrado.
             </p>
 
@@ -867,11 +856,10 @@
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
     <script src="./js/interfaz.js"></script>
-    <script src="./js/configuracion.js"></script>
-    <script src="./js/sincronizacion.js"></script>
     <script src="./js/correcciones-avanzadas.js"></script>
     <script src="./js/paneles-mejoras.js"></script>
     <script src="./js/movil.js"></script>
+    <script src="./js/instalacion.js"></script>
 </body>
 
 </html>

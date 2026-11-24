@@ -13,7 +13,8 @@ Los estilos se cargan en este orden:
 - `css/sistema.css`: colores, tipografía, componentes y estados compartidos.
 - `css/ingresos.css`: resumen, formulario, reparto e historial.
 - `css/movil.css`: adaptación por tamaño de pantalla y preferencias de accesibilidad.
-- `css/cuenta.css`: cuenta y confirmaciones de corrección.
+- `css/cuenta.css`: confirmaciones de corrección.
+- `css/instalacion.css`: instalación, estado de conexión y actualizaciones.
 
 `js/interfaz.js` añade navegación de presentación y la barra de distribución; no modifica los importes ni el almacenamiento. No se añadieron fuentes remotas, librerías visuales ni rastreadores.
 
@@ -29,7 +30,7 @@ node scripts/servir.cjs
 
 Abre http://127.0.0.1:5173. No necesitas instalar dependencias para usar la aplicación. El servidor solo sirve los archivos en tu ordenador; no es una API ni una base de datos. Detén el servidor con Ctrl+C.
 
-Los datos se guardan en el navegador, no en GitHub. La sincronización privada con Supabase es opcional y debe activarse. Usa siempre la misma dirección y navegador. Cambiar de dirección, puerto o navegador muestra un almacenamiento diferente: exporta una copia JSON e impórtala en la nueva ubicación para trasladar tus datos.
+Los datos se guardan en el navegador, no en GitHub. Usa siempre la misma dirección y navegador. Cambiar de dirección, puerto o navegador muestra un almacenamiento diferente: exporta una copia JSON e impórtala en la nueva ubicación para trasladar tus datos.
 
 ## Gastos y categorías
 
@@ -97,7 +98,7 @@ El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del
 
 Se muestran los últimos 30 registros, pero se guarda el historial completo. Esta primera versión guarda estados completos antes y después: el espacio utilizado crece con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
 
-Las copias nuevas usan la versión 8 e incluyen fechas, metas, recurrencias y correcciones de ingresos, además de ahorro, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5, 6 y 7; si no contienen gastos, esa sección comienza vacía. El botón **Borrar datos anteriores** abre el panel de eliminación. Es necesario escribir **BORRAR**. Se elimina la clave de almacenamiento de esta aplicación mediante removeItem, incluido el historial, y se recarga con un estado nuevo sin movimientos ni ingresos de ejemplo. Las claves de otras aplicaciones se conservan. Las copias descargadas y la nube no se borran.
+Las copias nuevas usan la versión 8 e incluyen fechas, metas, recurrencias y correcciones de ingresos, además de ahorro, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5, 6 y 7; si no contienen gastos, esa sección comienza vacía. El botón **Borrar datos anteriores** abre el panel de eliminación. Es necesario escribir **BORRAR**. Se elimina la clave de almacenamiento de esta aplicación mediante removeItem, incluido el historial, y se recarga con un estado nuevo sin movimientos ni ingresos de ejemplo. Las claves de otras aplicaciones se conservan. Las copias descargadas no se borran.
 
 ## Archivos
 
@@ -107,7 +108,7 @@ css/styles.css             Estilos funcionales existentes
 css/sistema.css            Identidad y componentes compartidos
 css/ingresos.css           Vista de ingresos y reparto
 css/movil.css              Adaptación móvil y accesibilidad
-css/cuenta.css             Cuenta y confirmaciones
+css/cuenta.css             Confirmaciones de corrección
 css/mejoras.css            Actividad, metas y planificación
 js/calculos.js             Operaciones monetarias y reparto
 js/nominas.js              Registro de nóminas
@@ -123,8 +124,6 @@ js/grupos.js               Renombrar, trasladar y eliminar grupos vacíos
 js/resumen.js              Conciliación de nóminas y saldos actuales
 js/interfaz.js             Navegación visual y distribución accesible
 js/movil.js                Teclado, rutas y comodidad móvil
-js/configuracion.js        URL y clave pública opcionales
-js/sincronizacion.js       Cuenta y sincronización manual
 js/datos-mejoras.js        Datos complementarios y guardado completo
 js/ingresos-edicion.js     Corrección y anulación de ingresos
 js/metas-recurrentes.js    Metas, programación y vencimientos
@@ -155,25 +154,11 @@ npm test
 
 Las pruebas usan datos ficticios y perfiles temporales, sin acceder al almacenamiento de tu navegador habitual.
 
-## Pendientes
+## Aplicación independiente
 
-Activar Supabase y ejecutar sus pruebas SQL y el recorrido con dos cuentas y dispositivos reales. La conexión está desactivada hasta configurar el servicio. Quedan para una fase posterior la recuperación de contraseña desde la web, la sincronización automática con resolución de conflictos y las correcciones que conserven selectivamente cambios posteriores independientes. Excel permanece fuera del alcance acordado.
+Funciona con datos locales, sin cuentas ni sincronización automática. Después de la primera instalación por HTTPS puede abrirse sin conexión. Consulta [instalar en el teléfono](docs/instalar-telefono.md).
 
-La entrega de grupos y resumen se verificó con 34 escenarios de integración, incluidos los anteriores de gastos, ahorro, correcciones, copias y restablecimiento.
-
-El rediseño se comprobó con 37 escenarios de integración y revisión visual en navegador. Se verificaron anchos de 320, 390, 768 y 1440 píxeles, navegación táctil, acceso al formulario, tablas por teclado y continuidad de los cálculos existentes. Esto no equivale a una auditoría completa de accesibilidad ni a pruebas en todos los dispositivos físicos.
-
-
-La adaptación móvil incorpora rutas por sección y botones Atrás/Adelante, espacios para la navegación inferior, avisos de tablas desplazables y tarjetas adaptables al tamaño de letra. Si falla guardar un ingreso, conserva sus campos y revierte la incorporación para evitar duplicados al reintentar. Consulta la [comprobación pendiente en dispositivos móviles](docs/pruebas-movil.md).
-
-Esta fase pasó 42 pruebas de integración en Chromium y una revisión visual a 390 píxeles. Incluye texto ampliado, navegación del historial y teclado simulado; la comprobación en dispositivos físicos sigue pendiente.
-
-
-## Cuenta y sincronización opcional
-
-La implementación de registro, inicio y cierre de sesión, comparación, envío y recuperación de copias está disponible en **Mi cuenta y sincronización**. No realiza peticiones mientras la configuración esté vacía. La activación y las comprobaciones del servicio se explican en [docs/sincronizacion.md](docs/sincronizacion.md).
-
-Cada cuenta tiene una copia privada y una revisión. El guardado compara esa revisión para rechazar escrituras desactualizadas. No hay mezcla automática de movimientos. Recuperar la copia remota solicita descargar la local y valida el contenido antes de reemplazarlo. Cerrar sesión conserva los datos locales; Empezar de cero no borra la nube.
+`manifest.webmanifest` define la instalación; `sw.js` conserva una versión completa de los archivos; `js/instalacion.js` informa del estado y permite actualizar con confirmación. Los registros financieros se mantienen separados en localStorage.
 
 ## Corrección de apartados con dependencias
 
@@ -181,7 +166,6 @@ En **Correcciones e historial → Corregir apartados transferidos o distribuidos
 
 No se atraviesan pagos confirmados. Tampoco se reconstruyen estados que no estén documentados en el historial. Una vista previa obsoleta se rechaza. La operación queda registrada con motivo y puede deshacerse como último cambio; las entradas originales no se eliminan.
 
-La fase de cuentas y correcciones pasó **53 pruebas de integración** en navegador. Los casos de nube usan una API simulada: la migración SQL, el aislamiento real entre cuentas y el correo quedan pendientes de validación en el proyecto Supabase. Se mantiene la adaptación general por ancho de pantalla, sin detección de marcas.
 
 Para actualizar tu copia del código, consulta [docs/actualizar-vscode.md](docs/actualizar-vscode.md).
 
@@ -197,7 +181,7 @@ La eliminación también funciona con una copia local dañada. No necesita escri
 
 El almacenamiento pertenece a una dirección y navegador. Por ejemplo, localhost y 127.0.0.1, puertos diferentes y GitHub Pages pueden tener copias separadas. Abre cada ubicación donde existan registros y repite el borrado con la versión actualizada. La web no puede borrar desde una dirección el almacenamiento de otra ni eliminar tus archivos JSON descargados. Si utilizabas un archivo HTML directamente, abre ese mismo archivo actualizado en el mismo navegador.
 
-Se mantiene el guardado permanente para los datos nuevos; no se incorpora un modo temporal. La sesión de nube y su comparación se descartan en esta página al borrar, sin eliminar la copia remota.
+Se mantiene el guardado permanente para los datos nuevos; no se incorpora un modo temporal.
 
 Referencia sobre el alcance del almacenamiento: [localStorage en MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
 
@@ -219,12 +203,10 @@ La [guía de las seis mejoras](docs/mejoras-uso.md) explica dónde encontrar cad
 Los ingresos utilizados conservan su importe y reparto; se permite corregir referencia, fecha y periodo. Los ingresos sin referencias pueden cambiar su importe/reparto o anularse con motivo. Las metas no duplican el ahorro y las recurrencias solo descuentan cuando se confirma cada pago. Los registros antiguos sin fecha se conservan como tales.
 
 ## Próximos trabajos
-- Activar Supabase, aplicar las migraciones 001 y 002, y validar aislamiento y sincronización con cuentas y dispositivos reales.
-- Recuperación de contraseña y eliminación de cuenta/copia remota desde la interfaz.
-- Resolver conflictos entre copias sin reemplazar una versión completa.
-- Corregir movimientos relacionados conservando operaciones posteriores independientes; estudiar el ajuste de ingresos ya utilizados.
-- Automatizar las pruebas y publicación en GitHub, ampliar pruebas en distintos navegadores y dispositivos.
-- Reducir el crecimiento del historial de estados completos y mejorar el almacenamiento para uso prolongado.
-- Instalación de la web, funcionamiento sin conexión y avisos de vencimiento fuera de la página.
+- Validar instalación, cierre y reapertura sin conexión en el teléfono real.
+- Automatizar pruebas y ampliar cobertura de navegadores.
+- Reducir el crecimiento del historial para uso prolongado.
+- Mejorar correcciones relacionadas conservando cambios posteriores independientes.
+- Evaluar avisos fuera de la aplicación según las capacidades del navegador.
 
-Esta entrega pasó **79 pruebas de integración**: las 59 anteriores y 20 escenarios de las nuevas funciones. Se revisaron visualmente los paneles en móvil y escritorio, con datos ficticios. Las comprobaciones de nube siguen usando una API simulada; la ejecución de las migraciones y las pruebas de aislamiento real dependen de activar Supabase.
+Las cuentas y la sincronización automática quedan fuera del alcance elegido. Excel no forma parte de este flujo.
