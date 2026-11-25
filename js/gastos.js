@@ -150,6 +150,7 @@ function fechaLocalGasto() {
 }
 
 function abrirGastos() {
+    if(typeof activarPaginaFinanzas==="function"){irSeccionLateral("gastos");return;}
     cambiarVista("reparto");
     document.getElementById("vista-reparto").hidden = true;
     document.getElementById("vista-gastos").hidden = false;

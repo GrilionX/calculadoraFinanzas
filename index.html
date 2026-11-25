@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="./css/instalacion.css">
     <link rel="stylesheet" href="./css/gestion.css">
 <link rel="stylesheet" href="./css/navegacion.css">
+<link rel="stylesheet" href="./css/dashboard.css">
 </head>
 
 <body>
@@ -34,6 +35,8 @@
 <button id="boton-reparto" type="button" data-ruta="ingresos" aria-controls="vista-reparto" aria-pressed="true">Ingresos y reparto</button>
 <button type="button" data-ruta="gastos">Mis gastos</button>
 <button type="button" data-ruta="destinos">Destino de mis ingresos</button>
+<button type="button" data-ruta="actividad">Actividad</button>
+<button type="button" data-ruta="simulador">Simulador</button>
 </div></details>
 <details open data-grupo="ahorro"><summary>◇ Ahorro</summary><div class="ramas-laterales">
 <button id="boton-ahorro" type="button" data-ruta="ahorro" aria-controls="vista-ahorro" aria-pressed="false">Ahorro personal</button>
@@ -48,7 +51,7 @@
 <div class="ramas-laterales"><button type="button" data-ruta="acreedores">Acreedores</button></div>
 <button type="button" data-ruta="tarjetas">Tarjetas de crédito</button>
 </div></details>
-</nav></aside>
+<div class="herramientas-laterales"><p>HERRAMIENTAS</p><button type="button" data-ruta="correcciones">Correcciones</button><button type="button" data-ruta="datos">Datos y copias</button></div></nav></aside>
     <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
 
     <section id="aviso-reinicio-externo" class="tarjeta" hidden aria-label="Recarga necesaria">
@@ -839,7 +842,9 @@
     <script src="./js/movil.js"></script>
     <script src="./js/instalacion.js"></script>
     <script src="./js/gestion-ui.js"></script>
+<script src="./js/espacio.js"></script>
 <script src="./js/navegacion.js"></script>
+<script src="./js/controles.js"></script>
 </body>
 
 </html>

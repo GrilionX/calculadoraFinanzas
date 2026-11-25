@@ -65,6 +65,7 @@ function marcarRutaMovil(ruta, escribir = true) {
 }
 
 function restaurarRutaMovil() {
+    if(typeof activarPaginaFinanzas==="function")return;
     const ruta = location.hash.slice(1);
     if (!Object.hasOwn(rutasMoviles, ruta)) return;
     if (ruta === "gastos") abrirGastos();

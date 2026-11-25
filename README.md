@@ -233,3 +233,6 @@ La versión de tarjetas y apartados se verificó con 96 escenarios de integraci�
 La navegación vertical se encuentra a la derecha; en celular se abre con Secciones. Las ramas de ingresos, ahorro, fondos y deudas permanecen independientes. Cada tarjeta permite editar límite, día de corte y día de pago, consultar crédito utilizado y disponible y conservar los movimientos anteriores. Consulta [navegación y crédito](docs/navegacion-y-credito.md).
 
 Esta revisión verificó 105 escenarios de integración, incluidos navegación lateral, teclado, historial de rutas, fondos por apartado, límites editables, pagos que liberan crédito, fechas en meses cortos, copias antiguas y bloqueo entre pestañas. Se revisó visualmente a 1440 y 390 px; la prueba física en teléfono continúa pendiente.
+
+## Diseño y navegación
+Menú izquierdo y vistas independientes, con selectores diseñados y animaciones adaptadas al dispositivo. Consulta [la guía del dashboard](docs/dashboard.md).

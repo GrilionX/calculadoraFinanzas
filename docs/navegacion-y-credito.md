@@ -1,7 +1,7 @@
 # Navegación lateral y crédito
 
 ## Navegación
-El menú está a la derecha. En escritorio permanece visible; en pantallas de hasta 900 px se abre con **Secciones**.
+El menú está a la izquierda. En escritorio permanece visible; en pantallas de hasta 900 px se abre con **Secciones**.
 
 - Ingresos: Ingresos y reparto, Mis gastos y Destino de mis ingresos.
 - Ahorro: Ahorro personal, Fondo de emergencia y los fondos de cada apartado.
@@ -27,3 +27,5 @@ Los límites y fechas son opcionales para las tarjetas antiguas. Se guardan en l
 ## Diseño
 Panel de ramas con animación breve, estado activo y foco visible. Se respeta la preferencia de movimiento reducido.
 Referencia de interacción: [patrón de navegación desplegable de W3C](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/).
+
+La navegación ahora abre vistas independientes; consulta [dashboard](dashboard.md).

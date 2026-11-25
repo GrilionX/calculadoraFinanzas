@@ -36,6 +36,7 @@ function rutaLateral(ruta) {
         return a?{vista:"ahorro",grupo:"ahorro",target:"fondo-"+id}:null;
     }
     return ({
+ datos:{grupo:"",vista:"datos"},correcciones:{grupo:"",vista:"correcciones"},actividad:{grupo:"ingresos",vista:"reparto"},simulador:{grupo:"ingresos",vista:"reparto"},
         ingresos:{vista:"reparto",grupo:"ingresos",target:"titulo-nomina"},
         gastos:{vista:"gastos",grupo:"ingresos",target:"titulo-gastos"},
         destinos:{vista:"reparto",grupo:"ingresos",target:"apartados-basicos"},
@@ -53,23 +54,16 @@ function sincronizarNavLateral(ruta) {
     for(const b of panelNavegacion.querySelectorAll("[data-ruta]")){
         if(b.dataset.ruta===ruta)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
     }
-    panelNavegacion.querySelector('[data-grupo="'+config.grupo+'"]').open=true;
+    const rama=panelNavegacion.querySelector('[data-grupo="'+config.grupo+'"]');if(rama)rama.open=true;
     if(ruta==="emergencia"||ruta.startsWith("fondo:"))document.getElementById("rama-fondos").open=true;
 }
-function irSeccionLateral(ruta,registrar=true,enfocar=true) {
-    const config=rutaLateral(ruta);if(!config)return;
-    if(menuAbierto)cambiarMenuLateral(false,false);
-    if(config.vista==="gastos")abrirGastos();else cambiarVista(config.vista);
-    if(registrar&&decodeURIComponent(location.hash.slice(1))!==ruta)history.pushState(null,"","#"+encodeURIComponent(ruta));
-    const destino=document.getElementById(config.target);
-    if(destino){
-        for(let p=destino.parentElement;p;p=p.parentElement)if(p.tagName==="DETAILS")p.open=true;
-        if(ruta==="nuevo-fondo"){
-            destino.closest("details").open=true;destino.elements.medio.value="tarjeta";
-        }
-        if(enfocar){destino.tabIndex=-1;destino.focus({preventScroll:true});destino.scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
-    }
-    sincronizarNavLateral(ruta);
+function irSeccionLateral(ruta,registrar=true,enfocar=true){
+ if(!rutaLateral(ruta))ruta="ingresos";
+ if(menuAbierto)cambiarMenuLateral(false,false);
+ if(!activarPaginaFinanzas(ruta,enfocar))return;
+ let actual;try{actual=decodeURIComponent(location.hash.slice(1));}catch{actual="";}
+ if(registrar&&actual!==ruta)history.pushState(null,"","#"+encodeURIComponent(ruta));
+ sincronizarNavLateral(ruta);
 }
 panelNavegacion.addEventListener("click",e=>{
     const b=e.target.closest("[data-ruta]");if(b)irSeccionLateral(b.dataset.ruta);
@@ -78,6 +72,7 @@ function actualizarFondosLateral() {
     const contenedor=document.getElementById("enlaces-fondos");if(!contenedor)return;
     const fondos=gestion.apartados.filter(a=>a.medio==="tarjeta");
     const firma=JSON.stringify(fondos.map(a=>[a.id,a.nombre]));
+    actualizarVistaDinamica();
     if(contenedor.dataset.firma===firma)return;
     contenedor.dataset.firma=firma;contenedor.replaceChildren();
     for(const a of fondos){const b=document.createElement("button");b.type="button";b.dataset.ruta="fondo:"+a.id;b.textContent="Fondo de emergencia "+a.nombre;contenedor.append(b);}

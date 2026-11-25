@@ -1,0 +1,82 @@
+/*Espacio financiero: violeta, superficies claras y navegación lateral*/
+:root{--ancho-lateral:268px;--tinta:#28263c;--secundario:#69677e;--acento:#7154c5;--linea:#e5e3ef;--fondo:#f3f3fa}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--fondo);color:var(--tinta);padding-right:0;padding-left:var(--ancho-lateral)}
+main{max-width:1550px;padding:24px clamp(20px,3vw,46px) 48px}
+#panel-navegacion{inset:0 auto 0 0;background:linear-gradient(165deg,#29263f,#1e1d30);border:0;box-shadow:8px 0 35px #29234110;color:#f4f1ff;padding:26px 16px}
+.cabecera-lateral{padding-bottom:30px;gap:12px}
+.cabecera-lateral strong{display:flex;align-items:center;gap:12px}
+.cabecera-lateral strong::before{content:"mf";display:grid;place-items:center;min-width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,#a68aec,#7852d2);box-shadow:0 7px 24px #a683ee35;font-size:1rem}
+#panel-navegacion summary{color:#e8e4f8}
+#panel-navegacion .navegacion-vistas button,#panel-navegacion button[aria-pressed=true]{background:transparent;color:#c5bfdc;border:0;box-shadow:none;font-size:.9rem}
+#panel-navegacion button[aria-current=page]{background:linear-gradient(110deg,#7851cb,#8d6cda);color:white;box-shadow:0 6px 18px #100a2929}
+#panel-navegacion button:hover,#panel-navegacion summary:hover{background:#ffffff0e;color:white;transform:translateX(3px)}
+#panel-navegacion button[aria-current=page]:hover{background:#8863d8}
+.ramas-laterales{border-color:#ffffff17}
+.herramientas-laterales{border-top:1px solid #ffffff19;padding-top:18px;margin-top:25px}
+.herramientas-laterales p{padding:0 12px;color:#a9a0c5;font-size:.75rem;letter-spacing:.12em}
+#cerrar-navegacion{background:#ffffff16;color:white;border:1px solid #ffffff20}
+.cabecera-app{border-bottom:1px solid var(--linea);padding-bottom:18px;margin-bottom:28px}
+.marca-simbolo,.marca-app small{display:none}.marca-app{font-size:.9rem;color:var(--secundario)}
+#estado-guardado{font-size:.8rem;background:#e8f4ee;border-radius:24px;padding:7px 12px}
+.titulo-app{font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:-.045em;margin:0 0 24px;line-height:1.15}
+.ruta-espacio{font-size:.75rem;letter-spacing:.14em;color:#7b729c;font-weight:750;margin:0 0 10px}
+.pagina-finanzas{min-width:0}
+#vista-ahorro,#vista-deudas,#vista-gastos{background:transparent;border:0;box-shadow:none;padding:0}
+.tarjeta,.panel-gestion,.panel-correcciones,.panel-dispositivo{background:#fff;border:1px solid var(--linea);border-radius:22px;box-shadow:0 8px 28px #35304505;padding:24px}
+.encabezado-vista>div,#pagina-ahorro>h2,#pagina-deudas>h2,.cabecera-gastos,#pagina-emergencia .panel-gestion>h2,#pagina-tarjetas .panel-gestion>h2,#pagina-destinos .panel-gestion>h2{display:none}
+.encabezado-vista{justify-content:flex-end;margin-bottom:16px}
+button{border-radius:12px;transition:transform .18s,box-shadow .18s,background .18s}
+button:active:not(:disabled){transform:scale(.96)}
+button:focus-visible,summary:focus-visible{outline:3px solid #a78ae5;outline-offset:3px}
+button[type=submit],.boton-principal{background:linear-gradient(115deg,#7050be,#8c66d1);border-color:transparent;color:white;box-shadow:0 5px 14px #7854bd22}
+button[type=submit]:hover,.boton-principal:hover{background:#6c48bb;box-shadow:0 7px 18px #7854bd35;transform:translateY(-2px)}
+button:disabled{box-shadow:none;transform:none}
+input,textarea,select{background:#faf9fd;border-color:#e1ddeb;border-radius:12px;color:var(--tinta)}
+input:focus,textarea:focus{border-color:#9b80d7;outline:3px solid #9070cd17}
+label{font-size:.9rem}
+#resumen-financiero{border-radius:24px}
+#resumen-financiero .metricas-nominas{grid-template-columns:1.4fr repeat(4,minmax(0,1fr));gap:12px}
+.metricas-nominas>div{border:0;border-radius:18px;background:#f2effa;min-height:138px;padding:18px}
+#resumen-financiero .metrica-disponible{background:linear-gradient(125deg,#6a4bb1,#9174d4);color:#fff;border:0;box-shadow:0 10px 25px #7655b825}
+.metrica-disponible>span,.metrica-disponible small{color:#eee7ff!important}
+.metricas-nominas>div:nth-child(3){background:#edf5f4}.metricas-nominas>div:nth-child(4){background:#fff5e6}.metricas-nominas>div:nth-child(5){background:#f8edf3}
+.metricas-nominas strong{overflow-wrap:anywhere}
+.acceso-gastos{background:#eeebf7;border:1px solid #e4ddf2;border-radius:18px}
+.acceso-gastos button{background:#fff;color:#6c4ba6;border:1px solid #d5c9eb}
+.reparto-nomina{background:#f7f5fc;border-color:#e7e0f1}
+.nomina-registrada,.tarjeta-gestion,.fondo-emergencia{border:1px solid var(--linea);border-radius:18px;background:#fff;padding:18px;margin-block:14px}
+.fechas-credito{background:#f1edf8;color:#655080}
+#resumen-financiero .cabecera-resumen{flex-wrap:wrap}
+.tarjeta-resumen{border-radius:12px}
+main details{border:1px solid var(--linea);background:#faf9fd;border-radius:14px;margin-block:12px;padding:0 14px}
+main details>summary{list-style:none;cursor:pointer;position:relative;padding:16px 24px 16px 0;min-height:48px;color:#514568;font-weight:650}
+main summary::-webkit-details-marker{display:none}
+main details>summary::after{content:"";position:absolute;right:4px;top:22px;width:7px;height:7px;border-right:2px solid #9a82bd;border-bottom:2px solid #9a82bd;transform:rotate(45deg);transition:transform .25s}
+main details[open]>summary::after{transform:rotate(225deg)}
+main details[open]>:not(summary){animation:contenido-entrada .28s ease-out}
+@keyframes contenido-entrada{from{opacity:0;transform:translateY(-7px)}to{opacity:1;transform:none}}
+progress{accent-color:#8961cc}
+.barra-distribucion span{transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.control-select{position:relative;display:block;width:100%;min-width:0}
+select.select-base{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;opacity:0;pointer-events:none}
+button.boton-select{display:block;position:relative;width:100%;max-width:100%;min-height:46px;text-align:left;margin:0;padding:12px 38px 12px 14px;border:1px solid #ded8eb;background:#faf9fd;color:#3f3751;box-shadow:none;font-size:1rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.boton-select::after{content:"";position:absolute;right:17px;top:18px;width:7px;height:7px;border-right:2px solid #8c74b3;border-bottom:2px solid #8c74b3;transform:rotate(45deg);transition:transform .2s}
+.boton-select[aria-expanded=true]{border-color:#9674ce;box-shadow:0 0 0 3px #8b63d019;background:white}
+.boton-select[aria-expanded=true]::after{transform:rotate(225deg);top:22px}
+.boton-select[aria-invalid=true]{border-color:#b34858}
+.boton-select:disabled{opacity:.55;cursor:not-allowed}
+.lista-select{position:fixed;z-index:150;overflow:auto;overscroll-behavior:contain;background:#fff;border:1px solid #ded4ee;border-radius:16px;box-shadow:0 15px 50px #32204d26;padding:6px;animation:selector-entrada .18s ease-out}
+.opcion-select{padding:12px;border-radius:10px;cursor:pointer;min-height:44px;font-size:1rem;color:#423652;overflow-wrap:anywhere}
+.opcion-select:hover,.opcion-activa{background:#f0e9fc}
+.opcion-select[aria-selected=true]{background:#e9ddfb;color:#653b9e;font-weight:650}
+.opcion-select[aria-disabled=true]{opacity:.45;cursor:not-allowed}
+@keyframes selector-entrada{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+@media(min-width:901px) and (max-width:1250px){#resumen-financiero .metricas-nominas{grid-template-columns:repeat(2,minmax(0,1fr))!important}.metrica-disponible{grid-column:1/-1}}
+@media(max-width:900px){body{padding-left:0}main{padding:78px 18px 32px!important}#panel-navegacion{transform:translateX(-100%)}#panel-navegacion.abierto{transform:translateX(0)}#abrir-navegacion{left:max(14px,env(safe-area-inset-left));right:auto;background:#29263f;color:white;border-color:#494059;border-radius:14px;box-shadow:0 6px 18px #29263f20}#panel-navegacion{transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility .35s}.cabecera-app{margin-bottom:24px}.tarjeta,.panel-gestion{padding:18px;border-radius:18px}.titulo-app{margin-bottom:20px}.metricas-nominas strong{font-size:1.25rem}#resumen-financiero .metricas-nominas{grid-template-columns:repeat(2,minmax(0,1fr))!important}.metrica-disponible{grid-column:1/-1}.espacio-ingresos{grid-template-columns:1fr}.filtro-resumen{min-width:0;width:100%}.encabezado-vista{justify-content:flex-start}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.cabecera-resumen>.tarjeta-resumen{display:flex;flex-direction:column;gap:8px;background:#f5f2fa;padding:12px 18px;font-size:.85rem}.cabecera-resumen>.tarjeta-resumen strong{font-size:1.2rem}
+
+#titulo-espacio:focus{outline:none}progress{appearance:none;width:100%;height:8px;border:0;border-radius:12px;overflow:hidden;background:#ece7f3}progress::-webkit-progress-bar{background:#ece7f3;border-radius:12px}progress::-webkit-progress-value{background:linear-gradient(90deg,#7851c0,#aa87e1);border-radius:12px;transition:width .5s ease}progress::-moz-progress-bar{background:#8961cc;border-radius:12px}

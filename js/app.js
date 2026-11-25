@@ -1417,6 +1417,7 @@ async function restablecer() {
 }
 
 function cambiarVista(nombreVista) {
+    if(typeof activarPaginaFinanzas==="function"){activarPaginaFinanzas(nombreVista==="reparto"?"ingresos":nombreVista,false);return;}
     document.getElementById("vista-gastos").hidden = true;
     const vistas = [
         { nombre: "reparto", boton: botonReparto, panel: vistaReparto },

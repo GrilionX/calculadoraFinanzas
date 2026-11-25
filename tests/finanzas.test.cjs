@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-24-lateral-4', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-dashboard-5', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -59,8 +59,8 @@ test('arranque, cálculos existentes, apartado, corrección desde el formulario 
     assert.equal(await page.evaluate(() => { ejecutarPruebas(); return fallos; }), 0);
     assert.equal(await page.evaluate(() => registrarApartadoConNomina('deuda', 'd1', '50')), true);
     assert.equal(await page.evaluate(() => calcularDisponibleCategoria(nominas[0], 'deudas', obtenerApartadosNomina()).disponibleCentavos), 95000);
-    await page.locator('#motivo-correccion').fill('Cantidad equivocada');
-    await page.locator('#deshacer-cambio').click();
+    await (await controlPrueba(page,'#motivo-correccion')).fill('Cantidad equivocada');
+    await (await controlPrueba(page,'#deshacer-cambio')).click();
     assert.match(await page.locator('#mensaje-correccion').textContent(), /Corrección guardada/);
     await page.reload();
     assert.deepEqual(await page.evaluate(() => ({ disponible: calcularDisponibleCategoria(nominas[0], 'deudas', obtenerApartadosNomina()).disponibleCentavos,
@@ -142,7 +142,7 @@ test('borrado total conserva claves ajenas y bloquea otra pestaña', async t => 
     await page.evaluate(() => { localStorage.setItem('ajena', 'conservar'); registrarApartadoConNomina('deuda', 'd1', '50'); });
     const otra = await page.context().newPage();
     await otra.goto(url);
-    await page.locator(".zona-borrado > summary").click();
+    await (await controlPrueba(page,".zona-borrado > summary")).click();
     await Promise.all([page.waitForEvent('load'), borrarTodoEnPrueba(page)]);
     assert.deepEqual(await page.evaluate(() => ({ deudas: deudas.length, grupos: gruposDeudas.length,
         nominas: nominas.length, historial: historialCorrecciones.length, ahorro: movimientosAhorros.length,
@@ -200,13 +200,13 @@ async function abrirGastosPrueba(t) {
 test('gastos: formulario, suma inmediata por categoría y persistencia', async t => {
     const { page, errors } = await abrirGastosPrueba(t);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.locator("#abrir-gastos").click();
-    await page.locator("#nombre-categoria-gasto").fill("Comida");
-    await page.locator("#formulario-categoria-gasto button").click();
-    await page.locator("#gasto-concepto").fill("Supermercado");
-    await page.locator("#gasto-monto").fill("150");
+    await (await controlPrueba(page,"#abrir-gastos")).click();
+    await (await controlPrueba(page,"#nombre-categoria-gasto")).fill("Comida");
+    await (await controlPrueba(page,"#formulario-categoria-gasto button:not(.boton-select)")).click();
+    await (await controlPrueba(page,"#gasto-concepto")).fill("Supermercado");
+    await (await controlPrueba(page,"#gasto-monto")).fill("150");
     assert.match(await page.locator("#gasto-previa").textContent(), /950/);
-    await page.locator("#gasto-registrar").click();
+    await (await controlPrueba(page,"#gasto-registrar")).click();
     assert.equal(await page.evaluate(() => resumenGastosNomina("n1").disponibleCentavos), 95000);
     assert.match(await page.locator("#gastos-por-categoria").textContent(), /Comida.*150/);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -400,20 +400,20 @@ test('categorías: migración de versión anterior y guardado fallido', async t 
 test('gastos: interfaz móvil de ocio y categoría archivada', async t => {
     const { page, errors } = await abrirGastosPrueba(t);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.locator("#abrir-gastos").click();
-    await page.locator("#gasto-origen").selectOption("ocio");
-    await page.locator("#nombre-categoria-gasto").fill("Cine");
-    await page.locator("#formulario-categoria-gasto button").click();
-    await page.locator("#gasto-concepto").fill("Entrada");
-    await page.locator("#gasto-monto").fill("50");
-    await page.locator("#gasto-registrar").click();
+    await (await controlPrueba(page,"#abrir-gastos")).click();
+    await (await controlPrueba(page,"#gasto-origen")).selectOption("ocio");
+    await (await controlPrueba(page,"#nombre-categoria-gasto")).fill("Cine");
+    await (await controlPrueba(page,"#formulario-categoria-gasto button:not(.boton-select)")).click();
+    await (await controlPrueba(page,"#gasto-concepto")).fill("Entrada");
+    await (await controlPrueba(page,"#gasto-monto")).fill("50");
+    await (await controlPrueba(page,"#gasto-registrar")).click();
     await page.getByRole("button", { name: "Archivar categoría: Cine", exact: true }).click();
     assert.equal(await page.locator("#gasto-categoria option").count(), 1);
     assert.match(await page.locator("#gastos-por-categoria").textContent(), /Archivada.*50/);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await page.getByRole("button", { name: "Reactivar categoría: Cine", exact: true }).click();
-    await page.locator("#gastos-por-categoria summary").click();
-    await page.locator("#gastos-por-categoria input").fill("Películas");
+    await (await controlPrueba(page,"#gastos-por-categoria summary")).click();
+    await (await controlPrueba(page,"#gastos-por-categoria input")).fill("Películas");
     await page.getByRole("button", { name: "Guardar nombre", exact: true }).click();
     assert.match(await page.locator("#historial-gastos").textContent(), /Películas/);
     assert.deepEqual(errors, []);
@@ -514,10 +514,10 @@ test('ahorro: copias antiguas, origen corrupto y formulario móvil', async t => 
     const { page, errors } = await abrirGastosPrueba(t);
     await page.setViewportSize({ width: 390, height: 844 });
     await clickRutaPrueba(page, "boton-ahorro");
-    await page.locator("#ahorro-nomina").selectOption("n1");
-    await page.locator("#concepto-ahorro").fill("Fondo personal");
-    await page.locator("#monto-ahorro").fill("100");
-    await page.locator("#formulario-ahorro button").click();
+    await (await controlPrueba(page,"#ahorro-nomina")).selectOption("n1");
+    await (await controlPrueba(page,"#concepto-ahorro")).fill("Fondo personal");
+    await (await controlPrueba(page,"#monto-ahorro")).fill("100");
+    await (await controlPrueba(page,"#formulario-ahorro button:not(.boton-select)")).click();
     assert.equal(await page.evaluate(() => calcularSaldoAhorro(movimientosAhorros)), 10000);
     assert.deepEqual(await page.evaluate(() => {
         const copia = copiar(construirPaquete());
@@ -647,14 +647,14 @@ test('grupos y resumen: controles móviles y actualización visible', async t =>
     await page.setViewportSize({ width: 390, height: 844 });
     assert.match(await page.locator("#resumen-ingresos").textContent(), /1,000/);
     await clickRutaPrueba(page, "boton-deudas");
-    await page.locator(".administrador-grupos summary").click();
-    await page.locator("#administrar-grupo").selectOption("g1");
-    await page.locator("#administrar-nombre").fill("Grupo personal");
-    await page.locator("#formulario-renombrar-grupo button").click();
-    await page.locator("#trasladar-deuda").selectOption("d1");
-    await page.locator("#trasladar-destino").selectOption("");
-    await page.locator("#confirmar-traslado").click();
-    await page.locator("#eliminar-grupo-vacio").click();
+    await (await controlPrueba(page,".administrador-grupos summary")).click();
+    await (await controlPrueba(page,"#administrar-grupo")).selectOption("g1");
+    await (await controlPrueba(page,"#administrar-nombre")).fill("Grupo personal");
+    await (await controlPrueba(page,"#formulario-renombrar-grupo button:not(.boton-select)")).click();
+    await (await controlPrueba(page,"#trasladar-deuda")).selectOption("d1");
+    await (await controlPrueba(page,"#trasladar-destino")).selectOption("");
+    await (await controlPrueba(page,"#confirmar-traslado")).click();
+    await (await controlPrueba(page,"#eliminar-grupo-vacio")).click();
     await page.getByRole("button",{name:"Sí",exact:true}).click();
     assert.equal(await page.evaluate(() => gruposDeudas.length), 0);
     await clickRutaPrueba(page, "boton-reparto");
@@ -675,16 +675,16 @@ test('diseño: navegación y formularios sin desborde en móvil, tableta y escri
             assert.ok(alto >= 44, "Navegación táctil");
         }
         await clickRutaPrueba(page, "boton-reparto");
-        await page.locator("#abrir-gastos").click();
+        await (await controlPrueba(page,"#abrir-gastos")).click();
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-        await page.locator("#volver-gastos").click();
+        await (await controlPrueba(page,"#volver-gastos")).click();
     }
     assert.deepEqual(errors, []);
 });
 
 test('diseño: acceso al ingreso, gráfico real y borrado protegido por desplegable', async t => {
     const { page, errors } = await abrirGastosPrueba(t);
-    await page.locator("#ir-a-ingreso").click();
+    await (await controlPrueba(page,"#ir-a-ingreso")).click();
     assert.equal(await page.evaluate(() => document.activeElement.id), "referencia-nomina");
     await page.evaluate(() => {
         agregarCategoriaGasto("Comida");
@@ -711,10 +711,10 @@ test('diseño: importes largos, historial y teclado sin perder contenido', async
         mostrarHistorialNominas();
         mostrarResumenFinanciero();
     });
-    await page.locator("#historial-nominas summary").click();
+    await (await controlPrueba(page,"#historial-nominas summary")).click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await clickRutaPrueba(page, "boton-reparto");
-    await page.locator("#resumen-financiero > details").nth(1).locator("summary").click();
+    await (await controlPrueba(page,"#resumen-financiero > details")).nth(1).locator("summary").click();
     const tabla = page.locator("#resumen-financiero .tabla-scroll");
     await tabla.focus();
     assert.equal(await tabla.getAttribute("tabindex"), "0");
@@ -723,7 +723,7 @@ test('diseño: importes largos, historial y teclado sin perder contenido', async
 
 test('móvil: atrás, adelante y enlace directo conservan el borrador', async t => {
     const { page, errors } = await abrir(t);
-    await page.locator('#referencia-nomina').fill('Pendiente');
+    await (await controlPrueba(page,'#referencia-nomina')).fill('Pendiente');
     await clickRutaPrueba(page, "boton-ahorro");
     await clickRutaPrueba(page, "boton-deudas");
     await page.goBack();
@@ -779,20 +779,20 @@ test('móvil: texto ampliado y orientación horizontal no desbordan', async t =>
 
 test('ingreso: fallo de almacenamiento conserva campos y permite reintento único', async t => {
     const { page } = await abrir(t);
-    await page.locator('#referencia-nomina').fill('Ingreso nuevo');
-    await page.locator('#neto-nomina').fill('1200');
-    await page.locator('#periodo-nomina').selectOption('semanal');
+    await (await controlPrueba(page,'#referencia-nomina')).fill('Ingreso nuevo');
+    await (await controlPrueba(page,'#neto-nomina')).fill('1200');
+    await (await controlPrueba(page,'#periodo-nomina')).selectOption('semanal');
     await page.evaluate(() => {
         window.guardarOriginalPrueba = Storage.prototype.setItem;
         Storage.prototype.setItem = () => { throw new DOMException('Sin espacio', 'QuotaExceededError'); };
     });
-    await page.locator('#confirmar-nomina').click();
+    await (await controlPrueba(page,'#confirmar-nomina')).click();
     assert.equal(await page.evaluate(() => nominas.length), 1);
     assert.equal(await page.locator('#referencia-nomina').inputValue(), 'Ingreso nuevo');
     assert.equal(await page.locator('#neto-nomina').inputValue(), '1200');
     assert.match(await page.locator('#mensaje-nomina').textContent(), /campos se conservan/);
     await page.evaluate(() => { Storage.prototype.setItem = window.guardarOriginalPrueba; });
-    await page.locator('#confirmar-nomina').click();
+    await (await controlPrueba(page,'#confirmar-nomina')).click();
     assert.equal(await page.evaluate(() => nominas.length), 2);
     await page.reload();
     assert.equal(await page.evaluate(() => nominas.filter(n => n.referencia === 'Ingreso nuevo').length), 1);
@@ -879,15 +879,15 @@ test('avanzadas: plan desactualizado y fallo de guardado no alteran registros', 
 test('avanzadas: formulario exige vista previa y confirmación de todos los cambios', async t => {
     const { page } = await abrir(t, true);
     await page.evaluate(() => { registrarApartadoGrupo('g1', '100'); distribuirFondoGrupo('g1'); });
-    await page.locator('.correccion-avanzada > summary').click();
+    await (await controlPrueba(page,'.correccion-avanzada > summary')).click();
     const id = await page.evaluate(() => obtenerApartadosNomina()[0].id);
-    await page.locator('#apartado-avanzado').selectOption(id);
-    await page.locator('#importe-avanzado').fill('75');
-    await page.locator('#preparar-avanzada').click();
+    await (await controlPrueba(page,'#apartado-avanzado')).selectOption(id);
+    await (await controlPrueba(page,'#importe-avanzado')).fill('75');
+    await (await controlPrueba(page,'#preparar-avanzada')).click();
     assert.equal(await page.locator('#lista-avanzada li').count(), 1);
-    await page.locator('#motivo-avanzado').fill('Corregir registro');
+    await (await controlPrueba(page,'#motivo-avanzado')).fill('Corregir registro');
     await page.locator('#aceptar-avanzada').check();
-    await page.locator('#aplicar-avanzada').click();
+    await (await controlPrueba(page,'#aplicar-avanzada')).click();
     assert.match(await page.locator('#mensaje-avanzada').textContent(), /Reconstrucción guardada/);
     await page.reload();
     assert.equal(await page.evaluate(() => resumirFondoGrupo(gruposDeudas[0]).fondoCentavos), 7500);
@@ -895,12 +895,12 @@ test('avanzadas: formulario exige vista previa y confirmación de todos los camb
 
 test('borrado: acceso visible y confirmación obligatoria sin eliminar por accidente', async t => {
     const { page } = await abrir(t);
-    await page.locator('#gestionar-datos').click();
+    await (await controlPrueba(page,'#gestionar-datos')).click();
     assert.equal(await page.locator('#panel-borrado').getAttribute('open'), '');
     assert.match(await page.locator('#resumen-borrado').textContent(), /1 ingresos, 1 deudas/);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'titulo-borrado');
     const antes = await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO));
-    await page.locator('#formulario-borrado-total button').click();
+    await (await controlPrueba(page,'#formulario-borrado-total button:not(.boton-select)')).click();
     await page.getByRole('button', {name:'No',exact:true}).click();
     assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
     assert.equal(await page.locator('dialog').count(), 0);
@@ -928,16 +928,16 @@ test('borrado: una copia corrupta se elimina y los nuevos ingresos sí persisten
     await page.evaluate(() => localStorage.setItem(CLAVE_GUARDADO, '{copia-dañada'));
     await page.reload();
     assert.equal(await page.evaluate(() => guardadoHabilitado), false);
-    await page.locator('#gestionar-datos').click();
+    await (await controlPrueba(page,'#gestionar-datos')).click();
     assert.match(await page.locator('#resumen-borrado').textContent(), /no se puede recuperar/);
     await Promise.all([page.waitForEvent('load'), borrarTodoEnPrueba(page)]);
     assert.equal(await page.evaluate(() => guardadoHabilitado), true);
     assert.match(await page.locator('#aviso-datos-borrados').textContent(), /Datos anteriores eliminados/);
     assert.equal(await page.evaluate(() => otrosIngresos.length), 0);
-    await page.locator('#referencia-nomina').fill('Mi primer ingreso nuevo');
-    await page.locator('#neto-nomina').fill('2500');
-    await page.locator('#periodo-nomina').selectOption('semanal');
-    await page.locator('#confirmar-nomina').click();
+    await (await controlPrueba(page,'#referencia-nomina')).fill('Mi primer ingreso nuevo');
+    await (await controlPrueba(page,'#neto-nomina')).fill('2500');
+    await (await controlPrueba(page,'#periodo-nomina')).selectOption('semanal');
+    await (await controlPrueba(page,'#confirmar-nomina')).click();
     await page.reload();
     assert.deepEqual(await page.evaluate(() => ({ nombres: nominas.map(n => n.referencia),
         importe: nominas[0].montoCentavos, deudas: deudas.length, historial: historialCorrecciones.length })),
@@ -951,7 +951,7 @@ test('borrado: un fallo al eliminar conserva los datos y permite reintentar', as
         window.removeOriginalPrueba = Storage.prototype.removeItem;
         Storage.prototype.removeItem = () => { throw new Error('Sin permiso'); };
     });
-    await page.locator('#gestionar-datos').click();
+    await (await controlPrueba(page,'#gestionar-datos')).click();
     await borrarTodoEnPrueba(page);
     assert.match(await page.locator('#mensaje-borrado').textContent(), /No se pudo eliminar/);
     assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
@@ -1054,13 +1054,13 @@ test('mejoras: fallo de almacenamiento revierte ingreso y datos complementarios 
 
 test('mejoras: formulario corrige ingreso y rechaza referencias duplicadas', async t => {
     const { page } = await abrir(t);
-    await page.locator('#editor-ingresos > summary').click();
-    await page.locator('#editar-ingreso-id').selectOption('n1');
-    await page.locator('#editar-ingreso-nombre').fill('Mi ingreso corregido');
-    await page.locator('#editar-ingreso-importe').fill('1300');
-    await page.locator('#editar-ingreso-fecha').fill('2026-11-03');
-    await page.locator('#editar-ingreso-motivo').fill('Captura inicial incorrecta');
-    await page.locator('#guardar-edicion-ingreso').click();
+    await (await controlPrueba(page,'#editor-ingresos > summary')).click();
+    await (await controlPrueba(page,'#editar-ingreso-id')).selectOption('n1');
+    await (await controlPrueba(page,'#editar-ingreso-nombre')).fill('Mi ingreso corregido');
+    await (await controlPrueba(page,'#editar-ingreso-importe')).fill('1300');
+    await (await controlPrueba(page,'#editar-ingreso-fecha')).fill('2026-11-03');
+    await (await controlPrueba(page,'#editar-ingreso-motivo')).fill('Captura inicial incorrecta');
+    await (await controlPrueba(page,'#guardar-edicion-ingreso')).click();
     assert.match(await page.locator('#mensaje-editar-ingreso').textContent(), /Ingreso corregido/);
     assert.equal(await page.evaluate(() => nominas[0].montoCentavos), 130000);
     assert.equal(await page.evaluate(() => {
@@ -1206,7 +1206,7 @@ test('mejoras: borrado total elimina fechas, metas, programaciones y anulaciones
         guardarVencimiento('d1','2026-12-01');
         fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar();
     });
-    await page.locator('#gestionar-datos').click();
+    await (await controlPrueba(page,'#gestionar-datos')).click();
     await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
     assert.equal(await page.evaluate(() => JSON.stringify(mejoras)===JSON.stringify(mejorasIniciales())), true);
 });
@@ -1214,15 +1214,15 @@ test('mejoras: borrado total elimina fechas, metas, programaciones y anulaciones
 test('mejoras: paneles abiertos son accesibles y no desbordan en móvil', async t => {
     const { page, errors } = await abrirGastosPrueba(t);
     await page.setViewportSize({width:320,height:850});
-    await page.locator('#editor-ingresos > summary').click();
-    await page.locator('#editar-ingreso-id').selectOption('n1');
-    await page.locator('#panel-actividad > summary').click();
+    await (await controlPrueba(page,'#editor-ingresos > summary')).click();
+    await (await controlPrueba(page,'#editar-ingreso-id')).selectOption('n1');
+    await (await controlPrueba(page,'#panel-actividad > summary')).click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth>innerWidth),false);
     await clickRutaPrueba(page, "boton-ahorro");
-    await page.locator('#editor-meta > summary').click();
-    await page.locator('#meta-nombre').fill('Emergencia');
-    await page.locator('#meta-objetivo').fill('1000');
-    await page.locator('#formulario-meta button[type=submit]').click();
+    await (await controlPrueba(page,'#editor-meta > summary')).click();
+    await (await controlPrueba(page,'#meta-nombre')).fill('Emergencia');
+    await (await controlPrueba(page,'#meta-objetivo')).fill('1000');
+    await (await controlPrueba(page,'#formulario-meta button[type=submit]')).click();
     assert.equal(await page.locator('#lista-metas article').count(),1);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth>innerWidth),false);
     assert.deepEqual(errors,[]);
@@ -1231,18 +1231,18 @@ test('mejoras: paneles abiertos son accesibles y no desbordan en móvil', async 
 test('mejoras: interfaz de recurrentes confirma un pago y rechaza una plantilla duplicada', async t => {
     const { page } = await abrirGastosPrueba(t);
     await page.evaluate(() => agregarCategoriaGasto('Servicios'));
-    await page.locator('#abrir-gastos').click();
-    await page.locator('#editor-recurrente > summary').click();
-    await page.locator('#recurrente-nombre').fill('Internet');
-    await page.locator('#recurrente-importe').fill('100');
+    await (await controlPrueba(page,'#abrir-gastos')).click();
+    await (await controlPrueba(page,'#editor-recurrente > summary')).click();
+    await (await controlPrueba(page,'#recurrente-nombre')).fill('Internet');
+    await (await controlPrueba(page,'#recurrente-importe')).fill('100');
     const categoria = await page.evaluate(() => categoriasGastos[0].id);
-    await page.locator('#recurrente-categoria').selectOption(categoria);
-    await page.locator('#recurrente-inicio').fill('2026-01-01');
-    await page.locator('#formulario-recurrente button').click();
+    await (await controlPrueba(page,'#recurrente-categoria')).selectOption(categoria);
+    await (await controlPrueba(page,'#recurrente-inicio')).fill('2026-01-01');
+    await (await controlPrueba(page,'#formulario-recurrente button:not(.boton-select)')).click();
     assert.equal(await page.locator('#lista-recurrentes article').count(),1);
     assert.equal(await page.evaluate(() => gastosBasicos.length),0);
-    await page.locator('#lista-recurrentes select').selectOption('n1');
-    await page.locator('#lista-recurrentes form button[type=submit]').click();
+    await (await controlPrueba(page,'#lista-recurrentes select')).selectOption('n1');
+    await (await controlPrueba(page,'#lista-recurrentes form button[type=submit]')).click();
     assert.match(await page.locator('#mensaje-recurrentes').textContent(), /una sola vez/);
     assert.equal(await page.evaluate(() => gastosBasicos.length),1);
     assert.equal(await page.evaluate(() => {
@@ -1254,12 +1254,12 @@ test('mejoras: interfaz de recurrentes confirma un pago y rechaza una plantilla 
 test('mejoras: resumen mensual y de ingreso se actualizan desde los controles', async t => {
     const { page } = await abrirGastosPrueba(t);
     await page.evaluate(() => { fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar(); });
-    await page.locator('.centro-actividad > details').first().locator('summary').click();
-    await page.locator('#resumen-mes').fill('2026-11');
+    await (await controlPrueba(page,'.centro-actividad > details')).first().locator('summary').click();
+    await (await controlPrueba(page,'#resumen-mes')).fill('2026-11');
     await page.locator('#resumen-mes').dispatchEvent('change');
     assert.match(await page.locator('#metricas-periodo').textContent(), /2,000/);
-    await page.locator('#resumen-modo').selectOption('nomina');
-    await page.locator('#periodo-nomina-resumen').selectOption('n1');
+    await (await controlPrueba(page,'#resumen-modo')).selectOption('nomina');
+    await (await controlPrueba(page,'#periodo-nomina-resumen')).selectOption('n1');
     assert.match(await page.locator('#nota-periodo').textContent(), /Uso del ingreso seleccionado/);
     assert.match(await page.locator('#metricas-periodo').textContent(), /Disponible/);
 });
@@ -1299,10 +1299,10 @@ test('offline: preparar, cerrar y reabrir sin red conserva ingresos nuevos', asy
     await page.context().setOffline(true);
     await page.reload();
     assert.match(await page.locator('#estado-conexion').textContent(), /Sin conexión/);
-    await page.locator('#referencia-nomina').fill('Ingreso sin internet');
-    await page.locator('#neto-nomina').fill('750');
-    await page.locator('#periodo-nomina').selectOption('semanal');
-    await page.locator('#confirmar-nomina').click();
+    await (await controlPrueba(page,'#referencia-nomina')).fill('Ingreso sin internet');
+    await (await controlPrueba(page,'#neto-nomina')).fill('750');
+    await (await controlPrueba(page,'#periodo-nomina')).selectOption('semanal');
+    await (await controlPrueba(page,'#confirmar-nomina')).click();
     const nueva = await page.context().newPage();
     await page.close();
     await nueva.goto(url);
@@ -1332,7 +1332,7 @@ test('offline: caché contiene solo archivos, borrar datos no impide reabrir', a
     assert.ok(urls.some(p=>p.endsWith('/index.html')));
     assert.ok(urls.every(p=>!p.endsWith('.json')&&!p.includes('/api/')));
     await page.context().setOffline(true);
-    await page.locator('#gestionar-datos').click();
+    await (await controlPrueba(page,'#gestionar-datos')).click();
     await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
     assert.equal(await page.evaluate(()=>nominas.length+deudas.length),0);
     await page.reload();
@@ -1349,6 +1349,7 @@ test('offline: actualización espera confirmación, conserva datos y cachés aje
         await page.waitForFunction(async()=>!!(await navigator.serviceWorker.getRegistration()).waiting);
         assert.equal(await page.evaluate(()=>nominas.length),1);
         await page.waitForFunction(()=>!document.getElementById('actualizar-app').hidden);
+        await navegarPrueba(page,'datos');
         await Promise.all([page.waitForEvent('load'),page.locator('#actualizar-app').click()]);
         assert.equal(await page.evaluate(()=>nominas.length),1);
         assert.equal(await page.evaluate(async()=> (await caches.keys()).includes('cache-ajena')),true);
@@ -1363,11 +1364,12 @@ test('copias locales: descarga versión 8 y restaura metas sin conexión', async
     await page.waitForFunction(()=>document.querySelector('#estado-offline').dataset.listo==='true');
     await page.context().setOffline(true);
     const copia=await page.evaluate(()=>crearCopiaLocal());
+    await navegarPrueba(page,'datos');
     const descarga=page.waitForEvent('download');
-    await page.locator('#exportar-copia').click();
+    await (await controlPrueba(page,'#exportar-copia')).click();
     assert.match((await descarga).suggestedFilename(), /^mis-finanzas-.*\.json$/);
     copia.datos.nominas[0].referencia='Restaurada desde archivo';
-    await page.locator('#archivo-copia').setInputFiles({name:'copia.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(copia))});
+    await (await controlPrueba(page,'#archivo-copia')).setInputFiles({name:'copia.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(copia))});
     await page.waitForFunction(()=>document.querySelector('#mensaje-copia').textContent.includes('restaurada y guardada'));
     await page.reload();
     assert.equal(await page.evaluate(()=>nominas[0].referencia),'Restaurada desde archivo');
@@ -1377,7 +1379,7 @@ test('copias locales: descarga versión 8 y restaura metas sin conexión', async
 test('copias locales: archivo corrupto y fallo de guardado conservan datos y memoria', async t => {
     const { page } = await abrir(t);
     const original=await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO));
-    await page.locator('#archivo-copia').setInputFiles({name:'mala.json',mimeType:'application/json',buffer:Buffer.from('{"app":"otra"}')});
+    await (await controlPrueba(page,'#archivo-copia')).setInputFiles({name:'mala.json',mimeType:'application/json',buffer:Buffer.from('{"app":"otra"}')});
     await page.waitForFunction(()=>document.querySelector('#mensaje-copia').className.includes('error'));
     assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),original);
     assert.deepEqual(await page.evaluate(()=>{
@@ -1418,7 +1420,7 @@ test('instalación: manifiesto e iconos válidos y controles móviles sin desbor
     });
     assert.deepEqual(dimensiones,[192,512]);
     await page.setViewportSize({width:320,height:850});
-    await page.locator('#panel-dispositivo summary').click();
+    await (await controlPrueba(page,'#panel-dispositivo summary')).click();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
 });
 
@@ -1518,10 +1520,10 @@ test('offline: cancelar la actualización conserva versión, datos y formulario'
     try {
         await page.evaluate(async()=>await(await navigator.serviceWorker.getRegistration()).update());
         await page.waitForFunction(()=>!document.getElementById('actualizar-app').hidden);
-        await page.locator('#referencia-nomina').fill('Borrador pendiente');
+        await (await controlPrueba(page,'#referencia-nomina')).fill('Borrador pendiente');
         page.removeAllListeners('dialog');
         page.on('dialog',d=>d.dismiss());
-        await page.locator('#actualizar-app').click();
+        await (await controlPrueba(page,'#actualizar-app')).click();
         assert.equal(await page.evaluate(()=>actualizacionSolicitada),false);
         assert.equal(await page.locator('#referencia-nomina').inputValue(),'Borrador pendiente');
         assert.equal(await page.evaluate(()=>nominas.length),1);
@@ -1530,7 +1532,7 @@ test('offline: cancelar la actualización conserva versión, datos y formulario'
 });
 
 async function borrarTodoEnPrueba(page) {
-    await page.locator('#formulario-borrado-total button').click();
+    await (await controlPrueba(page,'#formulario-borrado-total button:not(.boton-select)')).click();
     await page.getByRole('button',{name:'Sí',exact:true}).click();
 }
 async function prepararGestionPrueba(t) {
@@ -1595,17 +1597,17 @@ test('gestión: copia versión 9, recuperación y borrado total',async t=>{
     assert.equal(copia.version,9);
     await page.evaluate(c=>restaurarCopiaLocal(c),copia);await page.reload();
     assert.deepEqual(await page.evaluate(()=>gestion),copia.datos.gestion);
-    await page.locator('#gestionar-datos').click();
+    await (await controlPrueba(page,'#gestionar-datos')).click();
     await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
     assert.deepEqual(await page.evaluate(()=>gestion),{version:1,tarjetas:[],apartados:[]});
 });
 test('gestión: borrado Sí/No conserva o libera el saldo sin escribir',async t=>{
     const page=await prepararGestionPrueba(t);
     await page.evaluate(()=>{crearApartado('Gas','tarjeta','150',0);aportarBasico(gestion.apartados[0].id,'n1','150','2026-11');});
-    await page.locator('#apartados-basicos').getByRole('button',{name:'Eliminar apartado',exact:true}).click();
+    await (await controlPrueba(page,'#apartados-basicos')).getByRole('button',{name:'Eliminar apartado',exact:true}).click();
     await page.getByRole('button',{name:'No',exact:true}).click();
     assert.equal(await page.evaluate(()=>gestion.apartados.length),1);
-    await page.locator('#apartados-basicos').getByRole('button',{name:'Eliminar apartado',exact:true}).click();
+    await (await controlPrueba(page,'#apartados-basicos')).getByRole('button',{name:'Eliminar apartado',exact:true}).click();
     await page.getByRole('button',{name:'Sí',exact:true}).click();
     await page.waitForFunction(()=>gestion.apartados.length===0);
     assert.equal(await page.evaluate(()=>calcularResumenFinanciero().disponible),200000);
@@ -1621,13 +1623,13 @@ test('gestión: fallo de escritura y copia manipulada no pierden datos',async t=
 });
 test('gestión: formulario completo de tarjeta y compra',async t=>{
     const page=await prepararGestionPrueba(t);await clickRutaPrueba(page, "boton-deudas");
-    await page.locator('#tarjetas-credito').getByText('＋ Agregar tarjeta',{exact:true}).click();
-    await page.locator('#nueva-tarjeta [name=nombre]').fill('Mi tarjeta');
-    await page.locator('#nueva-tarjeta button').click();
-    await page.locator('#tarjetas-credito').getByText('＋ Compra o saldo',{exact:true}).click();
+    await (await controlPrueba(page,'#tarjetas-credito')).getByText('＋ Agregar tarjeta',{exact:true}).click();
+    await (await controlPrueba(page,'#nueva-tarjeta [name=nombre]')).fill('Mi tarjeta');
+    await (await controlPrueba(page,'#nueva-tarjeta button:not(.boton-select)')).click();
+    await (await controlPrueba(page,'#tarjetas-credito')).getByText('＋ Compra o saldo',{exact:true}).click();
     const f=page.locator('#tarjetas-credito form[id^=compra-]');
     await f.locator('[name=nombre]').fill('Computadora');await f.locator('[name=total]').fill('1200');await f.locator('[name=meses]').fill('12');
-    await f.locator('button').click();
+    await f.locator('button:not(.boton-select)').click();
     assert.equal(await page.evaluate(()=>gestion.tarjetas[0].compras[0].totalCentavos),120000);
     await page.setViewportSize({width:320,height:850});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
@@ -1655,18 +1657,18 @@ test('gestión: migración conserva importes y permite reasignarlos',async t=>{
 });
 
 async function clickRutaPrueba(page,id) {
-    if(await page.locator('#abrir-navegacion').isVisible() && await page.locator('#abrir-navegacion').getAttribute('aria-expanded')!=='true') await page.locator('#abrir-navegacion').click();
+    if(await (await controlPrueba(page,'#abrir-navegacion')).isVisible() && await (await controlPrueba(page,'#abrir-navegacion')).getAttribute('aria-expanded')!=='true') await (await controlPrueba(page,'#abrir-navegacion')).click();
     await page.locator('#'+id).click();
 }
-test('lateral: árbol a la derecha, ramas independientes y subrutas',async t=>{
+test('lateral: árbol a la izquierda, ramas independientes y subrutas',async t=>{
     const {page}=await abrir(t);
     assert.equal(await page.locator('#panel-navegacion').evaluate(e=>getComputedStyle(e).position),'fixed');
-    await page.locator('[data-grupo=ingresos] > summary').click();
+    await (await controlPrueba(page,'[data-grupo=ingresos] > summary')).click();
     assert.equal(await page.locator('[data-grupo=ahorro]').getAttribute('open'),'');
-    await page.locator('[data-grupo=ingresos] > summary').click();
-    await page.locator('[data-ruta=gastos]').click();
+    await (await controlPrueba(page,'[data-grupo=ingresos] > summary')).click();
+    await (await controlPrueba(page,'[data-ruta=gastos]')).click();
     assert.equal(await page.locator('#vista-gastos').isVisible(),true);
-    await page.locator('[data-ruta=tarjetas]').click();
+    await (await controlPrueba(page,'[data-ruta=tarjetas]')).click();
     assert.equal(await page.locator('#tarjetas-credito').isVisible(),true);
     assert.match(page.url(),/#tarjetas$/);
     await page.reload();
@@ -1676,13 +1678,13 @@ test('lateral: árbol a la derecha, ramas independientes y subrutas',async t=>{
 });
 test('lateral: móvil cierra con Escape y devuelve el foco',async t=>{
     const {page}=await abrir(t);await page.setViewportSize({width:390,height:844});
-    await page.locator('#abrir-navegacion').click();
+    await (await controlPrueba(page,'#abrir-navegacion')).click();
     assert.equal(await page.locator('main').evaluate(e=>e.inert),true);
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('main').evaluate(e=>e.inert),false);
     assert.equal(await page.evaluate(()=>document.activeElement.id),'abrir-navegacion');
-    await page.locator('#abrir-navegacion').click();
-    await page.locator('[data-ruta=destinos]').click();
+    await (await controlPrueba(page,'#abrir-navegacion')).click();
+    await (await controlPrueba(page,'[data-ruta=destinos]')).click();
     assert.equal(await page.locator('#abrir-navegacion').getAttribute('aria-expanded'),'false');
     assert.equal(await page.locator('main').evaluate(e=>e.inert),false);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
@@ -1694,16 +1696,16 @@ test('lateral: fondos por apartado sin duplicar el ahorro y opción de añadir',
         aportarBasico(a,'n1','150','2026-11');gastarApartado(a,'Gas','100','2026-11-15');cerrarMesApartado(a,'2026-11');
         crearApartado('Internet','tarjeta','200',0);
     });
-    const enlace=page.locator('#enlaces-fondos button').filter({hasText:'Gas'});await enlace.click();
+    const enlace=page.locator('#enlaces-fondos button:not(.boton-select)').filter({hasText:'Gas'});await enlace.click();
     assert.match(await page.locator('#ahorros-apartados').textContent(),/Fondo de emergencia Gas/);
     assert.equal(await page.evaluate(()=>calcularResumenFinanciero().ahorroActual),5000);
-    await page.locator('#panel-navegacion [data-ruta=nuevo-fondo]').click();
+    await (await controlPrueba(page,'#panel-navegacion [data-ruta=nuevo-fondo]')).click();
     assert.equal(await page.locator('#nuevo-apartado').isVisible(),true);
     assert.equal(await page.locator('#nuevo-apartado [name=medio]').inputValue(),'tarjeta');
-    await page.locator('#nuevo-apartado [name=nombre]').fill('Agua');
-    await page.locator('#nuevo-apartado [name=monto]').fill('50');
-    await page.locator('#nuevo-apartado button').click();
-    assert.equal(await page.locator('#enlaces-fondos button').count(),3);
+    await (await controlPrueba(page,'#nuevo-apartado [name=nombre]')).fill('Agua');
+    await (await controlPrueba(page,'#nuevo-apartado [name=monto]')).fill('50');
+    await (await controlPrueba(page,'#nuevo-apartado button:not(.boton-select)')).click();
+    assert.equal(await page.locator('#enlaces-fondos button:not(.boton-select)').count(),3);
 });
 test('crédito: límite editable, disponible y sobrelímite no alteran saldos',async t=>{
     const page=await prepararGestionPrueba(t);
@@ -1755,20 +1757,101 @@ test('crédito: valores inválidos y error al guardar conservan datos',async t=>
 });
 test('crédito: formulario permite editar límite y días',async t=>{
     const page=await prepararGestionPrueba(t);await clickRutaPrueba(page,'boton-deudas');
-    await page.locator('#tarjetas-credito').getByText('＋ Agregar tarjeta',{exact:true}).click();
+    await (await controlPrueba(page,'#tarjetas-credito')).getByText('＋ Agregar tarjeta',{exact:true}).click();
     const f=page.locator('#nueva-tarjeta');
-    await f.locator('[name=nombre]').fill('Banco');await f.locator('[name=limite]').fill('5000');await f.locator('[name=corte]').fill('25');await f.locator('[name=pago]').fill('10');await f.locator('button').click();
+    await f.locator('[name=nombre]').fill('Banco');await f.locator('[name=limite]').fill('5000');await f.locator('[name=corte]').fill('25');await f.locator('[name=pago]').fill('10');await f.locator('button:not(.boton-select)').click();
     await page.getByText('Editar límite y fechas',{exact:true}).click();
-    const editar=page.locator('form[id^=editar-tarjeta-]');await editar.locator('[name=limite]').fill('6000');await editar.locator('[name=pago]').fill('15');await editar.locator('button').click();
+    const editar=page.locator('form[id^=editar-tarjeta-]');await editar.locator('[name=limite]').fill('6000');await editar.locator('[name=pago]').fill('15');await editar.locator('button:not(.boton-select)').click();
     assert.equal(await page.evaluate(()=>gestion.tarjetas[0].limiteCentavos),600000);
     assert.equal(await page.evaluate(()=>gestion.tarjetas[0].diaPago),15);
 });
 
 test('lateral: cerrar el menú conserva el bloqueo por reinicio externo',async t=>{
     const {page}=await abrir(t);await page.setViewportSize({width:390,height:844});
-    await page.locator('#abrir-navegacion').click();
+    await (await controlPrueba(page,'#abrir-navegacion')).click();
     await page.evaluate(()=>bloquearPantallaPorReinicio('Datos cambiados en otra pestaña.'));
     await page.evaluate(()=>cambiarMenuLateral(false,false));
     assert.equal(await page.locator('main').evaluate(e=>e.inert),true);
     assert.equal(await page.evaluate(()=>guardar()),false);
+});
+
+async function controlPrueba(page,selector){
+ const control=page.locator(selector);
+ const ruta=await control.first().evaluate(e=>{
+ const p=e.closest("[data-pagina]");return p&&p.hidden?p.dataset.pagina:null;
+ });
+ if(ruta)await navegarPrueba(page,ruta);
+ return control;
+}
+async function navegarPrueba(page,ruta){
+ const abrir=page.locator("#abrir-navegacion");
+ if(await abrir.isVisible()&&await abrir.getAttribute("aria-expanded")!=="true")await abrir.click();
+ const boton=page.locator('#panel-navegacion [data-ruta="'+ruta+'"]');
+ const ramas=await boton.evaluate(e=>{const ids=[];for(let p=e.parentElement;p;p=p.parentElement)if(p.tagName==="DETAILS"&&!p.open)ids.unshift(p.dataset.grupo||p.id);return ids;});
+ for(const r of ramas){const d=page.locator('[data-grupo="'+r+'"],#'+r);await d.locator(":scope > summary").click();await page.waitForFunction(r=>document.querySelector('[data-grupo="'+r+'"],#'+r).open,r);}
+ await boton.click();
+}
+
+test('dashboard: una vista por opción, lateral izquierdo y navegación atrás',async t=>{
+ const {page,errors}=await abrir(t);
+ assert.equal(await page.locator('#panel-navegacion').evaluate(e=>e.getBoundingClientRect().left),0);
+ for(const ruta of ['ingresos','gastos','destinos','actividad','simulador','ahorro','emergencia','deudas','acreedores','tarjetas','correcciones','datos']){
+  await navegarPrueba(page,ruta);
+  assert.deepEqual(await page.locator('[data-pagina]:visible').evaluateAll(es=>es.map(e=>e.dataset.pagina)),[ruta]);
+ }
+ await page.goBack();assert.equal(await page.locator('#pagina-correcciones').isVisible(),true);
+ await page.reload();assert.equal(await page.locator('#pagina-correcciones').isVisible(),true);
+ assert.deepEqual(errors,[]);
+});
+test('dashboard: borrador intacto y selector con teclado y ratón',async t=>{
+ const {page}=await abrir(t);
+ await page.locator('#referencia-nomina').fill('Borrador conservado');
+ const boton=page.locator('#periodo-nomina').locator('..').locator('.boton-select');
+ await boton.click();assert.equal(await page.getByRole('listbox').count(),1);
+ await page.keyboard.press('End');await page.keyboard.press('Enter');
+ const elegido=await page.locator('#periodo-nomina').inputValue();
+ assert.equal(await page.getByRole('listbox').count(),0);
+ await navegarPrueba(page,'tarjetas');await navegarPrueba(page,'ingresos');
+ assert.equal(await page.locator('#referencia-nomina').inputValue(),'Borrador conservado');
+ assert.equal(await page.locator('#periodo-nomina').inputValue(),elegido);
+ await boton.click();await page.getByRole('option',{name:'Semanal',exact:true}).click();
+ assert.equal(await page.locator('#periodo-nomina').inputValue(),'semanal');
+});
+test('dashboard: móvil sin desbordamiento, menú izquierdo y movimiento reducido',async t=>{
+ const {page,errors}=await abrir(t);
+ for(const width of [320,390,768,1024]){
+  await page.setViewportSize({width,height:844});
+  for(const ruta of ['ingresos','destinos','tarjetas','datos']){
+   await navegarPrueba(page,ruta);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,ruta+' en '+width);
+  }
+ }
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await navegarPrueba(page,'ingresos');
+ assert.equal(await page.locator('#pagina-ingresos').evaluate(e=>e.getAnimations().length),0);
+ assert.deepEqual(errors,[]);
+});
+test('dashboard: un fondo no muestra otros fondos y vuelve al conjunto',async t=>{
+ const page=await prepararGestionPrueba(t);
+ await page.evaluate(()=>{crearApartado('Gas','tarjeta','150',0);crearApartado('Internet','tarjeta','200',0);});
+ const ids=await page.evaluate(()=>gestion.apartados.map(a=>a.id));
+ await navegarPrueba(page,'fondo:'+ids[0]);
+ assert.equal(await page.locator('#fondo-'+ids[0]).isVisible(),true);
+ assert.equal(await page.locator('#fondo-'+ids[1]).isVisible(),false);
+ await navegarPrueba(page,'emergencia');
+ assert.equal(await page.locator('#fondo-'+ids[1]).isVisible(),true);
+});
+test('dashboard: selector obligatorio recibe foco y opciones dinámicas',async t=>{
+ const {page}=await abrir(t);
+ await navegarPrueba(page,'destinos');
+ await page.locator('#nuevo-apartado').evaluate(f=>f.closest('details').open=true);
+ const select=page.locator('#nuevo-apartado [name=medio]');
+ const boton=select.locator('..').locator('.boton-select');
+ await boton.click();await page.keyboard.press('Escape');
+ assert.equal(await boton.getAttribute('aria-expanded'),'false');
+ await select.evaluate(s=>{s.required=true;s.add(new Option('Prueba dinámica','prueba'));s.value='prueba';s.dispatchEvent(new Event('change',{bubbles:true}));});
+ assert.match(await boton.textContent(),/Prueba dinámica/);
+ await select.evaluate(s=>{s.disabled=true;});
+ await page.waitForFunction(()=>document.querySelector('#nuevo-apartado [name=medio]').nextElementSibling.disabled);
+ assert.equal(await boton.isDisabled(),true);
 });

@@ -1,4 +1,4 @@
-/*Árbol de navegación a la derecha*/
+/*Árbol de navegación; presentación final en dashboard.css*/
 :root{--ancho-lateral:280px;--alto-nav-movil:0px}
 body{padding-right:var(--ancho-lateral)}
 main{width:100%;box-sizing:border-box;margin-inline:auto}
