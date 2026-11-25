@@ -2,6 +2,8 @@
 let eventoInstalacion = null;
 let registroOffline = null;
 let actualizacionSolicitada = false;
+let versionPendiente = null;
+let temporizadorActualizacion = null;
 const estadoOffline = document.getElementById("estado-offline");
 const mensajeInstalacion = document.getElementById("mensaje-instalacion");
 const botonInstalar = document.getElementById("instalar-app");
@@ -27,7 +29,8 @@ async function actualizarEstadoOffline() {
     estadoOffline.dataset.listo = String(listo);
 }
 function anunciarActualizacion() {
-    botonActualizar.hidden = !registroOffline?.waiting;
+    if (registroOffline?.waiting) versionPendiente = registroOffline.waiting;
+    botonActualizar.hidden = !versionPendiente;
     if (registroOffline?.waiting) mensajeInstalacion.textContent =
         "Hay una versión nueva lista. Aplícala cuando termines de escribir; los registros guardados se conservan.";
 }
@@ -49,15 +52,39 @@ botonInstalar.addEventListener("click", async () => {
         ? "Instalación aceptada. Busca Mis finanzas en tu teléfono."
         : "Puedes instalarla después desde el menú del navegador.";
 });
-botonActualizar.addEventListener("click", () => {
-    if (!registroOffline?.waiting) return;
+botonActualizar.addEventListener("click", async () => {
+    if (actualizacionSolicitada) return;
     if (!guardadoHabilitado || reinicioDetectado) {
         mensajeInstalacion.textContent = "Recupera el guardado antes de actualizar.";
         return;
     }
+    const pendiente = versionPendiente;
+    if (!pendiente) {
+        mensajeInstalacion.textContent = "La actualización todavía se está preparando. Busca actualizaciones y vuelve a intentarlo.";
+        return;
+    }
     if (!confirm("¿Actualizar ahora? Los datos guardados se conservan; lo que estés escribiendo sin registrar se perderá.")) return;
     actualizacionSolicitada = true;
-    registroOffline.waiting.postMessage({ tipo: "ACTIVAR_ACTUALIZACION" });
+    botonActualizar.disabled = true;
+    mensajeInstalacion.textContent = "Aplicando actualización…";
+    try {
+        const registro = await navigator.serviceWorker.getRegistration();
+        if (!registro || pendiente.state === "redundant") throw new Error("Versión no disponible");
+        if (pendiente.state === "activated" && navigator.serviceWorker.controller === pendiente) {
+            location.reload();
+            return;
+        }
+        temporizadorActualizacion = setTimeout(() => {
+            actualizacionSolicitada = false;
+            botonActualizar.disabled = false;
+            mensajeInstalacion.textContent = "La actualización no terminó. Tus datos siguen guardados. Puedes volver a intentarlo.";
+        }, 15000);
+        pendiente.postMessage({ tipo: "ACTIVAR_ACTUALIZACION" });
+    } catch {
+        actualizacionSolicitada = false;
+        botonActualizar.disabled = false;
+        mensajeInstalacion.textContent = "No se pudo aplicar esa versión. Busca actualizaciones para volver a intentarlo.";
+    }
 });
 document.getElementById("buscar-actualizacion").addEventListener("click", async () => {
     if (!registroOffline) { mensajeInstalacion.textContent = "Abre la versión HTTPS publicada para preparar la instalación."; return; }
@@ -86,7 +113,7 @@ async function prepararInstalacion() {
         return;
     }
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (actualizacionSolicitada) { location.reload(); return; }
+        if (actualizacionSolicitada) { clearTimeout(temporizadorActualizacion); location.reload(); return; }
         actualizarEstadoOffline();
     });
     try {

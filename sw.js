@@ -1,5 +1,5 @@
 //Solo archivos de la aplicación: nunca copias ni registros personales
-const VERSION = "2026-11-23-local-1";
+const VERSION = "2026-11-24-local-2";
 const PREFIJO = "mis-finanzas-app:" + self.registration.scope + ":";
 const CACHE = PREFIJO + VERSION;
 const ARCHIVOS = [
@@ -22,6 +22,7 @@ const ARCHIVOS = [
     "js/ingresos-edicion.js",
     "js/metas-recurrentes.js",
     "js/actividad.js",
+    "js/historial-local.js",
     "js/app.js",
     "js/pruebas.js",
     "js/interfaz.js",
@@ -54,7 +55,7 @@ self.addEventListener("activate", evento => {
     })());
 });
 self.addEventListener("message", evento => {
-    if (evento.data?.tipo === "ACTIVAR_ACTUALIZACION") self.skipWaiting();
+    if (evento.data?.tipo === "ACTIVAR_ACTUALIZACION") evento.waitUntil(self.skipWaiting());
     if (evento.data?.tipo === "COMPROBAR_OFFLINE") {
         evento.waitUntil((async () => {
             const cache = await caches.open(CACHE);

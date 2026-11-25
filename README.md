@@ -96,7 +96,7 @@ El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del
 - Los movimientos previos a esta versión se conservan, pero no tienen un estado anterior reconstruible para deshacerlos.
 - El ahorro personal no se modifica al corregir una deuda.
 
-Se muestran los últimos 30 registros, pero se guarda el historial completo. Esta primera versión guarda estados completos antes y después: el espacio utilizado crece con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
+Se muestran los últimos 30 registros, pero se guarda el historial completo. La representación local omite estados iniciales que repiten el resultado del cambio anterior; al cargar se reconstruyen para las correcciones. El espacio utilizado sigue creciendo con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
 
 Las copias nuevas usan la versión 8 e incluyen fechas, metas, recurrencias y correcciones de ingresos, además de ahorro, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5, 6 y 7; si no contienen gastos, esa sección comienza vacía. El botón **Borrar datos anteriores** abre el panel de eliminación. Es necesario escribir **BORRAR**. Se elimina la clave de almacenamiento de esta aplicación mediante removeItem, incluido el historial, y se recarga con un estado nuevo sin movimientos ni ingresos de ejemplo. Las claves de otras aplicaciones se conservan. Las copias descargadas no se borran.
 
@@ -210,3 +210,14 @@ Los ingresos utilizados conservan su importe y reparto; se permite corregir refe
 - Evaluar avisos fuera de la aplicación según las capacidades del navegador.
 
 Las cuentas y la sincronización automática quedan fuera del alcance elegido. Excel no forma parte de este flujo.
+
+## Actualización e historial compacto
+El botón de actualización conserva la referencia de la versión preparada y comprueba su estado al confirmar. Si no termina, informa del problema y permite reintentar sin borrar registros. Cancelar conserva el formulario abierto.
+
+La [guía del historial compacto](docs/historial-local.md) explica la reducción de repeticiones en el almacenamiento y la compatibilidad de las copias completas versión 8. No se elimina historial.
+
+Referencia del ciclo de actualización: [Service Workers en MDN](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers).
+
+Esta revisión verificó 86 escenarios de integración, incluidos actualización, cancelación, reducción del historial, recarga, importación de copias completas, rechazo de datos inválidos y fallo de escritura. En el escenario de 30 cambios, la representación compacta reduce más del 30 % del texto almacenado; el ahorro real depende de los datos.
+
+La configuración de GitHub Pages, la comprobación en el teléfono y la automatización de pruebas quedan aplazadas. El trabajo de almacenamiento es parcial: falta reducir el crecimiento a largo plazo y el uso de memoria.

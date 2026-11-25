@@ -453,7 +453,7 @@ function guardar() {
         const mejorasLimpias = limpiarMejoras(paquete.mejoras, paquete);
         if (!mejorasLimpias) throw new Error("Revisa las metas, fechas y gastos recurrentes.");
         paquete.mejoras = mejorasLimpias;
-        const textoNuevo = JSON.stringify(paquete);
+        const textoNuevo = serializarDatosLocales(paquete);
         localStorage.setItem(CLAVE_GUARDADO, textoNuevo);
         ultimoTextoGuardado = textoNuevo;
         mejoras = mejorasLimpias;
@@ -578,6 +578,7 @@ function limpiarMovimientosAhorro(lista) {
 }
 
 function aplicarDatos(datos, soloValidar = false) {
+    try { datos = expandirHistorialLocal(datos); } catch { return false; }
     if (
         !datos ||
         typeof datos !== "object" ||
@@ -890,7 +891,7 @@ function restaurarCopiaLocal(contenido) {
     }
     const normalizados = aplicarDatos(contenido.datos, "normalizar");
     normalizados.reinicioId = generarId([]);
-    const texto = JSON.stringify(normalizados);
+    const texto = serializarDatosLocales(normalizados);
     try { localStorage.setItem(CLAVE_GUARDADO, texto); }
     catch { throw new Error("No se pudo guardar la copia. Los datos anteriores se conservan."); }
     aplicarDatos(normalizados);

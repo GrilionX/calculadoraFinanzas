@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-23-local-1', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-24-local-2', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1424,4 +1424,111 @@ test('instalación: manifiesto e iconos válidos y controles móviles sin desbor
     await page.setViewportSize({width:320,height:850});
     await page.locator('#panel-dispositivo summary').click();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+});
+
+test('historial compacto: reduce espacio sin perder estados, motivos ni deshacer', async t => {
+    const { page } = await abrir(t);
+    const resultado = await page.evaluate(() => {
+        for (let i = 0; i < 30; i++) {
+            deudas[0].nombre = 'Nombre ' + i;
+            if (!guardar()) throw new Error('Fallo al preparar historial');
+        }
+        const original = construirPaquete();
+        const texto = localStorage.getItem(CLAVE_GUARDADO);
+        const almacenado = JSON.parse(texto);
+        const completo = JSON.stringify(original);
+        const copia = crearCopiaLocal();
+        window.historialEsperado = JSON.stringify(historialCorrecciones);
+        return { reducido: texto.length < completo.length * 0.7,
+            entradas: almacenado.historialCorrecciones.length,
+            marcador: almacenado.historialCompacto,
+            sinAntes: !Object.hasOwn(almacenado.historialCorrecciones[1], 'antes'),
+            mismos: JSON.stringify(aplicarDatos(almacenado, "normalizar").historialCorrecciones) === JSON.stringify(original.historialCorrecciones),
+            exportacionCompleta: !Object.hasOwn(copia.datos, 'historialCompacto') &&
+                copia.datos.historialCorrecciones.every(e => e.antes && e.despues),
+            historial: window.historialEsperado };
+    });
+    assert.equal(resultado.reducido, true);
+    assert.equal(resultado.marcador, 1);
+    assert.equal(resultado.sinAntes, true);
+    assert.equal(resultado.mismos, true);
+    assert.equal(resultado.exportacionCompleta, true);
+    await page.reload();
+    assert.equal(await page.evaluate(()=>JSON.stringify(historialCorrecciones)), resultado.historial);
+    assert.equal(await page.evaluate(()=>deshacerUltimoCambio('Volver al nombre anterior',ultimaCorreccionDisponible().id)),true);
+    await page.reload();
+    assert.equal(await page.evaluate(()=>deudas[0].nombre),'Nombre 28');
+});
+
+test('historial compacto: importa copia completa antigua y conserva independencia entre estados', async t => {
+    const { page } = await abrir(t);
+    const copia = await page.evaluate(() => {
+        deudas[0].nombre = 'Segundo nombre'; guardar();
+        deudas[0].nombre = 'Tercer nombre'; guardar();
+        return crearCopiaLocal();
+    });
+    await page.evaluate(c => restaurarCopiaLocal(c), copia);
+    await page.reload();
+    assert.deepEqual(await page.evaluate(()=>crearCopiaLocal().datos.historialCorrecciones), copia.datos.historialCorrecciones);
+    assert.equal(await page.evaluate(() => {
+        const anterior = historialCorrecciones[0].despues.deudas[0].nombre;
+        historialCorrecciones[1].antes.deudas[0].nombre = 'Cambio solo en memoria';
+        return historialCorrecciones[0].despues.deudas[0].nombre === anterior;
+    }), true);
+});
+
+test('historial compacto: rechaza cadenas rotas o versiones desconocidas sin modificar datos', async t => {
+    const { page } = await abrir(t);
+    const resultado = await page.evaluate(() => {
+        deudas[0].nombre = 'Otro nombre'; guardar();
+        deudas[0].nombre = 'Nombre final'; guardar();
+        const original = JSON.stringify(construirPaquete());
+        const compacto = JSON.parse(localStorage.getItem(CLAVE_GUARDADO));
+        const casos = [
+            { ...compacto, historialCompacto: 2 },
+            { ...compacto, historialCorrecciones: [null] },
+            { ...compacto, historialCorrecciones: [{...compacto.historialCorrecciones[0],antes:undefined}] },
+            { ...compacto, historialCorrecciones: compacto.historialCorrecciones.map((e,i)=>
+                i === 1 ? {...e,despues:{deudas:[],gruposDeudas:[]}} : e) }
+        ];
+        const rechazados = casos.every(c => !aplicarDatos(c, true));
+        return { rechazados, intacto: original === JSON.stringify(construirPaquete()) };
+    });
+    assert.deepEqual(resultado,{rechazados:true,intacto:true});
+});
+
+test('historial compacto: error de escritura conserva historial y datos anteriores', async t => {
+    const { page } = await abrir(t);
+    assert.deepEqual(await page.evaluate(() => {
+        deudas[0].nombre = 'Antes del fallo'; guardar();
+        const original = localStorage.getItem(CLAVE_GUARDADO);
+        const historial = JSON.stringify(historialCorrecciones);
+        const set = Storage.prototype.setItem;
+        Storage.prototype.setItem = () => {throw new DOMException('Sin espacio','QuotaExceededError');};
+        deudas[0].nombre = 'Cambio rechazado';
+        let resultado;
+        try {resultado=guardar();} finally {Storage.prototype.setItem=set;}
+        return {resultado,igual:localStorage.getItem(CLAVE_GUARDADO)===original,
+            historial:JSON.stringify(historialCorrecciones)===historial,nombre:deudas[0].nombre};
+    }),{resultado:false,igual:true,historial:true,nombre:'Antes del fallo'});
+    await page.reload();
+    assert.equal(await page.evaluate(()=>deudas[0].nombre),'Antes del fallo');
+});
+
+test('offline: cancelar la actualización conserva versión, datos y formulario', async t => {
+    const { page } = await abrir(t);
+    await page.waitForFunction(()=>document.querySelector('#estado-offline').dataset.listo==='true');
+    versionWorkerPrueba = 2;
+    try {
+        await page.evaluate(async()=>await(await navigator.serviceWorker.getRegistration()).update());
+        await page.waitForFunction(()=>!document.getElementById('actualizar-app').hidden);
+        await page.locator('#referencia-nomina').fill('Borrador pendiente');
+        page.removeAllListeners('dialog');
+        page.on('dialog',d=>d.dismiss());
+        await page.locator('#actualizar-app').click();
+        assert.equal(await page.evaluate(()=>actualizacionSolicitada),false);
+        assert.equal(await page.locator('#referencia-nomina').inputValue(),'Borrador pendiente');
+        assert.equal(await page.evaluate(()=>nominas.length),1);
+        assert.equal(await page.evaluate(async()=>!!(await navigator.serviceWorker.getRegistration()).waiting),true);
+    } finally {versionWorkerPrueba=0;}
 });
