@@ -51,12 +51,12 @@ function limpiarGastosBasicos(lista = [], subcategorias, pagos) {
     return resultado;
 }
 
-function obtenerCompromisosNomina(ds = deudas, gs = gruposDeudas, gastos = gastosBasicos, ahorro = movimientosAhorros) {
-    return [...obtenerApartadosNomina(ds, gs), ...gastos.filter(g => !g.anulacion), ...compromisosAhorro(ahorro)];
+function obtenerCompromisosNomina(ds = deudas, gs = gruposDeudas, gastos = gastosBasicos, ahorro = movimientosAhorros, complemento = gestion) {
+    return [...obtenerApartadosNomina(ds, gs), ...gastos.filter(g => !g.anulacion), ...compromisosAhorro(ahorro), ...compromisosGestion(complemento)];
 }
 
-function validarDisponibilidadCompleta(pagos, ds, gs, gastos, ahorro = movimientosAhorros) {
-    const movimientos = obtenerCompromisosNomina(ds, gs, gastos, ahorro);
+function validarDisponibilidadCompleta(pagos, ds, gs, gastos, ahorro = movimientosAhorros, complemento = gestion) {
+    const movimientos = obtenerCompromisosNomina(ds, gs, gastos, ahorro, complemento);
     if (limpiarAportacionesNomina(movimientos) === null) return false;
     try {
         for (const m of movimientos) {
@@ -126,7 +126,7 @@ function anularGastoBasico(id, motivo) {
 //Administración de categorías
 function esCategoriaDeGasto(id) {
     return typeof id === "string" && id.trim() !== "" &&
-        !["ahorro", "deudas", "inversiones"].includes(id);
+        !["ahorro", "deudas"].includes(id);
 }
 
 function renombrarCategoriaGasto(id, nombre) {
@@ -186,7 +186,7 @@ function mostrarGastos() {
     const presupuesto = n?.reparto.find(c => c.id === origenId);
     document.getElementById("gastos-contexto").textContent = resumen
         ? n.referencia + " · " + presupuesto.porcentaje + "% de este pago para " + presupuesto.nombre + "."
-        : n ? "Esta nómina no tiene categorías para gastos. Ahorro, deudas e inversiones se gestionan por separado."
+        : n ? "Esta nómina no tiene categorías para gastos. Ahorro y deudas se gestionan por separado."
         : "Primero registra una nómina en Reparto. El simulador no crea dinero disponible.";
     for (const [id, valor] of [["gastos-asignado", resumen?.asignadoCentavos],
         ["gastos-total", resumen?.gastadoCentavos], ["gastos-reservado", resumen?.reservadoCentavos],
@@ -260,9 +260,9 @@ function mostrarGastos() {
             boton.className = "boton-secundario";
             boton.textContent = "Anular gasto";
             boton.setAttribute("aria-label", "Anular gasto: " + g.concepto);
-            boton.addEventListener("click", () => {
-                const motivo = prompt("Motivo de la anulación (hasta 240 caracteres). El registro se conservará.");
-                if (motivo === null) return;
+            boton.addEventListener("click", async () => {
+                if (!await confirmarBorrado("¿Eliminar este movimiento?")) return;
+                const motivo = "Eliminado por el usuario";
                 const ok = anularGastoBasico(g.id, motivo);
                 mensajeGasto(ok ? "Gasto anulado. Su importe vuelve a estar disponible." : "No se pudo anular. Revisa el motivo y el aviso de guardado.", !ok);
             });

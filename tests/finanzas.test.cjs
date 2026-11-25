@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-24-local-2', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-24-gestion-3', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -143,8 +143,7 @@ test('borrado total conserva claves ajenas y bloquea otra pestaña', async t => 
     const otra = await page.context().newPage();
     await otra.goto(url);
     await page.locator(".zona-borrado > summary").click();
-    await page.locator('#confirmar-borrado').fill('BORRAR');
-    await Promise.all([page.waitForEvent('load'), page.locator('#formulario-borrado-total button').click()]);
+    await Promise.all([page.waitForEvent('load'), borrarTodoEnPrueba(page)]);
     assert.deepEqual(await page.evaluate(() => ({ deudas: deudas.length, grupos: gruposDeudas.length,
         nominas: nominas.length, historial: historialCorrecciones.length, ahorro: movimientosAhorros.length,
         ajena: localStorage.getItem('ajena'), guardado: guardadoHabilitado })),
@@ -656,6 +655,7 @@ test('grupos y resumen: controles móviles y actualización visible', async t =>
     await page.locator("#trasladar-destino").selectOption("");
     await page.locator("#confirmar-traslado").click();
     await page.locator("#eliminar-grupo-vacio").click();
+    await page.getByRole("button",{name:"Sí",exact:true}).click();
     assert.equal(await page.evaluate(() => gruposDeudas.length), 0);
     await page.locator("#boton-reparto").click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -900,21 +900,21 @@ test('borrado: acceso visible y confirmación obligatoria sin eliminar por accid
     assert.match(await page.locator('#resumen-borrado').textContent(), /1 ingresos, 1 deudas/);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'titulo-borrado');
     const antes = await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO));
-    await page.locator('#confirmar-borrado').fill('borrar');
     await page.locator('#formulario-borrado-total button').click();
+    await page.getByRole('button', {name:'No',exact:true}).click();
     assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
-    assert.match(await page.locator('#mensaje-borrado').textContent(), /Escribe BORRAR/);
+    assert.equal(await page.locator('dialog').count(), 0);
 });
 
 test('borrado: elimina la clave y la memoria incluso si no permite escribir', async t => {
     const { page } = await abrir(t);
-    assert.deepEqual(await page.evaluate(() => {
+    assert.deepEqual(await page.evaluate(async () => {
         registrarApartadoConNomina('deuda', 'd1', '50');
         localStorage.setItem('otra-aplicacion', 'conservar');
         recargarTrasReinicio = () => {};
         Storage.prototype.setItem = () => { throw new Error('Cuota agotada'); };
-        campoConfirmarBorrado.value = 'BORRAR';
-        restablecerTodosLosDatos(new Event('submit'));
+        confirmarBorrado = async () => true;
+        await restablecerTodosLosDatos(new Event('submit'));
         return { copia: localStorage.getItem(CLAVE_GUARDADO), otra: localStorage.getItem('otra-aplicacion'),
             nominas: nominas.length, deudas: deudas.length, historial: historialCorrecciones.length,
             extras: otrosIngresos.length, ahorro: movimientosAhorros.length, grupos: gruposDeudas.length,
@@ -930,8 +930,7 @@ test('borrado: una copia corrupta se elimina y los nuevos ingresos sí persisten
     assert.equal(await page.evaluate(() => guardadoHabilitado), false);
     await page.locator('#gestionar-datos').click();
     assert.match(await page.locator('#resumen-borrado').textContent(), /no se puede recuperar/);
-    await page.locator('#confirmar-borrado').fill('BORRAR');
-    await Promise.all([page.waitForEvent('load'), page.locator('#formulario-borrado-total button').click()]);
+    await Promise.all([page.waitForEvent('load'), borrarTodoEnPrueba(page)]);
     assert.equal(await page.evaluate(() => guardadoHabilitado), true);
     assert.match(await page.locator('#aviso-datos-borrados').textContent(), /Datos anteriores eliminados/);
     assert.equal(await page.evaluate(() => otrosIngresos.length), 0);
@@ -953,14 +952,13 @@ test('borrado: un fallo al eliminar conserva los datos y permite reintentar', as
         Storage.prototype.removeItem = () => { throw new Error('Sin permiso'); };
     });
     await page.locator('#gestionar-datos').click();
-    await page.locator('#confirmar-borrado').fill('BORRAR');
-    await page.locator('#formulario-borrado-total button').click();
+    await borrarTodoEnPrueba(page);
     assert.match(await page.locator('#mensaje-borrado').textContent(), /No se pudo eliminar/);
     assert.equal(await page.evaluate(() => localStorage.getItem(CLAVE_GUARDADO)), antes);
     assert.equal(await page.evaluate(() => nominas.length), 1);
     assert.equal(await page.evaluate(() => reinicioDetectado), false);
     await page.evaluate(() => { Storage.prototype.removeItem = window.removeOriginalPrueba; });
-    await Promise.all([page.waitForEvent('load'), page.locator('#formulario-borrado-total button').click()]);
+    await Promise.all([page.waitForEvent('load'), borrarTodoEnPrueba(page)]);
     assert.equal(await page.evaluate(() => nominas.length), 0);
 });
 
@@ -992,7 +990,7 @@ test('borrado: vaciar almacenamiento desde otra pestaña tampoco restaura datos'
     assert.equal(await otra.evaluate(() => guardadoHabilitado), true);
 });
 
-test('mejoras: copias antiguas no inventan fechas y las nuevas conservan versión 8', async t => {
+test('mejoras: copias antiguas no inventan fechas y las nuevas conservan versión 9', async t => {
     const { page } = await abrir(t);
     assert.deepEqual(await page.evaluate(() => {
         const viejo = copiar(construirPaquete()); delete viejo.mejoras;
@@ -1001,7 +999,7 @@ test('mejoras: copias antiguas no inventan fechas y las nuevas conservan versió
         const invalida = { app: 'finanzas-personal', version: 8, datos: viejo };
         return { ok, sinFecha, metas: mejoras.metas.length, rechazada: !esCopiaValida(invalida),
             copia8: crearCopiaLocal().version };
-    }), { ok: true, sinFecha: '', metas: 0, rechazada: true, copia8: 8 });
+    }), { ok: true, sinFecha: '', metas: 0, rechazada: true, copia8: 9 });
     await page.reload();
     assert.equal(await page.evaluate(() => guardadoHabilitado), true);
 });
@@ -1209,8 +1207,7 @@ test('mejoras: borrado total elimina fechas, metas, programaciones y anulaciones
         fijarFechaMovimiento(mejoras,'ingreso','n1','2026-11-01'); guardar();
     });
     await page.locator('#gestionar-datos').click();
-    await page.locator('#confirmar-borrado').fill('BORRAR');
-    await Promise.all([page.waitForEvent('load'),page.locator('#formulario-borrado-total button').click()]);
+    await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
     assert.equal(await page.evaluate(() => JSON.stringify(mejoras)===JSON.stringify(mejorasIniciales())), true);
 });
 
@@ -1263,7 +1260,7 @@ test('mejoras: resumen mensual y de ingreso se actualizan desde los controles', 
     assert.match(await page.locator('#metricas-periodo').textContent(), /2,000/);
     await page.locator('#resumen-modo').selectOption('nomina');
     await page.locator('#periodo-nomina-resumen').selectOption('n1');
-    assert.match(await page.locator('#nota-periodo').textContent(), /Uso actual/);
+    assert.match(await page.locator('#nota-periodo').textContent(), /Uso del ingreso seleccionado/);
     assert.match(await page.locator('#metricas-periodo').textContent(), /Disponible/);
 });
 
@@ -1292,7 +1289,7 @@ test('local: validación y copia no modifican los datos; no quedan cuentas ni nu
         const copia = crearCopiaLocal();
         return {version:copia.version,fecha:Number.isFinite(Date.parse(copia.creadaEn)),
             valida:aplicarDatos(copia.datos,true),intacta:antes===JSON.stringify(construirPaquete())};
-    }), {version:8,fecha:true,valida:true,intacta:true});
+    }), {version:9,fecha:true,valida:true,intacta:true});
     assert.deepEqual(errors,[]);
 });
 
@@ -1336,8 +1333,7 @@ test('offline: caché contiene solo archivos, borrar datos no impide reabrir', a
     assert.ok(urls.every(p=>!p.endsWith('.json')&&!p.includes('/api/')));
     await page.context().setOffline(true);
     await page.locator('#gestionar-datos').click();
-    await page.locator('#confirmar-borrado').fill('BORRAR');
-    await Promise.all([page.waitForEvent('load'),page.locator('#formulario-borrado-total button').click()]);
+    await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
     assert.equal(await page.evaluate(()=>nominas.length+deudas.length),0);
     await page.reload();
     assert.equal(await page.evaluate(()=>guardadoHabilitado),true);
@@ -1531,4 +1527,129 @@ test('offline: cancelar la actualización conserva versión, datos y formulario'
         assert.equal(await page.evaluate(()=>nominas.length),1);
         assert.equal(await page.evaluate(async()=>!!(await navigator.serviceWorker.getRegistration()).waiting),true);
     } finally {versionWorkerPrueba=0;}
+});
+
+async function borrarTodoEnPrueba(page) {
+    await page.locator('#formulario-borrado-total button').click();
+    await page.getByRole('button',{name:'Sí',exact:true}).click();
+}
+async function prepararGestionPrueba(t) {
+    const {page}=await abrir(t);
+    await page.evaluate(()=>{
+        const d=crearDatosIniciales();
+        d.nominas=[{version:1,id:'n1',referencia:'Ingreso de prueba',periodo:'catorcenal',montoCentavos:200000,
+            reparto:[{id:'basicos',nombre:'Básicos',porcentaje:100,montoCentavos:200000}]}];
+        aplicarDatos(d);guardar();mostrarHistorialNominas();
+    });return page;
+}
+test('gestión: gas y efectivo trasladan excedentes una sola vez',async t=>{
+    const page=await prepararGestionPrueba(t);
+    const r=await page.evaluate(()=>{
+        for(const medio of ['tarjeta','efectivo']) {
+            crearApartado('Gas '+medio,medio,'150',12);const id=gestion.apartados.at(-1).id;
+            aportarBasico(id,'n1','150','2026-11');aportarBasico(id,'n1','150','2026-11');
+            gastarApartado(id,'Gas','200','2026-11-15');cerrarMesApartado(id,'2026-11');
+        }
+        let doble=false;try{cerrarMesApartado(gestion.apartados[0].id,'2026-11');}catch{doble=true;}
+        return {saldos:saldosApartados(),doble,disponible:calcularResumenFinanciero().disponible};
+    });
+    assert.deepEqual(r,{saldos:{emergencia:10000,efectivo:10000,reservado:0},doble:true,disponible:140000});
+    await page.reload();assert.equal(await page.evaluate(()=>saldosApartados().emergencia),10000);
+});
+test('gestión: cuotas exactas, abonos parciales, atrasos y liquidación',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.deepEqual(await page.evaluate(()=>{
+        crearTarjeta('Tarjeta');const t=gestion.tarjetas[0].id;crearCompra(t,'Compra','1000',3,'2026-11');const id=gestion.tarjetas[0].compras[0].id;
+        pagarCompra(t,id,'100','n1','basicos','2026-11-10');
+        const parcial=resumenCompra(gestion.tarjetas[0].compras[0],'2026-11');
+        const atraso=resumenCompra(gestion.tarjetas[0].compras[0],'2026-12').pendienteMes;
+        pagarCompra(t,id,'900','n1','basicos','2026-12-01');
+        const final=resumenCompra(gestion.tarjetas[0].compras[0],'2026-12');
+        return {cuotas:[0,1,2].map(i=>cuotaCompra(gestion.tarjetas[0].compras[0],i)),parcial:parcial.pendienteMes,atraso,saldo:final.saldo,faltan:final.faltan,disponible:calcularResumenFinanciero().disponible};
+    }),{cuotas:[33333,33333,33334],parcial:23333,atraso:56666,saldo:0,faltan:0,disponible:100000});
+});
+test('gestión: bloquea sobrepagos, sobregastos y doble uso de ingresos',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.equal(await page.evaluate(()=>{
+        crearTarjeta('Tarjeta');const t=gestion.tarjetas[0].id;crearCompra(t,'Compra','100',1,'2026-11');const c=gestion.tarjetas[0].compras[0].id;
+        crearApartado('Renta','efectivo','1950',0);const a=gestion.apartados[0].id;aportarBasico(a,'n1','1950','2026-11');
+        const antes=localStorage.getItem(CLAVE_GUARDADO);let rechazadas=0;
+        for(const fn of [()=>pagarCompra(t,c,'101','n1','basicos','2026-11-01'),()=>pagarCompra(t,c,'60','n1','basicos','2026-11-01'),()=>gastarApartado(a,'Renta','2000','2026-11-02')])try{fn();}catch{rechazadas++;}
+        return rechazadas===3&&localStorage.getItem(CLAVE_GUARDADO)===antes;
+    }),true);
+});
+test('gestión: proyección instantánea no cambia el saldo real',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.deepEqual(await page.evaluate(()=>{
+        crearApartado('Fondo','tarjeta','100',12);const a=gestion.apartados[0].id;aportarBasico(a,'n1','100','2026-11');
+        const antes=calcularResumenFinanciero().disponible;cambiarTasaApartado(a,24);
+        return {doce:proyectarApartado(10000,12),veinticuatro:proyectarApartado(10000,24),cero:proyectarApartado(10000,0),igual:antes===calcularResumenFinanciero().disponible};
+    }),{doce:11200,veinticuatro:12400,cero:10000,igual:true});
+});
+test('gestión: copia versión 9, recuperación y borrado total',async t=>{
+    const page=await prepararGestionPrueba(t);
+    const copia=await page.evaluate(()=>{
+        crearTarjeta('Principal');crearApartado('Gas','tarjeta','150',12);aportarBasico(gestion.apartados[0].id,'n1','150','2026-11');
+        return crearCopiaLocal();
+    });
+    assert.equal(copia.version,9);
+    await page.evaluate(c=>restaurarCopiaLocal(c),copia);await page.reload();
+    assert.deepEqual(await page.evaluate(()=>gestion),copia.datos.gestion);
+    await page.locator('#gestionar-datos').click();
+    await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
+    assert.deepEqual(await page.evaluate(()=>gestion),{version:1,tarjetas:[],apartados:[]});
+});
+test('gestión: borrado Sí/No conserva o libera el saldo sin escribir',async t=>{
+    const page=await prepararGestionPrueba(t);
+    await page.evaluate(()=>{crearApartado('Gas','tarjeta','150',0);aportarBasico(gestion.apartados[0].id,'n1','150','2026-11');});
+    await page.locator('#apartados-basicos').getByRole('button',{name:'Eliminar apartado',exact:true}).click();
+    await page.getByRole('button',{name:'No',exact:true}).click();
+    assert.equal(await page.evaluate(()=>gestion.apartados.length),1);
+    await page.locator('#apartados-basicos').getByRole('button',{name:'Eliminar apartado',exact:true}).click();
+    await page.getByRole('button',{name:'Sí',exact:true}).click();
+    await page.waitForFunction(()=>gestion.apartados.length===0);
+    assert.equal(await page.evaluate(()=>calcularResumenFinanciero().disponible),200000);
+});
+test('gestión: fallo de escritura y copia manipulada no pierden datos',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.equal(await page.evaluate(()=>{
+        const antes=localStorage.getItem(CLAVE_GUARDADO);const set=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw Error('Sin espacio');};
+        let fallo=false;try{crearTarjeta('Fallida');}catch{fallo=true;}finally{Storage.prototype.setItem=set;}
+        const copia=crearCopiaLocal();copia.datos.gestion.apartados=[{id:'dañado'}];
+        return fallo&&gestion.tarjetas.length===0&&antes===localStorage.getItem(CLAVE_GUARDADO)&&!aplicarDatos(copia.datos,true);
+    }),true);
+});
+test('gestión: formulario completo de tarjeta y compra',async t=>{
+    const page=await prepararGestionPrueba(t);await page.locator('#boton-deudas').click();
+    await page.locator('#tarjetas-credito').getByText('＋ Agregar tarjeta',{exact:true}).click();
+    await page.locator('#nueva-tarjeta [name=nombre]').fill('Mi tarjeta');
+    await page.locator('#nueva-tarjeta button').click();
+    await page.locator('#tarjetas-credito').getByText('＋ Compra o saldo',{exact:true}).click();
+    const f=page.locator('#tarjetas-credito form[id^=compra-]');
+    await f.locator('[name=nombre]').fill('Computadora');await f.locator('[name=total]').fill('1200');await f.locator('[name=meses]').fill('12');
+    await f.locator('button').click();
+    assert.equal(await page.evaluate(()=>gestion.tarjetas[0].compras[0].totalCentavos),120000);
+    await page.setViewportSize({width:320,height:850});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+});
+
+test('offline: primera instalación no anuncia actualización ficticia',async t=>{
+    const {page}=await abrir(t);
+    await page.waitForFunction(()=>document.querySelector('#estado-offline').dataset.listo==='true');
+    assert.equal(await page.evaluate(()=>document.getElementById('actualizar-app').hidden),true);
+});
+test('gestión: migración conserva importes y permite reasignarlos',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.deepEqual(await page.evaluate(()=>{
+        const d=crearDatosIniciales();
+        const antiguo="inver"+"siones";
+        d.categorias=[{id:'basicos',nombre:'Básicos',porcentaje:80},{id:antiguo,nombre:'Categoría anterior',porcentaje:20}];
+        d.nominas=[{version:1,id:'n1',referencia:'Anterior',periodo:'mensual',montoCentavos:100000,reparto:[
+            {id:'basicos',nombre:'Básicos',porcentaje:80,montoCentavos:80000},{id:antiguo,nombre:'Categoría anterior',porcentaje:20,montoCentavos:20000}]}];
+        const ok=aplicarDatos(d)&&guardar();
+        const pendiente=nominas[0].reparto.find(c=>c.id==='pendiente').montoCentavos;
+        const plantilla=categorias.reduce((s,c)=>s+c.porcentaje,0);
+        reasignarPendiente('n1','basicos');
+        return {ok,pendiente,plantilla,reparto:nominas[0].reparto.map(c=>c.montoCentavos),total:calcularResumenFinanciero().disponible};
+    }),{ok:true,pendiente:20000,plantilla:80,reparto:[100000],total:100000});
 });

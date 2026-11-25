@@ -1,6 +1,7 @@
 //Edición de ingresos sin alterar dinero utilizado
 function dependenciasIngreso(id, datos = construirPaquete()) {
     const tipos = [];
+    if (compromisosGestion(datos.gestion).some(x => x.nominaId === id)) tipos.push("tarjetas o apartados básicos");
     if (datos.gastosBasicos.some(g => g.nominaId === id)) tipos.push("gastos (incluidas anulaciones)");
     if (datos.movimientosAhorros.some(m => m.origenNomina?.nominaId === id)) tipos.push("ahorro");
     if (obtenerApartadosNomina(datos.deudas, datos.gruposDeudas).some(a => a.nominaId === id)) tipos.push("apartados de deudas");

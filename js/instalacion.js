@@ -29,9 +29,11 @@ async function actualizarEstadoOffline() {
     estadoOffline.dataset.listo = String(listo);
 }
 function anunciarActualizacion() {
-    if (registroOffline?.waiting) versionPendiente = registroOffline.waiting;
+    const esperando = registroOffline?.waiting;
+    versionPendiente = navigator.serviceWorker.controller && esperando && esperando !== navigator.serviceWorker.controller
+        ? esperando : null;
     botonActualizar.hidden = !versionPendiente;
-    if (registroOffline?.waiting) mensajeInstalacion.textContent =
+    if (versionPendiente) mensajeInstalacion.textContent =
         "Hay una versión nueva lista. Aplícala cuando termines de escribir; los registros guardados se conservan.";
 }
 window.addEventListener("online", actualizarConexion);
@@ -114,6 +116,7 @@ async function prepararInstalacion() {
     }
     navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (actualizacionSolicitada) { clearTimeout(temporizadorActualizacion); location.reload(); return; }
+        anunciarActualizacion();
         actualizarEstadoOffline();
     });
     try {
@@ -127,6 +130,7 @@ async function prepararInstalacion() {
             });
         });
         await navigator.serviceWorker.ready;
+        anunciarActualizacion();
         await actualizarEstadoOffline();
     } catch { estadoOffline.textContent = "No se pudo preparar el modo sin conexión. Reintenta con internet y revisa el almacenamiento disponible."; }
 }

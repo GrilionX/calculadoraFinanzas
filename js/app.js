@@ -21,8 +21,7 @@ const CATEGORIAS_INICIALES = [
     { id: "basicos", nombre: "Gastos básicos", porcentaje: 55 },
     { id: "ocio", nombre: "Ocio", porcentaje: 5 },
     { id: "deudas", nombre: "Deudas", porcentaje: 25 },
-    { id: "ahorro", nombre: "Ahorro", porcentaje: 15 },
-    { id: "inversiones", nombre: "Inversiones", porcentaje: 0 }
+    { id: "ahorro", nombre: "Ahorro", porcentaje: 15 }
 ];
 
 const FRECUENCIAS_EXTRA = {
@@ -106,9 +105,6 @@ const estadoGuardado = document.getElementById("estado-guardado");
 
 const formularioBorradoTotal =
     document.getElementById("formulario-borrado-total");
-
-const campoConfirmarBorrado =
-    document.getElementById("confirmar-borrado");
 
 const mensajeBorrado =
     document.getElementById("mensaje-borrado");
@@ -384,6 +380,7 @@ function construirPaquete() {
     return {
         reinicioId: reinicioActual,
         mejoras,
+        gestion,
         frecuencia: campoFrecuencia.value,
         monto: campoMonto.value,
         periodo: campoPeriodo.value,
@@ -443,6 +440,7 @@ function guardar() {
             !validarDisponibilidadCompleta(nominas, deudas, gruposDeudas, gastosBasicos)) {
             throw new Error("Los gastos y las reservas superan el saldo o no son válidos.");
         }
+        if (!limpiarGestion(gestion, { nominas })) throw new Error("Revisa tarjetas y apartados.");
         const historialNuevo = prepararHistorialGuardado();
         const paquete = construirPaquete();
         paquete.historialCorrecciones = historialNuevo;
@@ -578,7 +576,7 @@ function limpiarMovimientosAhorro(lista) {
 }
 
 function aplicarDatos(datos, soloValidar = false) {
-    try { datos = expandirHistorialLocal(datos); } catch { return false; }
+    try { datos = migrarCategoriasAnteriores(expandirHistorialLocal(datos)); } catch { return false; }
     if (
         !datos ||
         typeof datos !== "object" ||
@@ -756,11 +754,13 @@ function aplicarDatos(datos, soloValidar = false) {
     );
     if (historialLimpio === null) return false;
 
+    const gestionLimpia = limpiarGestion(datos.gestion, { nominas: nominasLimpias });
+    if (!gestionLimpia) return false;
     const categoriasGastosLimpias = limpiarCategoriasGastos(datos.categoriasGastos);
     const gastosLimpios = categoriasGastosLimpias &&
         limpiarGastosBasicos(datos.gastosBasicos, categoriasGastosLimpias, nominasLimpias);
     if (!categoriasGastosLimpias || !gastosLimpios ||
-        !validarDisponibilidadCompleta(nominasLimpias, deudasLimpias, gruposLimpios, gastosLimpios, ahorroLimpio) || !validarOrigenAhorro(ahorroLimpio, nominasLimpias)) return false;
+        !validarDisponibilidadCompleta(nominasLimpias, deudasLimpias, gruposLimpios, gastosLimpios, ahorroLimpio, gestionLimpia) || !validarOrigenAhorro(ahorroLimpio, nominasLimpias)) return false;
 
     const mejorasLimpias = limpiarMejoras(datos.mejoras, {
         nominas: nominasLimpias, movimientosAhorros: ahorroLimpio, gastosBasicos: gastosLimpios,
@@ -773,7 +773,7 @@ function aplicarDatos(datos, soloValidar = false) {
         categorias: categoriasLimpias, otrosIngresos: extrasLimpios, movimientosAhorros: ahorroLimpio,
         deudas: deudasLimpias, gruposDeudas: gruposLimpios, nominas: nominasLimpias,
         categoriasGastos: categoriasGastosLimpias, gastosBasicos: gastosLimpios,
-        historialCorrecciones: historialLimpio, mejoras: mejorasLimpias
+        historialCorrecciones: historialLimpio, mejoras: mejorasLimpias, gestion: gestionLimpia
     };
     if (soloValidar) return true;
 
@@ -794,6 +794,7 @@ function aplicarDatos(datos, soloValidar = false) {
     gastosBasicos = gastosLimpios;
     historialCorrecciones = historialLimpio;
     mejoras = mejorasLimpias;
+    gestion = gestionLimpia;
     baseFechasMejoras = copiar({ nominas, movimientosAhorros, deudas, gruposDeudas });
     estadoDeudasGuardado = capturarEstadoDeudas();
 
@@ -841,10 +842,10 @@ function esCopiaValida(contenido) {
     return typeof contenido === "object" &&
         contenido !== null &&
         contenido.app === "finanzas-personal" &&
-        [1, 2, 3, 4, 5, 6, 7, 8].includes(contenido.version) &&
+        [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(contenido.version) &&
         typeof contenido.datos === "object" &&
         contenido.datos !== null &&
-        !Array.isArray(contenido.datos) && (contenido.version !== 8 || contenido.datos.mejoras?.version === 1);
+        !Array.isArray(contenido.datos) && (contenido.version < 8 || contenido.datos.mejoras?.version === 1) && (contenido.version < 9 || contenido.datos.gestion?.version === 1);
 }
 
 function crearCopiaLocal() {
@@ -853,7 +854,7 @@ function crearCopiaLocal() {
     }
     const datos = copiar(construirPaquete());
     if (!aplicarDatos(datos, true)) throw new Error("Los datos no superaron la validación.");
-    return { app: "finanzas-personal", version: 8, creadaEn: new Date().toISOString(), datos };
+    return { app: "finanzas-personal", version: 9, creadaEn: new Date().toISOString(), datos };
 }
 
 function actualizarEstadoRespaldo() {
@@ -994,7 +995,8 @@ function quitarDestino(id) {
     }
 }
 
-function eliminarCategoria(cat) {
+async function eliminarCategoria(cat) {
+    if (!await confirmarBorrado("¿Eliminar esta categoría del reparto?")) return;
     quitarDestino(cat.id);
     const posicion = categorias.indexOf(cat);
     categorias.splice(posicion, 1);
@@ -1175,7 +1177,8 @@ function agregarExtra() {
     listaExtras.lastElementChild.querySelector(".extra-nombre").focus();
 }
 
-function eliminarExtra(extra) {
+async function eliminarExtra(extra) {
+    if (!await confirmarBorrado("¿Eliminar este ingreso del simulador?")) return;
     const posicion = otrosIngresos.indexOf(extra);
     otrosIngresos.splice(posicion, 1);
     construirExtras();
@@ -1391,8 +1394,8 @@ function llenarSelectorPeriodo() {
     }
 }
 
-function restablecer() {
-    if (confirm(
+async function restablecer() {
+    if (await confirmarBorrado(
         "¿Restablecer sueldo, categorías y otros ingresos? " +
         "Tu ahorro, deudas y nóminas se conservarán."
     )) {
@@ -1575,14 +1578,10 @@ function recargarTrasReinicio() {
     window.location.reload();
 }
 
-function restablecerTodosLosDatos(evento) {
+async function restablecerTodosLosDatos(evento) {
     evento.preventDefault();
     if (reinicioDetectado) return;
-    if (campoConfirmarBorrado.value.trim() !== "BORRAR") {
-        mensajeBorrado.textContent = "Escribe BORRAR para confirmar.";
-        campoConfirmarBorrado.focus();
-        return;
-    }
+    if (!await confirmarBorrado("¿Eliminar todos los datos de este navegador?")) return;
 
     //Eliminar la copia anterior, incluso si está dañada o no queda espacio
     try {

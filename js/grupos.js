@@ -115,10 +115,10 @@ document.getElementById("formulario-renombrar-grupo").addEventListener("submit",
     informarGestionGrupo(renombrarGrupoDeudas(document.getElementById("administrar-grupo").value,
         document.getElementById("administrar-nombre").value));
 });
-document.getElementById("eliminar-grupo-vacio").addEventListener("click", () => {
+document.getElementById("eliminar-grupo-vacio").addEventListener("click", async () => {
     const id = document.getElementById("administrar-grupo").value;
     const grupo = gruposDeudas.find(g => g.id === id);
-    if (!grupo || !confirm("¿Eliminar el grupo vacío " + grupo.nombre + "? El cambio quedará en el historial.")) return;
+    if (!grupo || !await confirmarBorrado("¿Eliminar el grupo " + grupo.nombre + "?")) return;
     informarGestionGrupo(eliminarGrupoVacio(id));
 });
 document.getElementById("formulario-trasladar-deuda").addEventListener("submit", e => {

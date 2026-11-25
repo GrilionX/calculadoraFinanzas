@@ -15,7 +15,9 @@ function calcularResumenFinanciero(nominaId = "") {
     const ids = new Set(pagos.map(n => n.id));
     const sumar = sumarCentavosResumen;
     const ingresos = sumar(pagos.map(n => n.montoCentavos));
-    const gastos = sumar(gastosBasicos.filter(g => !g.anulacion && ids.has(g.nominaId)).map(g => g.montoCentavos));
+    const pagosTarjeta = gestion.tarjetas.flatMap(t => t.compras.flatMap(c => c.pagos)).filter(p => ids.has(p.nominaId));
+    const gastos = sumar([...gastosBasicos.filter(g => !g.anulacion && ids.has(g.nominaId)).map(g => g.montoCentavos), ...pagosTarjeta.map(p => p.montoCentavos)]);
+    const destinadoBasicos = sumar(gestion.apartados.flatMap(a => a.aportes).filter(p => ids.has(p.nominaId)).map(p => p.montoCentavos));
     const ahorroDestinado = sumar(compromisosAhorro().filter(m => ids.has(m.nominaId)).map(m => m.montoCentavos));
     const destinadoDeudas = sumar(obtenerApartadosNomina().filter(m => ids.has(m.nominaId)).map(m => m.montoCentavos));
     const filas = [];
@@ -27,11 +29,12 @@ function calcularResumenFinanciero(nominaId = "") {
         }
     }
     const disponible = sumar(filas.map(f => f.disponibleCentavos));
-    if (sumar([gastos, ahorroDestinado, destinadoDeudas, disponible]) !== ingresos) {
+    if (sumar([gastos, ahorroDestinado, destinadoDeudas, destinadoBasicos, disponible]) !== ingresos) {
         throw new Error("El reparto no coincide con las nóminas registradas.");
     }
     //Los saldos actuales incluyen datos anteriores sin nómina vinculada.
-    const ahorroActual = calcularSaldoAhorro(movimientosAhorros);
+    const fondosBasicos = saldosApartados();
+    const ahorroActual = sumar([calcularSaldoAhorro(movimientosAhorros), fondosBasicos.emergencia, fondosBasicos.efectivo]);
     if (!Number.isSafeInteger(ahorroActual) || ahorroActual < 0) throw new Error("El ahorro no es válido.");
     const reservasIndividuales = deudas.filter(d => !d.liquidada).map(d => {
         const reserva = calcularReservaDeuda(d);
@@ -46,7 +49,7 @@ function calcularResumenFinanciero(nominaId = "") {
     const reservasActuales = sumar([...reservasIndividuales, ...fondos]);
     const deudaPendiente = sumar(deudas.filter(d => !d.liquidada).map(d => d.objetivoCentavos));
     const pagadoDeudas = sumar(deudas.filter(d => d.liquidada).map(d => d.objetivoCentavos));
-    return { ingresos, gastos, ahorroDestinado, destinadoDeudas, disponible, filas,
+    return { ingresos, gastos, destinadoBasicos, ahorroDestinado, destinadoDeudas, disponible, filas,
         ahorroActual, reservasActuales, deudaPendiente, pagadoDeudas,
         faltaReunir: deudaPendiente - reservasActuales,
         retirosAhorro: sumar(movimientosAhorros.filter(m => m.tipo === "retiro" && !m.anulacion).map(m => m.montoCentavos)) };
@@ -63,7 +66,7 @@ function mostrarResumenFinanciero() {
     cuerpo.replaceChildren();
     try {
         const r = calcularResumenFinanciero(selector.value);
-        for (const clave of ["ingresos", "gastos", "ahorroDestinado", "destinadoDeudas", "disponible",
+        for (const clave of ["ingresos", "gastos", "destinadoBasicos", "ahorroDestinado", "destinadoDeudas", "disponible",
             "ahorroActual", "reservasActuales", "deudaPendiente", "pagadoDeudas", "faltaReunir", "retirosAhorro"]) {
             document.getElementById("resumen-" + clave).textContent = formatoMoneda.format(r[clave] / 100);
         }

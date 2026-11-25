@@ -13,6 +13,7 @@ function actualizarDistribucionVisual() {
             return;
         }
         const datos = [
+            ["Apartados", r.destinadoBasicos, "apartados", "#248d98"],
             ["Gastos", r.gastos, "gastos", "#b55e31"],
             ["Ahorro", r.ahorroDestinado, "ahorro", "#5268ad"],
             ["Deudas", r.destinadoDeudas, "deudas", "#947224"],

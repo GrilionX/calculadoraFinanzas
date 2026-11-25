@@ -105,13 +105,13 @@ function mostrarResumenPeriodos(filas = movimientosUnificados()) {
             if (!id) { uiMejora("nota-periodo").textContent = "Selecciona un ingreso para ver el reparto de ese pago y su uso actual."; return; }
             const r = calcularResumenFinanciero(id);
             valores = [["Recibido", r.ingresos], ["Gastos", r.gastos], ["Destinado a ahorro", r.ahorroDestinado],
-                ["Destinado a deudas", r.destinadoDeudas], ["Disponible", r.disponible]];
-            uiMejora("nota-periodo").textContent = "Uso actual del ingreso seleccionado, aunque sus movimientos tengan fechas de meses distintos. No repite el sueldo.";
+                ["Destinado a deudas", r.destinadoDeudas], ["Apartados básicos", r.destinadoBasicos], ["Disponible", r.disponible]];
+            uiMejora("nota-periodo").textContent = "Uso del ingreso seleccionado.";
         } else {
             const r = resumenMes(uiMejora("resumen-mes").value, filas);
             valores = [["Ingresos", r.ingresos], ["Gastos", r.gastos], ["Aportado a ahorro", r.ahorro],
-                ["Retirado de ahorro", r.retiros], ["Apartado a deudas", r.apartados], ["Pagos de deuda", r.pagos]];
-            uiMejora("nota-periodo").textContent = "Movimientos activos con fecha en este mes. Los apartados y los pagos se muestran separados: no se suman como dos salidas del mismo dinero. " +
+                ["Retirado de ahorro", r.retiros], ["Apartados", r.apartados], ["Pagos de deuda", r.pagos]];
+            uiMejora("nota-periodo").textContent = "Movimientos del mes. " +
                 r.sinFecha + " movimientos sin fecha quedan fuera.";
         }
         for (const [nombre, valor] of valores) {
@@ -254,10 +254,10 @@ uiMejora("formulario-editar-ingreso").addEventListener("submit", e => {
         cargarEditorIngreso();
     }, "Ingreso corregido y guardado.");
 });
-uiMejora("anular-ingreso").addEventListener("click", () => {
-    if (!confirm("¿Anular este ingreso? Dejará de aportar saldo y seguirá visible en el historial como anulado.")) return;
+uiMejora("anular-ingreso").addEventListener("click", async () => {
+    if (!await confirmarBorrado("¿Eliminar este ingreso?")) return;
     informarMejora("mensaje-editar-ingreso", () => {
-        anularIngreso(uiMejora("editar-ingreso-id").value, uiMejora("editar-ingreso-motivo").value, baseEditorIngreso);
+        anularIngreso(uiMejora("editar-ingreso-id").value, "Eliminado por el usuario", baseEditorIngreso);
         cargarEditorIngreso();
     }, "Ingreso anulado. Su registro se conserva en la actividad.");
 });

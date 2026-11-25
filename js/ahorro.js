@@ -108,9 +108,9 @@ function detalleOrigenAhorro(movimiento, elemento) {
     } else if (movimiento.id) {
         const boton = document.createElement("button");
         boton.type = "button"; boton.textContent = "Anular movimiento";
-        boton.addEventListener("click", () => {
-            const motivo = prompt("Motivo de la corrección (hasta 240 caracteres). No se permite dejar un saldo de ahorro negativo.");
-            if (motivo === null) return;
+        boton.addEventListener("click", async () => {
+                if (!await confirmarBorrado("¿Eliminar este movimiento?")) return;
+                const motivo = "Eliminado por el usuario";
             const ok = anularMovimientoAhorro(movimiento.id, motivo);
             mensajeAhorro.textContent = ok ? "Movimiento anulado y saldos actualizados." :
                 "No se pudo anular: revisa el motivo, los retiros posteriores y el guardado.";

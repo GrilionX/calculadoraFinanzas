@@ -126,5 +126,6 @@ function guardarOperacionMejora(modificar) {
 }
 function refrescarPantallasMejoras() {
     mostrarHistorialNominas(); mostrarDeudas(); mostrarAhorro(); mostrarDisponibleOrigen();
+    if (typeof mostrarGestion === "function") mostrarGestion();
     if (typeof mostrarPanelesMejoras === "function") mostrarPanelesMejoras();
 }

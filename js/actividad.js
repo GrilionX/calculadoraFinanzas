@@ -37,6 +37,13 @@ function movimientosUnificados() {
     for (const c of historialCorrecciones) agregar({ id: "ajuste-deuda:" + c.id, tipo: "ajuste",
         fecha: (() => { const f = new Date(c.fecha); return [f.getFullYear(), String(f.getMonth()+1).padStart(2,"0"), String(f.getDate()).padStart(2,"0")].join("-"); })(), nombre: c.revierteId ? "Corrección de deudas" : describirCambio(c.antes, c.despues),
         detalle: c.motivo, monto: null });
+    for(const t of gestion.tarjetas)for(const c of t.compras)for(const p of c.pagos)
+        agregar({id:"tarjeta:"+p.id,tipo:"gasto",fecha:p.fecha,nombre:t.nombre+" · "+c.nombre,monto:p.montoCentavos,nominaId:p.nominaId,categoriaId:p.categoriaId});
+    for(const a of gestion.apartados) {
+        for(const p of a.aportes)agregar({id:"basico:"+p.id,tipo:"apartado",fecha:p.fecha,nombre:a.nombre,monto:p.montoCentavos,nominaId:p.nominaId,categoriaId:"basicos"});
+        for(const g of a.gastos)agregar({id:"basico-gasto:"+g.id,tipo:"gasto",fecha:g.fecha,nombre:a.nombre+" · "+g.concepto,monto:g.montoCentavos,categoriaId:"basicos"});
+        for(const c of a.cierres)if(c.excedente>0)agregar({id:"cierre:"+a.id+":"+c.mes,tipo:"ahorro",fecha:c.fecha,nombre:a.medio==="efectivo"?"Ahorro en efectivo":"Fondo de emergencia",monto:c.excedente,categoriaId:"basicos"});
+    }
     return filas.sort((a, b) => (b.fecha || "").localeCompare(a.fecha || "") || a.id.localeCompare(b.id));
 }
 function textoBusqueda(valor) { return String(valor).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }

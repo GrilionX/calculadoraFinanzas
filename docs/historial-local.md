@@ -11,7 +11,7 @@ Al cargar, reconstruye cada estado y después aplica las validaciones habituales
 La reconstrucción crea copias independientes: corregir un estado en memoria no altera otra entrada. La escritura sigue siendo única y se comprueba que otra pestaña no haya cambiado los datos.
 
 ## Copias de seguridad
-Exportar produce el formato completo versión 8, compatible con la versión anterior. Importar valida primero la copia y guarda la representación compacta. No necesitas convertir archivos a mano.
+Exportar produce el formato completo versión 9, con tarjetas y apartados incluidos. Importar valida primero la copia y guarda la representación compacta. No necesitas convertir archivos a mano.
 Una versión antigua del código no entiende el nuevo formato local; para volver a ella, exporta primero una copia completa con la versión actual.
 
 ## Límites

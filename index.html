@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="./css/cuenta.css">
     <link rel="stylesheet" href="./css/mejoras.css">
     <link rel="stylesheet" href="./css/instalacion.css">
+    <link rel="stylesheet" href="./css/gestion.css">
 </head>
 
 <body>
@@ -58,8 +59,8 @@
             <div class="fila-botones"><button id="instalar-app" type="button" hidden>Instalar en mi teléfono</button>
                 <button id="actualizar-app" type="button" hidden>Aplicar actualización disponible</button></div>
             <details><summary>Instalación, actualizaciones y datos</summary>
-                <p id="instrucciones-instalacion">Abre esta web con internet una primera vez. Cuando aparezca “Lista para usar sin conexión”, usa el menú de tu navegador para instalarla o añadirla a la pantalla de inicio. En iPhone: Compartir → Añadir a pantalla de inicio.</p>
-                <p>Los datos se quedan en este dispositivo. No hay cuentas ni sincronización automática. Descarga copias antes de cambiar de teléfono o borrar los datos del navegador.</p>
+                <p id="instrucciones-instalacion">Con internet: prepara el modo sin conexión y añade la aplicación a tu pantalla de inicio.</p>
+                <p class="ayuda">Datos locales. Conserva una copia descargada.</p>
                 <button id="buscar-actualizacion" type="button">Buscar actualización</button>
                 <button id="proteger-almacenamiento" type="button">Solicitar conservación de datos</button>
                 <p id="mensaje-instalacion" role="status"></p>
@@ -78,7 +79,7 @@
             <select id="gasto-nomina"></select>
             <label for="gasto-origen">¿De qué presupuesto sale el gasto?</label>
             <select id="gasto-origen"></select>
-            <p class="ayuda">Ahorro, deudas e inversiones mantienen sus propios gestores.</p>
+            <p class="ayuda">Ahorro y deudas mantienen sus propios gestores.</p>
             <p id="gastos-contexto" class="ayuda"></p>
             <div class="resumen-gastos" aria-label="Resumen de la nómina seleccionada">
                 <div><span>Asignado a este presupuesto</span><strong id="gastos-asignado"></strong></div>
@@ -104,7 +105,7 @@
                 </section>
                 <section class="tarjeta">
                     <h3>Mis categorías de gastos</h3>
-                    <p>Comparten el presupuesto seleccionado. Puedes cambiar sus nombres, archivarlas y reactivarlas sin perder gastos. Las archivadas siguen contando en los totales.</p>
+                    
                     <form id="formulario-categoria-gasto">
                         <label for="nombre-categoria-gasto">Nombre de la categoría</label>
                         <input id="nombre-categoria-gasto" type="text" maxlength="60" required placeholder="Comida, transporte, renta…">
@@ -123,7 +124,7 @@
 <div><label for="recurrente-categoria">Categoría de gastos</label><select id="recurrente-categoria" required></select></div>
 <div><label for="recurrente-frecuencia">Frecuencia</label><select id="recurrente-frecuencia"><option value="mensual">Mensual</option><option value="semanal">Semanal</option><option value="catorcenal">Cada 14 días</option><option value="anual">Anual</option></select></div>
 <div><label for="recurrente-inicio">Primer vencimiento</label><input id="recurrente-inicio" type="date" required></div></div>
-<p class="ayuda">Crea primero una categoría en Mis categorías de gastos. Para cambiar importe o calendario, pausa la programación anterior y crea otra; su historial se conserva.</p>
+
 <button type="submit">Crear programación</button></form></details>
 <div id="lista-recurrentes" class="rejilla-mejoras"></div><p id="mensaje-recurrentes" role="status"></p></section>
             <section class="tarjeta">
@@ -137,10 +138,11 @@
             <button type="button" id="ir-a-ingreso" class="boton-principal">Registrar un ingreso</button></div>
             <section id="resumen-financiero" class="tarjeta" aria-labelledby="titulo-resumen-financiero">
                 <div class="cabecera-resumen"><div><p class="sobretitulo">VISTA GENERAL</p><h3 id="titulo-resumen-financiero">Así está tu dinero</h3></div>
-                <div class="filtro-resumen"><label for="resumen-nomina">Nóminas incluidas</label><select id="resumen-nomina"></select></div></div>
+                <div class="tarjeta-resumen"><span>Apartados básicos</span><strong id="resumen-destinadoBasicos">$0.00</strong></div>
+<div class="filtro-resumen"><label for="resumen-nomina">Nóminas incluidas</label><select id="resumen-nomina"></select></div></div>
                 <div class="tarjetas-financieras metricas-nominas"><div class="metrica-disponible"><span>Disponible en tus nóminas</span><strong id="resumen-disponible">$0.00</strong><small>Después de gastos y apartados</small></div><div><span>Ingresos recibidos</span><strong id="resumen-ingresos">$0.00</strong></div><div><span>Gastos registrados</span><strong id="resumen-gastos">$0.00</strong></div><div><span>Destinado a ahorro</span><strong id="resumen-ahorroDestinado">$0.00</strong></div><div><span>Destinado a deudas</span><strong id="resumen-destinadoDeudas">$0.00</strong></div></div>
                 <div class="distribucion-visual"><div id="barra-distribucion" class="barra-distribucion" role="img" aria-label="Distribución de ingresos"></div><p id="texto-distribucion" class="ayuda"></p></div>
-                <details class="detalle-explicacion"><summary>Cómo se calcula el disponible</summary><p class="ayuda">Ingresos recibidos = gastos + destinado a ahorro + destinado a deudas + sin utilizar. “Destinado a deudas” incluye apartados ya pagados. Los retiros de ahorro no vuelven a liberar la nómina.</p></details>
+                <details class="detalle-explicacion"><summary>Cómo se calcula el disponible</summary></details>
                 <details><summary>Disponible por nómina y categoría</summary>
                     <div class="tabla-scroll"><table><caption>Distribución del dinero registrado</caption>
                         <thead><tr><th>Nómina</th><th>Categoría</th><th>Asignado</th><th>Utilizado o apartado</th><th>Disponible</th></tr></thead>
@@ -148,7 +150,7 @@
                     </table></div>
                 </details>
                 <details class="saldos-globales"><summary>Saldos actuales de ahorro y deudas <span>Todos tus registros</span></summary>
-                <p class="ayuda">Estos saldos siempre incluyen todos tus registros, también los anteriores sin nómina vinculada. No se suman a las tarjetas de arriba ni cambian con el filtro de nómina. No representan un saldo bancario sincronizado.</p>
+                
                 <div class="tarjetas-financieras"><div><span>Ahorro personal actual</span><strong id="resumen-ahorroActual">$0.00</strong></div><div><span>Reservado para deudas pendientes</span><strong id="resumen-reservasActuales">$0.00</strong></div><div><span>Pagos de deuda confirmados</span><strong id="resumen-pagadoDeudas">$0.00</strong></div><div><span>Deuda pendiente total</span><strong id="resumen-deudaPendiente">$0.00</strong></div><div><span>Falta reunir para deudas</span><strong id="resumen-faltaReunir">$0.00</strong></div><div><span>Retiros de ahorro registrados</span><strong id="resumen-retirosAhorro">$0.00</strong></div></div>
                 </details><p id="mensaje-resumen-financiero" role="status"></p>
             </section>
@@ -276,11 +278,7 @@
             <details class="simulador-anterior">
                 <summary>Simulador de sueldo constante y categorías generales</summary>
 
-                <p class="ayuda">
-                    Esta sección trabaja con supuestos repetidos.
-                    Sus resultados no crean pagos ni modifican tus nóminas registradas.
-                    Aquí también puedes administrar tus categorías generales.
-                </p>
+                
 
                 <section class="tarjeta">
                     <h2>Mi sueldo</h2>
@@ -312,11 +310,7 @@
 
                 <section class="tarjeta">
                     <h2>Otros ingresos</h2>
-                    <p class="ayuda">
-                        Aguinaldo, bonos, propinas... Se calculan aparte.
-                        Solo se suman a tu reparto si marcas
-                        "Sumar a mi reparto" y eliges a dónde van.
-                    </p>
+                    
                     <div id="lista-extras"></div>
                     <p class="resumen">
                         Todos tus ingresos promediados:
@@ -431,7 +425,7 @@
 
             <div class="resumen-ahorro">
                 <span class="resumen-ahorro__etiqueta">
-                    Ahorro personal disponible
+                    Ahorro general disponible
                 </span>
                 <strong id="saldo-ahorro">$0.00</strong>
                 <span class="resumen-ahorro__nota">
@@ -615,10 +609,7 @@
 
                 <p id="disponible-origen-apartado" role="status"></p>
 
-                <p class="ayuda">
-                    Los apartados anteriores conservan su historial sin nomina vinculad.
-                    Esta disponibilidad todavia no descuenta gastos ni movimiento de ahorro
-                </p>
+                
             </section>
 
             <h3>Apartar dinero</h3>
@@ -671,11 +662,7 @@
                     Utiliza tus reservas actuales y un aporte semanal supuesto.
                 </p>
 
-                <p class="ayuda">
-                    Los grupos con fondo compartido se calculan como una sola meta.
-                    Su prioridad es la menor de sus deudas pendientes.
-                    En modalidad individual, cada deuda conserva su prioridad.
-                </p>
+                
 
                 <form id="formulario-proyeccion" class="formulario-deudas">
                     <label for="presupuesto-apartados">
@@ -685,11 +672,7 @@
                     <input id="presupuesto-apartados" type="number" min="0" step="0.01" inputmode="decimal" value="0"
                         required aria-describedby="ayuda-presupuesto-apartados">
 
-                    <p id="ayuda-presupuesto-apartados" class="ayuda">
-                        La semana 1 representa la primera aportación futura.
-                        Escribe dinero adicional al que ya tienes apartado.
-                        Este supuesto no repite tus nóminas ni registra movimientos.
-                    </p>
+                    <p id="ayuda-presupuesto-apartados" class="ayuda">Aportación futura por semana. Solo simulación.</p>
 
                     <button type="submit" class="boton-principal">
                         Calcular horizonte
@@ -700,29 +683,16 @@
 
                 <ol id="resultado-proyeccion" class="resultado-proyeccion"></ol>
 
-                <p class="ayuda">
-                    Los objetivos se atienden por prioridad.
-                    Los empates se ordenan por nombre.
-                    El sobrante de una semana continúa con el siguiente objetivo.
-                </p>
+                
 
-                <p class="ayuda">
-                    La estimación mantiene los saldos actuales.
-                    No calcula nuevos intereses, cargos ni fechas de vencimiento.
-                    Reunir un importe no confirma su pago.
-                </p>
+                
             </section>
         </section>
 
         <section class="tarjeta">
             <h2>Copia de seguridad y cambio de teléfono</h2>
             <p id="estado-respaldo" class="ayuda"></p>
-            <p class="ayuda">
-                Tus datos se guardan solo en este dispositivo, también cuando estás sin conexión.
-                Descarga una copia para no perderlos o para pasarlos a otro aparato.
-                El archivo contiene tus datos personales:
-                guárdalo en un lugar seguro y no lo compartas.
-            </p>
+            <p class="ayuda">Datos locales. Conserva una copia descargada.</p>
 
             <div class="fila-botones">
                 <button id="exportar-copia" type="button">Descargar copia</button>
@@ -731,7 +701,7 @@
 
             <input id="archivo-copia" type="file" accept=".json,application/json" hidden>
             <p id="mensaje-copia" class="aviso" role="status"></p>
-            <p class="ayuda">Para pasar tus datos a otro dispositivo, descarga el archivo aquí y cárgalo allí. Cargar una copia reemplaza los datos de ese dispositivo; no mezcla dos historiales.</p>
+            <p class="ayuda">Importar reemplaza los datos actuales.</p>
         </section>
 
         <button id="restablecer" type="button">
@@ -744,26 +714,16 @@
             <p id="resumen-borrado" aria-live="polite"></p>
             <p id="ubicacion-borrado" class="ayuda"></p>
 
-            <p>
-                Se elimina la copia guardada de esta aplicación en este navegador. Después podrás guardar nuevos registros.
-                Se recuperan únicamente las categorías iniciales, sin movimientos de ejemplo.
-            </p>
+            
 
-            <p>
-                Esto no borra los archivos del proyecto ni las copias JSON descargadas.
-                Si también usaste otra dirección, puerto o navegador, abre allí la web actualizada y repite el borrado.
-            </p>
+            <p>Las copias descargadas no se borran.</p>
 
             <button id="respaldo-antes-borrar" type="button">
                 Descargar copia antes de borrar
             </button>
 
             <form id="formulario-borrado-total">
-                <label for="confirmar-borrado">
-                    Escribe BORRAR para confirmar
-                </label>
-
-                <input id="confirmar-borrado" type="text" autocomplete="off" spellcheck="false" required>
+                
 
                 <button type="submit" class="boton-peligro">
                     Eliminar datos de este navegador
@@ -799,9 +759,7 @@
             </details>
             <details class="ajustes-financieros correccion-avanzada">
                 <summary>Corregir apartados transferidos o distribuidos</summary>
-                <p>Podemos volver al estado anterior a sus transferencias y corregir el importe en una sola operación.
-                    También se revertirán los cambios posteriores de deudas y grupos que aparezcan en la vista previa,
-                    aunque sean independientes. No se cruzan pagos confirmados ni se modifica tu ahorro.</p>
+                <p>La vista previa muestra todos los cambios que se revertirán.</p>
                 <form id="formulario-avanzada">
                     <label for="apartado-avanzado">Apartado con movimientos posteriores</label>
                     <select id="apartado-avanzado" required></select>
@@ -854,6 +812,9 @@
     <script src="./js/metas-recurrentes.js"></script>
     <script src="./js/actividad.js"></script>
     <script src="./js/historial-local.js"></script>
+    <script src="./js/confirmaciones.js"></script>
+    <script src="./js/migracion-categorias.js"></script>
+    <script src="./js/gestion.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/pruebas.js"></script>
     <script src="./js/interfaz.js"></script>
@@ -861,6 +822,7 @@
     <script src="./js/paneles-mejoras.js"></script>
     <script src="./js/movil.js"></script>
     <script src="./js/instalacion.js"></script>
+    <script src="./js/gestion-ui.js"></script>
 </body>
 
 </html>

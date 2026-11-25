@@ -41,7 +41,7 @@ Desde Reparto, pulsa **Registrar mis gastos**. Se conservan las tres pestañas p
 3. Crea tus categorías de gastos dentro del presupuesto elegido y registra concepto, fecha e importe.
 4. Consulta sus gastos, reservas para deudas, saldo disponible y sumas por categoría.
 
-Los importes se toman del reparto guardado, sin recalcularlo con porcentajes actuales ni mezclar nóminas. El 55% de básicos y el 5% de ocio son valores iniciales, no límites fijos. Las categorías personales del reparto también pueden financiar gastos. Ahorro, deudas e inversiones se reservan para sus gestores independientes.
+Los importes se toman del reparto guardado, sin recalcularlo con porcentajes actuales ni mezclar nóminas. El 55% de básicos y el 5% de ocio son valores iniciales, no límites fijos. Las categorías personales del reparto también pueden financiar gastos. Ahorro y deudas se reservan para sus gestores independientes.
 
 Dentro de **Mis categorías de gastos**, puedes cambiar un nombre, archivar una categoría o reactivarla. La identidad se conserva: renombrar actualiza su etiqueta en los movimientos existentes. Archivar no borra gastos ni devuelve dinero; la categoría deja de estar disponible para nuevas capturas y sus importes siguen contando. No se permiten nombres repetidos dentro del mismo presupuesto, incluidas las categorías archivadas. Sí puedes usar el mismo nombre en dos presupuestos distintos.
 
@@ -221,3 +221,10 @@ Referencia del ciclo de actualización: [Service Workers en MDN](https://develop
 Esta revisión verificó 86 escenarios de integración, incluidos actualización, cancelación, reducción del historial, recarga, importación de copias completas, rechazo de datos inválidos y fallo de escritura. En el escenario de 30 cambios, la representación compacta reduce más del 30 % del texto almacenado; el ahorro real depende de los datos.
 
 La configuración de GitHub Pages, la comprobación en el teléfono y la automatización de pruebas quedan aplazadas. El trabajo de almacenamiento es parcial: falta reducir el crecimiento a largo plazo y el uso de memoria.
+
+## Tarjetas y apartados: versión para probar
+Consulta la [guía de esta versión](docs/version-gestion.md) para probar los siete cambios. Incluye tarjetas y compras a meses, pagos desde ingresos, apartados básicos por periodo, cierre de mes con excedentes, proyección anual y borrado Sí/No. Las copias nuevas usan versión 9 y siguen admitiendo las anteriores.
+
+El nombre de la categoría retirada solo permanece en el migrador de datos antiguos. En pantalla sus importes pendientes se muestran como Por reasignar. Esta versión no incorpora los trabajos previamente aplazados.
+
+La versión de tarjetas y apartados se verificó con 96 escenarios de integración y revisión visual a 390 px. Incluye pagos parciales, ajuste de centavos en la última cuota, límite del ingreso disponible, excedentes al cerrar mes, copias versión 9, borrado Sí/No y migración de saldos por reasignar. La prueba física en teléfono sigue pendiente.
