@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-24-gestion-3', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-24-lateral-4', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -513,7 +513,7 @@ test('ajustes: protección de fondos distribuidos y pagos confirmados', async t 
 test('ahorro: copias antiguas, origen corrupto y formulario móvil', async t => {
     const { page, errors } = await abrirGastosPrueba(t);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.locator("#boton-ahorro").click();
+    await clickRutaPrueba(page, "boton-ahorro");
     await page.locator("#ahorro-nomina").selectOption("n1");
     await page.locator("#concepto-ahorro").fill("Fondo personal");
     await page.locator("#monto-ahorro").fill("100");
@@ -646,7 +646,7 @@ test('grupos y resumen: controles móviles y actualización visible', async t =>
     const { page, errors } = await abrir(t);
     await page.setViewportSize({ width: 390, height: 844 });
     assert.match(await page.locator("#resumen-ingresos").textContent(), /1,000/);
-    await page.locator("#boton-deudas").click();
+    await clickRutaPrueba(page, "boton-deudas");
     await page.locator(".administrador-grupos summary").click();
     await page.locator("#administrar-grupo").selectOption("g1");
     await page.locator("#administrar-nombre").fill("Grupo personal");
@@ -657,7 +657,7 @@ test('grupos y resumen: controles móviles y actualización visible', async t =>
     await page.locator("#eliminar-grupo-vacio").click();
     await page.getByRole("button",{name:"Sí",exact:true}).click();
     assert.equal(await page.evaluate(() => gruposDeudas.length), 0);
-    await page.locator("#boton-reparto").click();
+    await clickRutaPrueba(page, "boton-reparto");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.deepEqual(errors, []);
 });
@@ -668,13 +668,13 @@ test('diseño: navegación y formularios sin desborde en móvil, tableta y escri
     for (const width of [320, 390, 768, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         for (const id of ["boton-reparto", "boton-ahorro", "boton-deudas"]) {
-            await page.locator("#" + id).click();
+            await clickRutaPrueba(page, id);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false,
                 "No debe desbordar a " + width + " en " + id);
             const alto = await page.locator("#" + id).evaluate(el => el.getBoundingClientRect().height);
             assert.ok(alto >= 44, "Navegación táctil");
         }
-        await page.locator("#boton-reparto").click();
+        await clickRutaPrueba(page, "boton-reparto");
         await page.locator("#abrir-gastos").click();
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
         await page.locator("#volver-gastos").click();
@@ -713,7 +713,7 @@ test('diseño: importes largos, historial y teclado sin perder contenido', async
     });
     await page.locator("#historial-nominas summary").click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-    await page.locator("#boton-reparto").click();
+    await clickRutaPrueba(page, "boton-reparto");
     await page.locator("#resumen-financiero > details").nth(1).locator("summary").click();
     const tabla = page.locator("#resumen-financiero .tabla-scroll");
     await tabla.focus();
@@ -724,8 +724,8 @@ test('diseño: importes largos, historial y teclado sin perder contenido', async
 test('móvil: atrás, adelante y enlace directo conservan el borrador', async t => {
     const { page, errors } = await abrir(t);
     await page.locator('#referencia-nomina').fill('Pendiente');
-    await page.locator('#boton-ahorro').click();
-    await page.locator('#boton-deudas').click();
+    await clickRutaPrueba(page, "boton-ahorro");
+    await clickRutaPrueba(page, "boton-deudas");
     await page.goBack();
     assert.equal(await page.locator('#vista-ahorro').isVisible(), true);
     await page.goBack();
@@ -760,7 +760,7 @@ test('móvil: pantalla táctil, reducción simulada por teclado y recuperación'
     assert.equal(await page.locator('.navegacion-vistas').isVisible(), false);
     await page.setViewportSize({ width: 390, height: 850 });
     await page.waitForFunction(() => !document.body.classList.contains('teclado-visible'));
-    assert.equal(await page.locator('.navegacion-vistas').isVisible(), true);
+    assert.equal(await page.locator('#abrir-navegacion').isVisible(), true);
     assert.ok(await page.locator('#referencia-nomina').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 16));
 });
 
@@ -770,7 +770,7 @@ test('móvil: texto ampliado y orientación horizontal no desbordan', async t =>
     for (const size of [{ width: 320, height: 850 }, { width: 850, height: 390 }]) {
         await page.setViewportSize(size);
         for (const id of ['boton-reparto', 'boton-ahorro', 'boton-deudas']) {
-            await page.locator('#' + id).click();
+            await clickRutaPrueba(page, id);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, id + ' a ' + size.width);
         }
     }
@@ -1218,7 +1218,7 @@ test('mejoras: paneles abiertos son accesibles y no desbordan en móvil', async 
     await page.locator('#editar-ingreso-id').selectOption('n1');
     await page.locator('#panel-actividad > summary').click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth>innerWidth),false);
-    await page.locator('#boton-ahorro').click();
+    await clickRutaPrueba(page, "boton-ahorro");
     await page.locator('#editor-meta > summary').click();
     await page.locator('#meta-nombre').fill('Emergencia');
     await page.locator('#meta-objetivo').fill('1000');
@@ -1620,7 +1620,7 @@ test('gestión: fallo de escritura y copia manipulada no pierden datos',async t=
     }),true);
 });
 test('gestión: formulario completo de tarjeta y compra',async t=>{
-    const page=await prepararGestionPrueba(t);await page.locator('#boton-deudas').click();
+    const page=await prepararGestionPrueba(t);await clickRutaPrueba(page, "boton-deudas");
     await page.locator('#tarjetas-credito').getByText('＋ Agregar tarjeta',{exact:true}).click();
     await page.locator('#nueva-tarjeta [name=nombre]').fill('Mi tarjeta');
     await page.locator('#nueva-tarjeta button').click();
@@ -1652,4 +1652,123 @@ test('gestión: migración conserva importes y permite reasignarlos',async t=>{
         reasignarPendiente('n1','basicos');
         return {ok,pendiente,plantilla,reparto:nominas[0].reparto.map(c=>c.montoCentavos),total:calcularResumenFinanciero().disponible};
     }),{ok:true,pendiente:20000,plantilla:80,reparto:[100000],total:100000});
+});
+
+async function clickRutaPrueba(page,id) {
+    if(await page.locator('#abrir-navegacion').isVisible() && await page.locator('#abrir-navegacion').getAttribute('aria-expanded')!=='true') await page.locator('#abrir-navegacion').click();
+    await page.locator('#'+id).click();
+}
+test('lateral: árbol a la derecha, ramas independientes y subrutas',async t=>{
+    const {page}=await abrir(t);
+    assert.equal(await page.locator('#panel-navegacion').evaluate(e=>getComputedStyle(e).position),'fixed');
+    await page.locator('[data-grupo=ingresos] > summary').click();
+    assert.equal(await page.locator('[data-grupo=ahorro]').getAttribute('open'),'');
+    await page.locator('[data-grupo=ingresos] > summary').click();
+    await page.locator('[data-ruta=gastos]').click();
+    assert.equal(await page.locator('#vista-gastos').isVisible(),true);
+    await page.locator('[data-ruta=tarjetas]').click();
+    assert.equal(await page.locator('#tarjetas-credito').isVisible(),true);
+    assert.match(page.url(),/#tarjetas$/);
+    await page.reload();
+    assert.equal(await page.locator('[data-ruta=tarjetas]').getAttribute('aria-current'),'page');
+    await page.goBack();
+    assert.equal(await page.locator('#vista-gastos').isVisible(),true);
+});
+test('lateral: móvil cierra con Escape y devuelve el foco',async t=>{
+    const {page}=await abrir(t);await page.setViewportSize({width:390,height:844});
+    await page.locator('#abrir-navegacion').click();
+    assert.equal(await page.locator('main').evaluate(e=>e.inert),true);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('main').evaluate(e=>e.inert),false);
+    assert.equal(await page.evaluate(()=>document.activeElement.id),'abrir-navegacion');
+    await page.locator('#abrir-navegacion').click();
+    await page.locator('[data-ruta=destinos]').click();
+    assert.equal(await page.locator('#abrir-navegacion').getAttribute('aria-expanded'),'false');
+    assert.equal(await page.locator('main').evaluate(e=>e.inert),false);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+});
+test('lateral: fondos por apartado sin duplicar el ahorro y opción de añadir',async t=>{
+    const page=await prepararGestionPrueba(t);
+    await page.evaluate(()=>{
+        crearApartado('Gas','tarjeta','150',0);const a=gestion.apartados[0].id;
+        aportarBasico(a,'n1','150','2026-11');gastarApartado(a,'Gas','100','2026-11-15');cerrarMesApartado(a,'2026-11');
+        crearApartado('Internet','tarjeta','200',0);
+    });
+    const enlace=page.locator('#enlaces-fondos button').filter({hasText:'Gas'});await enlace.click();
+    assert.match(await page.locator('#ahorros-apartados').textContent(),/Fondo de emergencia Gas/);
+    assert.equal(await page.evaluate(()=>calcularResumenFinanciero().ahorroActual),5000);
+    await page.locator('#panel-navegacion [data-ruta=nuevo-fondo]').click();
+    assert.equal(await page.locator('#nuevo-apartado').isVisible(),true);
+    assert.equal(await page.locator('#nuevo-apartado [name=medio]').inputValue(),'tarjeta');
+    await page.locator('#nuevo-apartado [name=nombre]').fill('Agua');
+    await page.locator('#nuevo-apartado [name=monto]').fill('50');
+    await page.locator('#nuevo-apartado button').click();
+    assert.equal(await page.locator('#enlaces-fondos button').count(),3);
+});
+test('crédito: límite editable, disponible y sobrelímite no alteran saldos',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.deepEqual(await page.evaluate(()=>{
+        crearTarjeta('Banco','1000','25','10');const id=gestion.tarjetas[0].id;
+        crearCompra(id,'Compra','600',3,'2026-11');
+        const usado=resumenCredito(gestion.tarjetas[0]);
+        let bloqueado=false;try{crearCompra(id,'Exceso','401',1,'2026-11');}catch{bloqueado=true;}
+        editarTarjeta(id,'Banco nuevo','500','28','15');
+        const reducido=resumenCredito(gestion.tarjetas[0]);
+        const c=gestion.tarjetas[0].compras[0].id;pagarCompra(id,c,'200','n1','basicos','2026-11-24');
+        return {usado,bloqueado,reducido,final:resumenCredito(gestion.tarjetas[0]),ingreso:calcularResumenFinanciero().disponible};
+    }),{usado:{utilizado:60000,limite:100000,disponible:40000,excedido:0},bloqueado:true,
+        reducido:{utilizado:60000,limite:50000,disponible:0,excedido:10000},
+        final:{utilizado:40000,limite:50000,disponible:10000,excedido:0},ingreso:180000});
+    await page.reload();assert.equal(await page.evaluate(()=>gestion.tarjetas[0].nombre),'Banco nuevo');
+});
+test('crédito: meses cortos, año bisiesto y pago del siguiente mes',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.deepEqual(await page.evaluate(()=>[
+        fechasTarjeta({diaCorte:31,diaPago:10},'2026-02'),
+        fechasTarjeta({diaCorte:31,diaPago:31},'2028-02'),
+        fechasTarjeta({diaCorte:5,diaPago:31},'2026-02'),
+        fechasTarjeta({diaCorte:25,diaPago:10},'2026-12')
+    ]),[{corte:'2026-02-28',pago:'2026-03-10'},{corte:'2028-02-29',pago:'2028-03-31'},
+        {corte:'2026-02-05',pago:'2026-02-28'},{corte:'2026-12-25',pago:'2027-01-10'}]);
+});
+test('crédito: copia antigua sin límite y copia nueva mantienen movimientos',async t=>{
+    const page=await prepararGestionPrueba(t);
+    const copia=await page.evaluate(()=>{
+        crearTarjeta('Antes');const c=crearCopiaLocal();delete c.datos.gestion.tarjetas[0].limiteCentavos;delete c.datos.gestion.tarjetas[0].diaCorte;delete c.datos.gestion.tarjetas[0].diaPago;
+        restaurarCopiaLocal(c);return crearCopiaLocal();
+    });
+    assert.equal(copia.datos.gestion.tarjetas[0].limiteCentavos,null);
+    await page.evaluate(()=>editarTarjeta(gestion.tarjetas[0].id,'Editada','2500','20','5'));
+    const nueva=await page.evaluate(()=>crearCopiaLocal());
+    await page.evaluate(c=>restaurarCopiaLocal(c),nueva);await page.reload();
+    assert.deepEqual(await page.evaluate(()=>gestion.tarjetas),nueva.datos.gestion.tarjetas);
+});
+test('crédito: valores inválidos y error al guardar conservan datos',async t=>{
+    const page=await prepararGestionPrueba(t);
+    assert.equal(await page.evaluate(()=>{
+        crearTarjeta('Banco','1000','20','5');const id=gestion.tarjetas[0].id,antes=localStorage.getItem(CLAVE_GUARDADO);
+        let rechazados=0;for(const fn of [()=>editarTarjeta(id,'Banco','-1','20','5'),()=>editarTarjeta(id,'Banco','1000','32','5'),()=>editarTarjeta(id,'Banco','1000','2.5','5')])try{fn();}catch{rechazados++;}
+        const set=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw Error('Sin espacio');};
+        try{editarTarjeta(id,'Cambio','500','21','6');}catch{rechazados++;}finally{Storage.prototype.setItem=set;}
+        return rechazados===4&&localStorage.getItem(CLAVE_GUARDADO)===antes&&gestion.tarjetas[0].nombre==='Banco';
+    }),true);
+});
+test('crédito: formulario permite editar límite y días',async t=>{
+    const page=await prepararGestionPrueba(t);await clickRutaPrueba(page,'boton-deudas');
+    await page.locator('#tarjetas-credito').getByText('＋ Agregar tarjeta',{exact:true}).click();
+    const f=page.locator('#nueva-tarjeta');
+    await f.locator('[name=nombre]').fill('Banco');await f.locator('[name=limite]').fill('5000');await f.locator('[name=corte]').fill('25');await f.locator('[name=pago]').fill('10');await f.locator('button').click();
+    await page.getByText('Editar límite y fechas',{exact:true}).click();
+    const editar=page.locator('form[id^=editar-tarjeta-]');await editar.locator('[name=limite]').fill('6000');await editar.locator('[name=pago]').fill('15');await editar.locator('button').click();
+    assert.equal(await page.evaluate(()=>gestion.tarjetas[0].limiteCentavos),600000);
+    assert.equal(await page.evaluate(()=>gestion.tarjetas[0].diaPago),15);
+});
+
+test('lateral: cerrar el menú conserva el bloqueo por reinicio externo',async t=>{
+    const {page}=await abrir(t);await page.setViewportSize({width:390,height:844});
+    await page.locator('#abrir-navegacion').click();
+    await page.evaluate(()=>bloquearPantallaPorReinicio('Datos cambiados en otra pestaña.'));
+    await page.evaluate(()=>cambiarMenuLateral(false,false));
+    assert.equal(await page.locator('main').evaluate(e=>e.inert),true);
+    assert.equal(await page.evaluate(()=>guardar()),false);
 });

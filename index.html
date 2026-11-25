@@ -20,9 +20,35 @@
     <link rel="stylesheet" href="./css/mejoras.css">
     <link rel="stylesheet" href="./css/instalacion.css">
     <link rel="stylesheet" href="./css/gestion.css">
+<link rel="stylesheet" href="./css/navegacion.css">
 </head>
 
 <body>
+
+<button id="abrir-navegacion" type="button" aria-controls="panel-navegacion" aria-expanded="false">☰ Secciones</button>
+<div id="fondo-navegacion" hidden></div>
+<aside id="panel-navegacion" aria-label="Navegación de finanzas">
+<header class="cabecera-lateral"><strong>Mis finanzas</strong><button id="cerrar-navegacion" type="button" aria-label="Cerrar navegación">✕</button></header>
+<nav class="navegacion-vistas" aria-label="Secciones de finanzas">
+<details open data-grupo="ingresos"><summary>▥ Ingresos</summary><div class="ramas-laterales">
+<button id="boton-reparto" type="button" data-ruta="ingresos" aria-controls="vista-reparto" aria-pressed="true">Ingresos y reparto</button>
+<button type="button" data-ruta="gastos">Mis gastos</button>
+<button type="button" data-ruta="destinos">Destino de mis ingresos</button>
+</div></details>
+<details open data-grupo="ahorro"><summary>◇ Ahorro</summary><div class="ramas-laterales">
+<button id="boton-ahorro" type="button" data-ruta="ahorro" aria-controls="vista-ahorro" aria-pressed="false">Ahorro personal</button>
+<details open id="rama-fondos"><summary>Fondo de emergencia</summary><div class="ramas-laterales">
+<button type="button" data-ruta="emergencia">Todos mis fondos</button>
+<div id="enlaces-fondos"></div>
+<button type="button" data-ruta="nuevo-fondo">＋ Añadir fondo</button>
+</div></details>
+</div></details>
+<details open data-grupo="deudas"><summary>≋ Deudas</summary><div class="ramas-laterales">
+<button id="boton-deudas" type="button" data-ruta="deudas" aria-controls="vista-deudas" aria-pressed="false">Deudas generales</button>
+<div class="ramas-laterales"><button type="button" data-ruta="acreedores">Acreedores</button></div>
+<button type="button" data-ruta="tarjetas">Tarjetas de crédito</button>
+</div></details>
+</nav></aside>
     <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
 
     <section id="aviso-reinicio-externo" class="tarjeta" hidden aria-label="Recarga necesaria">
@@ -39,17 +65,7 @@
             <p id="estado-guardado" class="ayuda" role="status"></p>
         </header>
 
-        <nav class="navegacion-vistas" aria-label="Secciones de finanzas">
-            <button id="boton-reparto" type="button" aria-controls="vista-reparto" aria-pressed="true">
-                <span class="icono-nav" aria-hidden="true">▥</span> Ingresos
-            </button>
-            <button id="boton-ahorro" type="button" aria-controls="vista-ahorro" aria-pressed="false">
-                <span class="icono-nav" aria-hidden="true">◇</span> Ahorro
-            </button>
-            <button id="boton-deudas" type="button" aria-controls="vista-deudas" aria-pressed="false">
-                <span class="icono-nav" aria-hidden="true">≋</span> Deudas
-            </button>
-        </nav>
+        
         <h1 class="titulo-app">Tu dinero, en orden.</h1>
         <p class="subtitulo-app">Decide con claridad qué gastar, qué guardar y qué pagar.</p>
 
@@ -823,6 +839,7 @@
     <script src="./js/movil.js"></script>
     <script src="./js/instalacion.js"></script>
     <script src="./js/gestion-ui.js"></script>
+<script src="./js/navegacion.js"></script>
 </body>
 
 </html>

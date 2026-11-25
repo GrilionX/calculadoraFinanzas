@@ -1,5 +1,5 @@
 //Solo archivos de la aplicación: nunca copias ni registros personales
-const VERSION = "2026-11-24-gestion-3";
+const VERSION = "2026-11-24-lateral-4";
 const PREFIJO = "mis-finanzas-app:" + self.registration.scope + ":";
 const CACHE = PREFIJO + VERSION;
 const ARCHIVOS = [
@@ -28,6 +28,8 @@ const ARCHIVOS = [
     "js/gestion.js",
     "js/gestion-ui.js",
     "css/gestion.css",
+    "js/navegacion.js",
+    "css/navegacion.css",
     "js/app.js",
     "js/pruebas.js",
     "js/interfaz.js",

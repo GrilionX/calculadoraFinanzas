@@ -9,7 +9,7 @@ function botonGestion(texto,accion,clase="") {
 function avisoGestion(texto,error=false) {const n=document.getElementById("aviso-gestion");n.textContent=texto;n.className=error?"aviso error":"aviso ok";}
 function campoGestion(form,nombre,etiqueta,tipo="text",valor="") {
     const label=nodoGestion("label",etiqueta),input=document.createElement("input");
-    input.name=nombre;input.type=tipo;input.value=valor;input.required=true;
+    input.name=nombre;input.type=tipo;input.value=valor;input.defaultValue=String(valor);input.required=true;
     if(tipo==="number"){input.min="0.01";input.step="0.01";input.inputMode="decimal";}
     label.append(input);form.append(label);return input;
 }
@@ -67,9 +67,18 @@ function mostrarGestion() {
     if(nominas.some(n=>n.reparto.some(c=>c.id==="pendiente")))avisoGestion("Hay importes por reasignar en ingresos anteriores.",true);
     const total=sumaGestion(gestion.tarjetas.flatMap(t=>t.compras.map(c=>resumenCompra(c,mesGestion).pendienteMes)));
     panelTarjetas.append(resumenMoneda("Pendiente al mes seleccionado",total,"mensual-tarjetas"));
-    panelTarjetas.append(formularioGestion("nueva-tarjeta","＋ Agregar tarjeta",f=>campoGestion(f,"nombre","Nombre"),v=>crearTarjeta(v.nombre)));
+    panelTarjetas.append(formularioGestion("nueva-tarjeta","＋ Agregar tarjeta",f=>camposCredito(f),v=>crearTarjeta(v.nombre,v.limite,v.corte,v.pago)));
     for(const t of gestion.tarjetas) {
         const card=nodoGestion("article",undefined,"tarjeta-gestion");card.dataset.entidad=t.id;card.append(nodoGestion("h3",t.nombre));
+        const credito=resumenCredito(t),fechas=fechasTarjeta(t,mesGestion);
+        const creditoUI=nodoGestion("div",undefined,"saldos-gestion");
+        creditoUI.append(resumenMoneda("Crédito usado",credito.utilizado,t.id+"usado"));
+        if(credito.limite!==null)creditoUI.append(resumenMoneda("Límite",credito.limite,t.id+"limite"),resumenMoneda("Disponible",credito.disponible,t.id+"disponible"));
+        else creditoUI.append(nodoGestion("p","Límite sin configurar","etiqueta"));
+        card.append(creditoUI,nodoGestion("p","Corte: "+(fechas.corte||"Sin configurar")+" · Pago: "+(fechas.pago||"Sin configurar"),"fechas-credito"));
+        if(credito.excedido)card.append(nodoGestion("p","Límite excedido: "+monedaGestion(credito.excedido),"aviso error"));
+        if(credito.limite>0){const barra=document.createElement("progress");barra.max=credito.limite;barra.value=Math.min(credito.utilizado,credito.limite);barra.setAttribute("aria-label","Crédito utilizado");card.append(barra);}
+        card.append(formularioGestion("editar-tarjeta-"+t.id,"Editar límite y fechas",f=>camposCredito(f,t),v=>editarTarjeta(t.id,v.nombre,v.limite,v.corte,v.pago)));
         card.append(botonGestion("Eliminar tarjeta",()=>eliminarFilaGestion("tarjeta",t.id), "boton-peligro"));
         card.append(formularioGestion("compra-"+t.id,"＋ Compra o saldo",f=>{
             campoGestion(f,"nombre","Concepto");campoGestion(f,"total","Monto total","number");
@@ -134,10 +143,25 @@ function mostrarGestion() {
             if(!a.cierres.some(c=>c.mes===(x.mes??x.fecha.slice(0,7))))row.append(botonGestion("Eliminar",()=>eliminarFilaGestion(tipo,x.id,a.id)));historial.append(row);}
         card.append(historial,botonGestion("Eliminar apartado",()=>eliminarFilaGestion("apartado",a.id)));panelApartados.append(card);
     }
-    const s=saldosApartados();panelAhorros.replaceChildren(nodoGestion("h2","Excedentes guardados"));
+    const s=saldosApartados();panelAhorros.replaceChildren(nodoGestion("h2","Fondo de emergencia"));
     const grid=nodoGestion("div",undefined,"saldos-gestion");grid.append(resumenMoneda("Fondo de emergencia",s.emergencia,"fondo-emergencia"),resumenMoneda("Ahorro en efectivo",s.efectivo,"ahorro-efectivo"));panelAhorros.append(grid);
+    for(const a of gestion.apartados.filter(a=>a.medio==="tarjeta")) {
+        const fondo=nodoGestion("article",undefined,"fondo-emergencia");fondo.id="fondo-"+a.id;fondo.tabIndex=-1;
+        fondo.append(resumenMoneda("Fondo de emergencia "+a.nombre,sumaGestion(a.cierres.map(c=>c.excedente)),a.id+"fondo"));
+        panelAhorros.append(fondo);
+    }
+    panelAhorros.append(botonGestion("＋ Añadir fondo",()=>irSeccionLateral("nuevo-fondo")));
+    if(typeof actualizarFondosLateral==="function")actualizarFondosLateral();
     for(const [id,b]of borradores){const f=document.getElementById(id);if(!f)continue;f.closest("details").open=b.abierto;for(const [n,v]of b.datos){const el=f.elements.namedItem(n);if(el){el.value=v;if(n==="nomina")el.dispatchEvent(new Event("change"));}}}
 }
 const mostrarNominasAnterior=mostrarHistorialNominas;
 mostrarHistorialNominas=function(){mostrarNominasAnterior();mostrarGestion();};
 mostrarGestion();
+
+function camposCredito(f,t={}) {
+    campoGestion(f,"nombre","Nombre","text",t.nombre??"");
+    const limite=campoGestion(f,"limite","Límite de crédito","number",t.limiteCentavos==null?"":String(t.limiteCentavos/100));limite.min="0";limite.required=false;limite.placeholder="Sin configurar";
+    for(const [id,label,valor] of [["corte","Día de corte",t.diaCorte],["pago","Día de pago",t.diaPago]]) {
+        const dia=campoGestion(f,id,label,"number",valor??"");dia.min="1";dia.max="31";dia.step="1";dia.required=false;dia.placeholder="1–31";
+    }
+}

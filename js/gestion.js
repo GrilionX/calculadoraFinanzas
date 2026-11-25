@@ -49,6 +49,9 @@ function limpiarGestion(valor,paquete) {
         const origen=(x,cat)=>exigirGestion(paquete.nominas.some(n=>n.id===x&&n.reparto.some(c=>c.id===cat)));
         for(const t of d.tarjetas) {
             id(t.id);exigirGestion(textoMejora(t.nombre,60)&&Array.isArray(t.compras));
+            t.limiteCentavos ??= null; t.diaCorte ??= null; t.diaPago ??= null;
+            exigirGestion(t.limiteCentavos===null||(Number.isSafeInteger(t.limiteCentavos)&&t.limiteCentavos>=0));
+            for(const dia of [t.diaCorte,t.diaPago])exigirGestion(dia===null||(Number.isInteger(dia)&&dia>=1&&dia<=31));
             for(const c of t.compras) {
                 id(c.id);dinero(c.totalCentavos);
                 exigirGestion(textoMejora(c.nombre,80)&&Number.isInteger(c.meses)&&c.meses>=1&&c.meses<=120&&c.totalCentavos>=c.meses&&mesValido(c.inicio)&&Array.isArray(c.pagos));
@@ -72,10 +75,42 @@ function limpiarGestion(valor,paquete) {
 }
 function operarGestion(fn) {return guardarOperacionMejora(p=>fn(p.gestion));}
 function idGestion() {return crypto.randomUUID();}
-function crearTarjeta(nombre) {return operarGestion(d=>d.tarjetas.push({id:idGestion(),nombre:nombre.trim(),compras:[]}));}
+function datosCredito(limite="",corte="",pago="") {
+    const limiteCentavos=limite===""||limite===null?null:limite==="0"||limite===0?0:convertirPesosACentavos(limite);
+    exigirGestion(limite===""||limite===null||limiteCentavos!==null,"Revisa el límite de crédito.");
+    const dia=valor=>{if(valor===""||valor===null)return null;const n=Number(valor);exigirGestion(Number.isInteger(n)&&n>=1&&n<=31,"Usa días del 1 al 31.");return n;};
+    return {limiteCentavos,diaCorte:dia(corte),diaPago:dia(pago)};
+}
+function crearTarjeta(nombre,limite="",corte="",pago="") {
+    const config=datosCredito(limite,corte,pago);
+    return operarGestion(d=>d.tarjetas.push({id:idGestion(),nombre:nombre.trim(),...config,compras:[]}));
+}
+function editarTarjeta(id,nombre,limite,corte,pago) {
+    const config=datosCredito(limite,corte,pago);
+    return operarGestion(d=>{const t=d.tarjetas.find(t=>t.id===id);exigirGestion(t,"Tarjeta no encontrada.");Object.assign(t,{nombre:nombre.trim(),...config});});
+}
+function resumenCredito(t) {
+    const utilizado=sumaGestion(t.compras.map(c=>resumenCompra(c).saldo));
+    const limite=t.limiteCentavos??null;
+    return {utilizado,limite,disponible:limite===null?null:Math.max(0,limite-utilizado),excedido:limite===null?0:Math.max(0,utilizado-limite)};
+}
+function fechaDiaTarjeta(mes,dia) {
+    if(dia===null||dia===undefined)return "";
+    exigirGestion(mesValido(mes)&&Number.isInteger(dia)&&dia>=1&&dia<=31);
+    const ultimo=new Date(Date.UTC(+mes.slice(0,4),+mes.slice(5,7),0)).getUTCDate();
+    return mes+"-"+String(Math.min(dia,ultimo)).padStart(2,"0");
+}
+function fechasTarjeta(t,mes) {
+    const corte=fechaDiaTarjeta(mes,t.diaCorte);
+    const mesPago=t.diaCorte&&t.diaPago&&t.diaPago<=t.diaCorte?desplazarMes(mes,1):mes;
+    return {corte,pago:fechaDiaTarjeta(mesPago,t.diaPago)};
+}
 function crearCompra(tarjeta,nombre,total,meses,inicio) {
     return operarGestion(d=>{const t=d.tarjetas.find(t=>t.id===tarjeta);exigirGestion(t,"Selecciona una tarjeta.");
-        t.compras.push({id:idGestion(),nombre:nombre.trim(),totalCentavos:convertirPesosACentavos(total),meses:Number(meses),inicio,pagos:[]});});
+        const importe=convertirPesosACentavos(total),credito=resumenCredito(t);
+        exigirGestion(importe!==null,"Revisa el monto.");
+        exigirGestion(credito.disponible===null||importe<=credito.disponible,"La compra supera el crédito disponible.");
+        t.compras.push({id:idGestion(),nombre:nombre.trim(),totalCentavos:importe,meses:Number(meses),inicio,pagos:[]});});
 }
 function pagarCompra(tarjeta,compra,monto,nominaId,categoriaId,fecha) {
     return operarGestion(d=>{const c=d.tarjetas.find(t=>t.id===tarjeta)?.compras.find(c=>c.id===compra);exigirGestion(c,"Selecciona una compra.");

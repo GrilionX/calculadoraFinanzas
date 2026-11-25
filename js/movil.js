@@ -56,11 +56,12 @@ function rutaVisibleMovil() {
 function marcarRutaMovil(ruta, escribir = true) {
     if (!Object.hasOwn(rutasMoviles, ruta)) return;
     if (escribir && location.hash !== "#" + ruta) history.pushState(null, "", "#" + ruta);
-    for (const boton of document.querySelectorAll(".navegacion-vistas button")) {
+    for (const boton of document.querySelectorAll(".navegacion-vistas button[aria-pressed]")) {
         const activo = boton.getAttribute("aria-pressed") === "true";
         if (activo) boton.setAttribute("aria-current", "page");
         else boton.removeAttribute("aria-current");
     }
+    if(typeof sincronizarNavLateral==="function")sincronizarNavLateral(ruta);
 }
 
 function restaurarRutaMovil() {

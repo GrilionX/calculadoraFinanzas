@@ -228,3 +228,8 @@ Consulta la [guía de esta versión](docs/version-gestion.md) para probar los si
 El nombre de la categoría retirada solo permanece en el migrador de datos antiguos. En pantalla sus importes pendientes se muestran como Por reasignar. Esta versión no incorpora los trabajos previamente aplazados.
 
 La versión de tarjetas y apartados se verificó con 96 escenarios de integración y revisión visual a 390 px. Incluye pagos parciales, ajuste de centavos en la última cuota, límite del ingreso disponible, excedentes al cerrar mes, copias versión 9, borrado Sí/No y migración de saldos por reasignar. La prueba física en teléfono sigue pendiente.
+
+## Menú lateral y configuración de tarjetas
+La navegación vertical se encuentra a la derecha; en celular se abre con Secciones. Las ramas de ingresos, ahorro, fondos y deudas permanecen independientes. Cada tarjeta permite editar límite, día de corte y día de pago, consultar crédito utilizado y disponible y conservar los movimientos anteriores. Consulta [navegación y crédito](docs/navegacion-y-credito.md).
+
+Esta revisión verificó 105 escenarios de integración, incluidos navegación lateral, teclado, historial de rutas, fondos por apartado, límites editables, pagos que liberan crédito, fechas en meses cortos, copias antiguas y bloqueo entre pestañas. Se revisó visualmente a 1440 y 390 px; la prueba física en teléfono continúa pendiente.
