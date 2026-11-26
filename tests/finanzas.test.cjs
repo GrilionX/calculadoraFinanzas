@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-emergencia-6', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-emergencia-7', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1970,4 +1970,16 @@ test('emergencia: volver a abrir después de retirar restaura el ingreso obligat
  assert.equal(await form.locator('[name=nomina]').isDisabled(),false);
  assert.equal(await form.locator('[name=nomina]').getAttribute('required'),'');
  assert.equal(await form.locator('[name=nomina]').evaluate(e=>e.closest('label').hidden),false);
+});
+
+test('emergencia: gráfica de ahorro agrupa cierres y aportaciones por fondo',async t=>{
+ const page=await prepararGestionPrueba(t);
+ const r=await page.evaluate(()=>{
+ crearApartado('Gas','tarjeta','150',0);crearApartado('Internet','efectivo','100',0);
+ const [gas,internet]=gestion.apartados.map(a=>a.id);
+ aportarBasico(gas,'n1','150','2026-11');gastarApartado(gas,'Gas','100','2026-11-01');cerrarMesApartado(gas,'2026-11');
+ moverEmergencia(gas,'aportacion','10','n1','Extra');moverEmergencia(internet,'aportacion','20','n1','Reserva');
+ return {fondos:Object.fromEntries(datosGraficasGastos().ahorro),saldo:calcularResumenFinanciero().ahorroActual};
+ });
+ assert.deepEqual(r,{fondos:{'Emergencia Gas':6000,'Emergencia Internet':2000},saldo:8000});
 });

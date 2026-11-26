@@ -249,3 +249,5 @@ Cada cierre mensual mantiene su sobrante en el fondo del concepto original (Gas,
 - Las metas muestran porcentaje y evolución por movimiento con una línea de objetivo. Las tarjetas comparan crédito usado y disponible. Las animaciones respetan la preferencia de movimiento reducido.
 
 La app sigue siendo instalable como PWA y no necesita dependencias gráficas externas. Actualiza desde **Datos y copias → Buscar actualización**. Esta entrega no incluye un APK; la prueba en el teléfono físico sigue siendo necesaria. Exporta/importa una copia si cambias de navegador o de dirección.
+
+La base visual se conserva: menú izquierdo y vistas independientes del 25 de noviembre por la mañana. La gráfica de ahorro identifica cada fondo (Gas, Internet, etc.) y reúne sus sobrantes y aportaciones sin volver a sumar el total general.
