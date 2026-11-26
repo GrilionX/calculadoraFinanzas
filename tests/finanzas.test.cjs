@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-emergencia-7', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-preparacion-8', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1982,4 +1982,35 @@ test('emergencia: gráfica de ahorro agrupa cierres y aportaciones por fondo',as
  return {fondos:Object.fromEntries(datosGraficasGastos().ahorro),saldo:calcularResumenFinanciero().ahorroActual};
  });
  assert.deepEqual(r,{fondos:{'Emergencia Gas':6000,'Emergencia Internet':2000},saldo:8000});
+});
+
+test('instalación: diagnóstico de solo lectura muestra versión y validez de copia',async t=>{
+ const {page}=await abrir(t);
+ await page.waitForFunction(()=>document.querySelector('#estado-offline').dataset.listo==='true');
+ const antes=await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO));
+ await navegarPrueba(page,'datos');
+ await page.locator('#panel-dispositivo details > summary').click();
+ await page.locator('#comprobar-dispositivo').click();
+ await page.waitForFunction(()=>!document.getElementById('comprobar-dispositivo').disabled);
+ assert.equal(await page.locator('#diagnostico-dispositivo li').count(),5);
+ assert.match(await page.locator('#diagnostico-dispositivo').textContent(),/Registros válidos para exportar/);
+ assert.match(await page.locator('#version-app').textContent(),/2026-11-25-preparacion-8/);
+ assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),antes);
+});
+test('instalación: diagnóstico detecta archivos ausentes sin borrar registros',async t=>{
+ const {page}=await abrir(t);
+ await page.waitForFunction(()=>document.querySelector('#estado-offline').dataset.listo==='true');
+ const antes=await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO));
+ await page.evaluate(async()=>{for(const k of await caches.keys())if(k.startsWith('mis-finanzas-app:')){const c=await caches.open(k);await c.delete(new URL('css/dashboard.css',location.href).href);}});
+ await page.evaluate(()=>comprobarDispositivo());
+ assert.match(await page.locator('#diagnostico-dispositivo').textContent(),/Preparación incompleta/);
+ assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),antes);
+});
+test('instalación: guía PDF enlazada y descarga identificable',async t=>{
+ const {page}=await abrir(t);
+ await navegarPrueba(page,'datos');await page.locator('#panel-dispositivo details > summary').click();
+ const enlace=page.getByRole('link',{name:'Descargar guía de instalación y pruebas (PDF)'});
+ assert.match(await enlace.getAttribute('href'),/guia-instalacion-y-pruebas.pdf$/);
+ const [descarga]=await Promise.all([page.waitForEvent('download'),enlace.click()]);
+ assert.equal(descarga.suggestedFilename(),'guia-instalacion-y-pruebas.pdf');
 });

@@ -2,12 +2,13 @@
 No necesita cuentas, Supabase ni un ordenador encendido después de instalarla. VS Code sirve para editar el código; GitHub Pages entrega los archivos en la primera visita y al actualizar.
 
 ## Publicación inicial
+Verificación del 25 de noviembre de 2026: Pages no está activado y la URL prevista devuelve 404. Actívalo desde tu sesión de GitHub siguiendo estos pasos.
 En GitHub, abre el repositorio → Settings → Pages. Selecciona Deploy from a branch, rama main y carpeta / (root). Guarda y espera a que el despliegue termine.
 La dirección prevista es https://grilionx.github.io/calculadoraFinanzas/. No está disponible hasta que Pages publique correctamente.
 
 ## Instalación
 1. Abre la dirección HTTPS con internet, en el navegador habitual del teléfono.
-2. En el panel de este dispositivo, espera el aviso de aplicación preparada sin conexión.
+2. En Secciones → Datos y copias, espera «Lista para usar sin conexión». En «Instalación, actualizaciones y datos» pulsa «Comprobar este dispositivo».
 3. Pulsa Instalar aplicación si aparece. En Android también puedes usar el menú del navegador → Instalar aplicación o Añadir a pantalla de inicio. En iPhone usa Safari → Compartir → Añadir a pantalla de inicio.
 4. Abre el icono, activa modo avión, cierra y vuelve a abrir. Comprueba que puedes registrar un ingreso ficticio y verlo tras cerrar y abrir.
 5. Antes de usar datos oficiales, prueba exportar y restaurar una copia y después Empezar de cero.
@@ -26,6 +27,8 @@ Con internet, pulsa Buscar actualización. Cuando esté preparada, termina de re
 No borres los datos del navegador para actualizar.
 
 ## Comprobación pendiente
-Las pruebas automatizadas usan datos ficticios en Chromium. Antes del jueves, confirma en tu teléfono real instalación, apertura en modo avión, cierre y reapertura, exportación/importación y borrado seguido de un ingreso nuevo.
+Las pruebas automatizadas usan datos ficticios en Chromium. Antes de usar datos reales, confirma en tu teléfono real instalación, apertura en modo avión, cierre y reapertura, exportación/importación y borrado seguido de un ingreso nuevo.
 
 Referencias: [instalación de PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable), [funcionamiento sin conexión](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation).
+
+Guía paso a paso: [descargar PDF](guia-instalacion-y-pruebas.pdf).

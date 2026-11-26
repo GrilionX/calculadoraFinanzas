@@ -1,143 +1,129 @@
-# Calculadora de finanzas personales
+# Mis finanzas
 
-Aplicación estática en español: presupuesto, ahorro personal, nóminas variables, deudas individuales, fondos por grupo y proyección. Cada usuario introduce sus datos; no incluye deudas personales precargadas.
+## Instalación: empieza aquí
 
-## Diseño y uso en celular
+### 1. Publicar la web (una sola vez)
 
-La vista principal se llama **Ingresos** y conserva el reparto por nómina. El disponible ocupa la tarjeta principal; los detalles de cálculo y saldos globales se pueden desplegar. El gráfico muestra únicamente movimientos registrados, con leyenda y descripción accesible.
+**Pendiente de tu cuenta:** en la revisión del 25 de noviembre de 2026, GitHub Pages no estaba activado y la dirección devolvía 404. Subir código a main no activa Pages por sí solo.
 
-El botón **Registrar un ingreso** lleva al formulario. En escritorio, el registro y el historial se presentan en columnas; en celular se apilan y la navegación de Ingresos, Ahorro y Deudas queda en la parte inferior. Las tablas conservan desplazamiento horizontal y acceso por teclado. El borrado total está dentro del desplegable **Empezar de cero**.
+1. Inicia sesión en GitHub y abre [Settings → Pages](https://github.com/GrilionX/calculadoraFinanzas/settings/pages).
+2. En **Build and deployment → Source**, selecciona **Deploy from a branch**.
+3. Elige **main** y **/(root)**; pulsa **Save**.
+4. Espera a que GitHub termine la publicación. Abre la dirección que aparezca en Pages.
+5. La dirección prevista es [Mis finanzas](https://grilionx.github.io/calculadoraFinanzas/). Si muestra 404, revisa Pages y el despliegue; no borres los datos de tu navegador.
 
-Los estilos se cargan en este orden:
-- `css/styles.css`: estilos funcionales existentes.
-- `css/sistema.css`: colores, tipografía, componentes y estados compartidos.
-- `css/ingresos.css`: resumen, formulario, reparto e historial.
-- `css/movil.css`: adaptación por tamaño de pantalla y preferencias de accesibilidad.
-- `css/cuenta.css`: confirmaciones de corrección.
-- `css/instalacion.css`: instalación, estado de conexión y actualizaciones.
+Esta activación requiere acceso a la configuración del repositorio. La conexión usada para actualizar archivos no dispone de esa operación de administración.
 
-`js/interfaz.js` añade navegación de presentación y la barra de distribución; no modifica los importes ni el almacenamiento. No se añadieron fuentes remotas, librerías visuales ni rastreadores.
+### 2. Instalar en el teléfono
 
-Referencias consultadas para jerarquía de información y presentación de presupuestos: [Monarch](https://www.monarch.com/features/budgeting), [YNAB](https://www.ynab.com/features) y [Copilot Money](https://www.copilot.money/). El diseño y los componentes son propios.
+1. Abre la dirección HTTPS publicada con internet en tu navegador habitual.
+2. Entra en **Secciones → Datos y copias**.
+3. Espera **Lista para usar sin conexión**.
+4. Abre **Instalación, actualizaciones y datos** y pulsa **Comprobar este dispositivo**.
+5. Pulsa **Instalar en mi teléfono**, si aparece. También puedes usar el menú del navegador → **Instalar aplicación** o **Añadir a pantalla de inicio**. En iPhone: Safari → Compartir → Añadir a pantalla de inicio. El texto exacto depende del navegador.
+6. Abre el nuevo icono, activa modo avión, cierra y vuelve a abrir. Comprueba que tus registros siguen disponibles.
+7. Descarga y prueba una copia JSON antes de pasar de pruebas a datos reales.
 
-## Ejecutar en tu ordenador
+No requiere cuentas, nube ni ordenador encendido después de preparar el uso sin conexión. GitHub contiene el código; tus registros permanecen en el navegador. El teléfono y el ordenador no se sincronizan automáticamente.
 
-Desde la carpeta del repositorio, con Node.js instalado:
+**Guía completa:** [PDF de instalación, actualización y pruebas](docs/guia-instalacion-y-pruebas.pdf).
+
+### 3. Ejecutar en VS Code
+
+Con Git y Node.js instalados, desde la carpeta del repositorio:
 
 ```sh
 node scripts/servir.cjs
 ```
 
-Abre http://127.0.0.1:5173. No necesitas instalar dependencias para usar la aplicación. El servidor solo sirve los archivos en tu ordenador; no es una API ni una base de datos. Detén el servidor con Ctrl+C.
+Abre **http://127.0.0.1:5173**. No necesitas instalar paquetes para usar la web. Detén el servidor con **Ctrl+C**. No abras index.html directamente si quieres probar instalación o funcionamiento sin conexión.
 
-Los datos se guardan en el navegador, no en GitHub. Usa siempre la misma dirección y navegador. Cambiar de dirección, puerto o navegador muestra un almacenamiento diferente: exporta una copia JSON e impórtala en la nueva ubicación para trasladar tus datos.
+El servidor es local al ordenador; esa dirección no abre la web del ordenador desde el teléfono. Para el teléfono usa la publicación HTTPS.
 
-## Gastos y categorías
+### 4. Actualizar la copia de VS Code
 
-Desde Reparto, pulsa **Registrar mis gastos**. Se conservan las tres pestañas principales.
+Primero comprueba tu carpeta y rama:
 
-1. Selecciona una nómina registrada.
-2. Elige el presupuesto: básicos, ocio u otra categoría de gastos que figure en el reparto de esa nómina.
-3. Crea tus categorías de gastos dentro del presupuesto elegido y registra concepto, fecha e importe.
-4. Consulta sus gastos, reservas para deudas, saldo disponible y sumas por categoría.
-
-Los importes se toman del reparto guardado, sin recalcularlo con porcentajes actuales ni mezclar nóminas. El 55% de básicos y el 5% de ocio son valores iniciales, no límites fijos. Las categorías personales del reparto también pueden financiar gastos. Ahorro y deudas se reservan para sus gestores independientes.
-
-Dentro de **Mis categorías de gastos**, puedes cambiar un nombre, archivar una categoría o reactivarla. La identidad se conserva: renombrar actualiza su etiqueta en los movimientos existentes. Archivar no borra gastos ni devuelve dinero; la categoría deja de estar disponible para nuevas capturas y sus importes siguen contando. No se permiten nombres repetidos dentro del mismo presupuesto, incluidas las categorías archivadas. Sí puedes usar el mismo nombre en dos presupuestos distintos.
-
-Un gasto no puede superar el saldo disponible. El mismo dinero no puede financiar un gasto y un apartado. Para corregir una captura, anula el gasto con motivo y registra el correcto. La anulación conserva el movimiento y libera su importe.
-
-Las categorías de gastos antiguas se migran automáticamente al presupuesto de básicos y comienzan activas. Los campos internos `gastosBasicos` y algunas funciones conservan su nombre anterior por compatibilidad, pero ahora almacenan gastos de los distintos presupuestos, identificados por `categoriaId`.
-
-## Administración de grupos
-
-En **Deudas → Administrar mis grupos** puedes cambiar el nombre de un grupo, mover una deuda pendiente a otro grupo o dejarla sin grupo, y eliminar grupos vacíos sin movimientos.
-
-Renombrar conserva el identificador, los pagos y los movimientos. Un traslado conserva el objetivo y los apartados individuales con su origen de nómina. Se bloquea si hay transferencias o asignaciones que referencian esa deuda, si interviene un fondo compartido con reservas o si se intenta llevar una deuda con apartados individuales a un fondo compartido. Las mismas restricciones se aplican desde el editor de deuda.
-
-Eliminar exige que no haya deudas (tampoco liquidadas), movimientos de fondo ni referencias de transferencias. Todos estos cambios quedan en el historial de estados anteriores y posteriores. Si no se puede guardar, se conserva el estado anterior.
-
-## Resumen financiero
-
-En **Reparto → Mi resumen financiero** puedes ver todas las nóminas o elegir una. Se comprueba esta igualdad con importes enteros en centavos:
-
-**Ingresos recibidos = gastos + destinado a ahorro + destinado a deudas + sin utilizar.**
-
-- El destino a ahorro incluye las aportaciones vinculadas activas, aunque después hayas retirado ahorro.
-- El destino a deudas incluye los apartados vinculados, aunque se hayan distribuido, transferido o pagado. Cada origen se cuenta una sola vez.
-- El disponible por nómina y categoría descuenta gastos, aportaciones de ahorro y apartados activos.
-- El simulador y los ingresos supuestos no se incluyen como dinero recibido.
-
-Debajo aparecen los **saldos actuales de toda la cuenta local**, que no cambian con el filtro de nómina: ahorro actual, reservas para deudas pendientes, pagos confirmados, deuda pendiente, lo que falta reunir y retiros de ahorro. Incluyen registros anteriores sin origen de nómina. Son saldos del registro local, no una consulta al banco. No deben sumarse nuevamente a los totales de nóminas. Los retiros de ahorro no crean automáticamente un gasto ni liberan la nómina original.
-
-## Ahorro vinculado
-
-Las nuevas aportaciones requieren elegir una nómina con categoría Ahorro. El importe consume su disponible y no puede reutilizarse en apartados. Los movimientos anteriores sin origen se conservan como ahorro previo; no se inventa una nómina para ellos.
-
-Los retiros salen del saldo de ahorro personal y no devuelven dinero a la nómina. Un retiro no registra automáticamente un gasto ni una transferencia a otro presupuesto. Para corregir una captura, usa **Anular movimiento** con motivo y registra la correcta. La anulación conserva el registro. Se rechaza si produce un saldo negativo en cualquier punto de la historia: primero deben corregirse los retiros que dependían de esa aportación. Los movimientos antiguos sin identificador no muestran anulación.
-
-## Ajustes de objetivos y apartados
-
-En **Correcciones e historial → Ajustar objetivos y apartados concretos**:
-
-- Cambia el objetivo de una deuda pendiente, indicando motivo. Se valida que cubra las reservas individuales y del grupo; las asignaciones ya distribuidas pueden exigir deshacer primero la distribución.
-- Corrige el importe de un apartado concreto vinculado a nómina. El nuevo importe sustituye al anterior y la diferencia actualiza la disponibilidad. Cero anula el apartado.
-- Solo se ofrecen apartados sin transferencias ni distribución; los pagos confirmados se mantienen protegidos. No se reconstruyen orígenes de movimientos antiguos.
-- Los estados anteriores y posteriores, junto con el motivo, se conservan en el historial y en la copia JSON. Los cambios selectivos no requieren deshacer operaciones independientes posteriores.
-
-## Correcciones e historial
-
-El panel registra los nuevos cambios de deudas y grupos. Permite deshacerlos del más reciente al más antiguo, con una vista previa y un motivo obligatorio. La operación original y su corrección permanecen en la copia de seguridad.
-
-- Deshacer un apartado libera su importe en la nómina y categoría de origen.
-- Deshacer una distribución devuelve el dinero al fondo; no libera nuevamente la nómina.
-- Deshacer una modalidad restaura la modalidad y las reservas anteriores.
-- Los pagos confirmados son un límite: no se deshacen ni se puede retroceder a operaciones anteriores a ellos.
-- Los movimientos previos a esta versión se conservan, pero no tienen un estado anterior reconstruible para deshacerlos.
-- El ahorro personal no se modifica al corregir una deuda.
-
-Se muestran los últimos 30 registros, pero se guarda el historial completo. La representación local omite estados iniciales que repiten el resultado del cambio anterior; al cargar se reconstruyen para las correcciones. El espacio utilizado sigue creciendo con el historial. Si el navegador no puede guardar, se rechaza el cambio de deudas y se muestra un aviso. Descarga copias periódicamente. Este historial local no es un registro inalterable ni sustituye los comprobantes de pago.
-
-Las copias nuevas usan la versión 8 e incluyen fechas, metas, recurrencias y correcciones de ingresos, además de ahorro, gastos y categorías. Se siguen leyendo las versiones 1, 2, 3, 4, 5, 6 y 7; si no contienen gastos, esa sección comienza vacía. El botón **Borrar datos anteriores** abre el panel de eliminación. Es necesario escribir **BORRAR**. Se elimina la clave de almacenamiento de esta aplicación mediante removeItem, incluido el historial, y se recarga con un estado nuevo sin movimientos ni ingresos de ejemplo. Las claves de otras aplicaciones se conservan. Las copias descargadas no se borran.
-
-## Archivos
-
-```text
-index.html                 Interfaz y orden de carga
-css/styles.css             Estilos funcionales existentes
-css/sistema.css            Identidad y componentes compartidos
-css/ingresos.css           Vista de ingresos y reparto
-css/movil.css              Adaptación móvil y accesibilidad
-css/cuenta.css             Confirmaciones de corrección
-css/mejoras.css            Actividad, metas y planificación
-js/calculos.js             Operaciones monetarias y reparto
-js/nominas.js              Registro de nóminas
-js/deudas.js               Deudas, grupos y horizonte
-js/fondos.js               Fondos, asignaciones y modalidades
-js/origenes.js             Vínculo de apartados con nóminas
-js/correcciones.js         Validación, historial y reversión
-js/correcciones-avanzadas.js Reconstrucción con vista previa
-js/gastos.js               Gastos por presupuesto, categorías y disponibilidad conjunta
-js/ahorro.js               Origen y correcciones del ahorro personal
-js/ajustes.js              Objetivos y apartados concretos con motivo
-js/grupos.js               Renombrar, trasladar y eliminar grupos vacíos
-js/resumen.js              Conciliación de nóminas y saldos actuales
-js/interfaz.js             Navegación visual y distribución accesible
-js/movil.js                Teclado, rutas y comodidad móvil
-js/datos-mejoras.js        Datos complementarios y guardado completo
-js/ingresos-edicion.js     Corrección y anulación de ingresos
-js/metas-recurrentes.js    Metas, programación y vencimientos
-js/actividad.js            Historial y resumen por fechas
-js/paneles-mejoras.js      Interfaz de las seis mejoras
-js/app.js                  Persistencia, presupuesto, ahorro y arranque
-js/pruebas.js              Comprobaciones existentes
-scripts/servir.cjs         Servidor local de archivos
-tests/finanzas.test.cjs    Pruebas de integración en navegador
+```sh
+git status
+git branch --show-current
+git remote -v
 ```
 
-`guardar()` conserva el estado de deudas y su historial en una misma escritura. `deshacerUltimoCambio()` valida el estado anterior y añade una reversión con referencia a la operación original. `limpiarHistorialCorrecciones()` comprueba las copias antes de aplicarlas. Las pestañas con datos desactualizados deben recargarse antes de guardar.
+Si no hay cambios locales pendientes:
 
-## Verificar cambios
+```sh
+git fetch origin
+git switch main
+git pull --ff-only origin main
+git log -1 --oneline
+```
+
+Si tienes modificaciones que quieres conservar, antes de cambiar de rama:
+
+```sh
+git stash push -u -m "Trabajo local antes de actualizar"
+```
+
+Después ejecuta los comandos de actualización anteriores. Tus cambios quedan guardados; no apliques el stash automáticamente sobre la nueva versión. Si Git avisa de conflictos o historial divergente, detente y revisa el mensaje. No uses reset --hard para resolverlo.
+
+### 5. Actualizar la aplicación instalada
+
+Con internet, entra en **Datos y copias → Instalación, actualizaciones y datos → Buscar actualización**. Termina de guardar tus formularios, descarga una copia y pulsa **Aplicar actualización disponible** cuando aparezca. Revisa la versión instalada y vuelve a comprobar el dispositivo. No borres almacenamiento para actualizar.
+
+## Copias, traslado y borrado
+
+- Exporta un JSON desde **Datos y copias** y verifica que esté en Descargas.
+- Importar reemplaza el conjunto actual; no fusiona copias. Guarda primero una copia de lo que quieras conservar.
+- Cambiar de dirección, puerto, navegador o dispositivo utiliza otro almacenamiento. Traslada los registros con exportar/importar.
+- Las copias contienen información financiera: guárdalas fuera del repositorio público.
+- Para empezar limpio, usa **Borrar datos anteriores → Eliminar datos de este navegador → Sí**. Las copias descargadas no se eliminan.
+- Solicitar conservación de datos al navegador no sustituye una copia descargada.
+- **Comprobar este dispositivo** es una revisión de solo lectura: no crea movimientos ni confirma que una descarga esté guardada a salvo.
+
+## Funciones disponibles
+
+- Nóminas variables y reparto por ingreso; simulador separado de los ingresos recibidos.
+- Gastos por categoría, categorías personalizadas y gastos recurrentes con confirmación.
+- Ahorro personal y metas, con avance visual.
+- Deudas individuales o por grupo; reservas separadas de los pagos.
+- Tarjetas: límite, corte, pago, compras a meses y abonos.
+- Apartados básicos por periodo, gasto real y cierre mensual confirmado.
+- Fondos de emergencia individuales (Gas, Internet, etc.) y suma general sin duplicar dinero. El efectivo aparece como parte del total.
+- Aportaciones y retiros por fondo; desde el general, aportaciones iguales y retiros proporcionales, con vista previa.
+- Gráficas de básicos, ocio, tarjetas/deudas y ahorro; fondos identificados individualmente.
+- Menú izquierdo y vistas independientes, adaptación móvil y movimiento reducido.
+- Copias JSON, correcciones, borrado con confirmación y preparación sin conexión.
+
+## Reglas que mantienen los cálculos
+
+Los importes se calculan en centavos enteros. El reparto de cada nómina se conserva. El disponible descuenta gastos, aportaciones de ahorro, reservas de deuda y compromisos de apartados/tarjetas; los saldos no se suman de nuevo como ingresos.
+
+Un cierre mueve el sobrante al fondo del apartado una sola vez. El total de emergencia es una suma, no una segunda cuenta. Retirar ahorro o emergencia no libera la nómina original ni registra automáticamente un gasto. La tasa anual es una proyección; no genera ganancias reales.
+
+Las gráficas actuales muestran pagos y aportaciones registrados; las reservas y compras a crédito aún sin pagar no se presentan como pagos. La próxima fase separará expresamente el gasto al comprar del flujo de dinero al pagar.
+
+## Preparación de la próxima fase
+
+Se ha añadido un módulo independiente en **js/dominio/base-financiera.mjs**, con pruebas. **Todavía no está conectado a la interfaz ni al almacenamiento actual**: prepara cálculos y validaciones, no activa las nueve funciones completas.
+
+| Función elegida | Base preparada | Siguiente implementación |
+| --- | --- | --- |
+| 1. Cuentas y efectivo | Tipos de cuenta, saldo y crédito disponible | Alta/edición, vinculación voluntaria de datos existentes |
+| 2. Transferencias | Salida y entrada vinculadas, sin ingreso ni gasto ficticio | Formulario y registro atómico |
+| 3. Compras y tarjetas | Compra mixta y pago de tarjeta diferenciados | Vincular compras y pagos a la interfaz actual |
+| 4. Subpresupuestos | Límites y gasto por subcategoría | Editor por periodo y avisos |
+| 5. Calendario | Eventos ordenados por fecha y estado | Integrar recurrencias, deudas y tarjetas sin duplicados |
+| 6. Cierre mensual | Vista previa de ingresos, compras, pagos y cashback | Confirmación persistida y protección frente a doble cierre |
+| 8. Cashback | Pendiente/confirmado, referencia única y saldo a favor | Captura del abono real y vínculo con tarjeta/cuenta |
+| 9. Gasto dividido | Desglose por categoría y medio de pago con suma exacta | Editor visual de divisiones |
+| 11. Proyección | Saldo estimado, trayectoria y mínimo previsto | Derivar eventos pendientes hasta el próximo ingreso |
+
+Consulta [el plan técnico y sus criterios de aceptación](docs/proxima-fase.md). No se reconstruyen cuentas ni fechas antiguas por suposición. Antes de integrar el módulo se añadirá una migración explícita, con vista previa, copia y posibilidad de cancelar.
+
+## Pruebas
+
+Para desarrollar y ejecutar las pruebas, instala las dependencias de desarrollo:
 
 ```sh
 npm install
@@ -145,109 +131,20 @@ npx playwright install chromium
 npm test
 ```
 
-Si ya tienes Microsoft Edge, puedes usarlo en PowerShell:
+La suite cubre cálculos, saldos, guardado fallido, copias, borrado, navegación, gráficos, actualización y uso sin conexión. Las pruebas del módulo nuevo cubren transferencias, cashback, desgloses, presupuestos, fechas y proyecciones. Usa datos ficticios; algunas pruebas generan capturas en test-results/.
 
-```powershell
-$env:BROWSER_CHANNEL = "msedge"
-npm test
-```
+**Pendiente real:** activar Pages desde tu cuenta y probar en tu teléfono instalación, modo avión, reapertura y restauración de una copia. Una APK se evaluará después si la instalación web no es suficiente; no se incluye todavía.
 
-Las pruebas usan datos ficticios y perfiles temporales, sin acceder al almacenamiento de tu navegador habitual.
+## Documentación
 
-## Aplicación independiente
+- [Instalar y usar en el teléfono](docs/instalar-telefono.md)
+- [Actualizar desde VS Code](docs/actualizar-vscode.md)
+- [Navegación](docs/dashboard.md)
+- [Fondos, tarjetas y apartados](docs/version-gestion.md)
+- [Próxima fase](docs/proxima-fase.md)
+- [Guía PDF](docs/guia-instalacion-y-pruebas.pdf)
 
-Funciona con datos locales, sin cuentas ni sincronización automática. Después de la primera instalación por HTTPS puede abrirse sin conexión. Consulta [instalar en el teléfono](docs/instalar-telefono.md).
+La publicación sigue las [instrucciones de GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). La instalación depende del soporte del navegador descrito en la [guía de PWA de MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable).
 
-`manifest.webmanifest` define la instalación; `sw.js` conserva una versión completa de los archivos; `js/instalacion.js` informa del estado y permite actualizar con confirmación. Los registros financieros se mantienen separados en localStorage.
-
-## Corrección de apartados con dependencias
-
-En **Correcciones e historial → Corregir apartados transferidos o distribuidos**, selecciona el apartado y el importe correcto, prepara la vista previa y revisa la lista completa. Se vuelve al estado previo a las transferencias y se corrige el apartado en una sola escritura. Esto revierte también los cambios posteriores independientes de deudas y grupos mostrados en la lista. Los ingresos, gastos y ahorro se conservan y se comprueba la disponibilidad conjunta.
-
-No se atraviesan pagos confirmados. Tampoco se reconstruyen estados que no estén documentados en el historial. Una vista previa obsoleta se rechaza. La operación queda registrada con motivo y puede deshacerse como último cambio; las entradas originales no se eliminan.
-
-
-Para actualizar tu copia del código, consulta [docs/actualizar-vscode.md](docs/actualizar-vscode.md).
-
-
-## Eliminar datos anteriores y seguir guardando
-1. Actualiza el código y abre la web en la misma dirección y navegador donde aparecen los registros antiguos.
-2. Pulsa **Borrar datos anteriores**, cerca del encabezado.
-3. Revisa el resumen y la dirección indicada. Puedes descargar una copia si quieres conservar los registros.
-4. Escribe **BORRAR** y pulsa **Eliminar datos de este navegador**.
-5. Al recargar verás la confirmación. Los registros nuevos se guardan normalmente y sobreviven a próximas recargas.
-
-La eliminación también funciona con una copia local dañada. No necesita escribir una copia vacía antes de borrar, por lo que puede liberar la copia anterior aunque el almacenamiento no admita nuevas escrituras. Si el navegador impide eliminarla, se muestra el error y no se reinicia la aplicación. Tras eliminar, otras pestañas con registros anteriores quedan bloqueadas para evitar que vuelvan a guardarlos.
-
-El almacenamiento pertenece a una dirección y navegador. Por ejemplo, localhost y 127.0.0.1, puertos diferentes y GitHub Pages pueden tener copias separadas. Abre cada ubicación donde existan registros y repite el borrado con la versión actualizada. La web no puede borrar desde una dirección el almacenamiento de otra ni eliminar tus archivos JSON descargados. Si utilizabas un archivo HTML directamente, abre ese mismo archivo actualizado en el mismo navegador.
-
-Se mantiene el guardado permanente para los datos nuevos; no se incorpora un modo temporal.
-
-Referencia sobre el alcance del almacenamiento: [localStorage en MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
-
-La revisión del borrado pasó 59 pruebas de integración, incluidas eliminación de datos corruptos, error de permisos, almacenamiento sin capacidad de escritura, pestañas antiguas y persistencia de ingresos nuevos.
-
-
-## Mejoras de uso diario
-La [guía de las seis mejoras](docs/mejoras-uso.md) explica dónde encontrar cada función y sus límites.
-
-| Función | Ubicación |
-| --- | --- |
-| Corregir o anular ingresos | Ingresos → Ingresos registrados |
-| Historial y buscador | Ingresos → Cada movimiento, en su lugar |
-| Resumen mensual o por pago | Ingresos → Cada movimiento, en su lugar |
-| Vencimientos | Deudas → Fechas de tus deudas |
-| Metas personales | Ahorro → Dale un destino a tu ahorro |
-| Gastos recurrentes | Gastos → Tus gastos recurrentes |
-
-Los ingresos utilizados conservan su importe y reparto; se permite corregir referencia, fecha y periodo. Los ingresos sin referencias pueden cambiar su importe/reparto o anularse con motivo. Las metas no duplican el ahorro y las recurrencias solo descuentan cuando se confirma cada pago. Los registros antiguos sin fecha se conservan como tales.
-
-## Próximos trabajos
-- Validar instalación, cierre y reapertura sin conexión en el teléfono real.
-- Automatizar pruebas y ampliar cobertura de navegadores.
-- Reducir el crecimiento del historial para uso prolongado.
-- Mejorar correcciones relacionadas conservando cambios posteriores independientes.
-- Evaluar avisos fuera de la aplicación según las capacidades del navegador.
-
-Las cuentas y la sincronización automática quedan fuera del alcance elegido. Excel no forma parte de este flujo.
-
-## Actualización e historial compacto
-El botón de actualización conserva la referencia de la versión preparada y comprueba su estado al confirmar. Si no termina, informa del problema y permite reintentar sin borrar registros. Cancelar conserva el formulario abierto.
-
-La [guía del historial compacto](docs/historial-local.md) explica la reducción de repeticiones en el almacenamiento y la compatibilidad de las copias completas versión 8. No se elimina historial.
-
-Referencia del ciclo de actualización: [Service Workers en MDN](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers).
-
-Esta revisión verificó 86 escenarios de integración, incluidos actualización, cancelación, reducción del historial, recarga, importación de copias completas, rechazo de datos inválidos y fallo de escritura. En el escenario de 30 cambios, la representación compacta reduce más del 30 % del texto almacenado; el ahorro real depende de los datos.
-
-La configuración de GitHub Pages, la comprobación en el teléfono y la automatización de pruebas quedan aplazadas. El trabajo de almacenamiento es parcial: falta reducir el crecimiento a largo plazo y el uso de memoria.
-
-## Tarjetas y apartados: versión para probar
-Consulta la [guía de esta versión](docs/version-gestion.md) para probar los siete cambios. Incluye tarjetas y compras a meses, pagos desde ingresos, apartados básicos por periodo, cierre de mes con excedentes, proyección anual y borrado Sí/No. Las copias nuevas usan versión 9 y siguen admitiendo las anteriores.
-
-El nombre de la categoría retirada solo permanece en el migrador de datos antiguos. En pantalla sus importes pendientes se muestran como Por reasignar. Esta versión no incorpora los trabajos previamente aplazados.
-
-La versión de tarjetas y apartados se verificó con 96 escenarios de integración y revisión visual a 390 px. Incluye pagos parciales, ajuste de centavos en la última cuota, límite del ingreso disponible, excedentes al cerrar mes, copias versión 9, borrado Sí/No y migración de saldos por reasignar. La prueba física en teléfono sigue pendiente.
-
-## Menú lateral y configuración de tarjetas
-La navegación vertical se encuentra a la derecha; en celular se abre con Secciones. Las ramas de ingresos, ahorro, fondos y deudas permanecen independientes. Cada tarjeta permite editar límite, día de corte y día de pago, consultar crédito utilizado y disponible y conservar los movimientos anteriores. Consulta [navegación y crédito](docs/navegacion-y-credito.md).
-
-Esta revisión verificó 105 escenarios de integración, incluidos navegación lateral, teclado, historial de rutas, fondos por apartado, límites editables, pagos que liberan crédito, fechas en meses cortos, copias antiguas y bloqueo entre pestañas. Se revisó visualmente a 1440 y 390 px; la prueba física en teléfono continúa pendiente.
-
-## Diseño y navegación
-Menú izquierdo y vistas independientes, con selectores diseñados y animaciones adaptadas al dispositivo. Consulta [la guía del dashboard](docs/dashboard.md).
-
-
-## Fondos individuales y gráficas (noviembre de 2026)
-
-Cada cierre mensual mantiene su sobrante en el fondo del concepto original (Gas, Internet, etc.). El encabezado **Apartado de emergencia general** suma todos los fondos, incluidos los de efectivo; la cifra de efectivo es un desglose de ese total, no dinero adicional. Los registros antiguos se conservan automáticamente.
-
-- En un fondo individual puedes añadir o retirar dinero solo de ese concepto.
-- En **Todos mis fondos** puedes operar sobre el conjunto: las aportaciones se reparten por partes iguales; los retiros, proporcionalmente al saldo. La vista previa muestra el reparto exacto, incluidos centavos.
-- Las aportaciones adicionales usan el saldo disponible de Gastos básicos de un ingreso registrado. Retirar no vuelve a liberar ese ingreso. El historial conserva cierres y movimientos; los apartados con historial de emergencia no se eliminan.
-- **Mis gastos** incorpora una gráfica general y pasteles de básicos, ocio, tarjetas/deudas y ahorro, con filtro por mes. Los gastos de categorías personalizadas se incluyen en Otras categorías. Se cuentan pagos reales y aportaciones brutas al ahorro, no reservas de deudas ni compras a crédito pendientes. Los retiros se consultan en el historial y no se presentan como consumo.
-- Las metas muestran porcentaje y evolución por movimiento con una línea de objetivo. Las tarjetas comparan crédito usado y disponible. Las animaciones respetan la preferencia de movimiento reducido.
-
-La app sigue siendo instalable como PWA y no necesita dependencias gráficas externas. Actualiza desde **Datos y copias → Buscar actualización**. Esta entrega no incluye un APK; la prueba en el teléfono físico sigue siendo necesaria. Exporta/importa una copia si cambias de navegador o de dirección.
-
-La base visual se conserva: menú izquierdo y vistas independientes del 25 de noviembre por la mañana. La gráfica de ahorro identifica cada fondo (Gas, Internet, etc.) y reúne sus sobrantes y aportaciones sin volver a sumar el total general.
+### Verificación de esta entrega
+122 pruebas de integración y 17 pruebas unitarias superadas (139 en total). También se comprobó la entrega del PDF desde el servidor local y se revisaron visualmente sus siete páginas. Esto no sustituye la prueba de instalación en tu teléfono real.

@@ -76,14 +76,19 @@
         <section id="panel-dispositivo" class="panel-dispositivo" aria-label="Aplicación en este dispositivo">
             <div class="estado-dispositivo"><span id="estado-conexion" class="etiqueta-movimiento">Comprobando conexión</span>
             <span id="estado-offline" role="status">Preparando uso sin conexión…</span></div>
-            <div class="fila-botones"><button id="instalar-app" type="button" hidden>Instalar en mi teléfono</button>
+            <p id="version-app" class="ayuda">Versión instalada: por comprobar</p>
+<div class="fila-botones"><button id="instalar-app" type="button" hidden>Instalar en mi teléfono</button>
                 <button id="actualizar-app" type="button" hidden>Aplicar actualización disponible</button></div>
             <details><summary>Instalación, actualizaciones y datos</summary>
                 <p id="instrucciones-instalacion">Con internet: prepara el modo sin conexión y añade la aplicación a tu pantalla de inicio.</p>
                 <p class="ayuda">Datos locales. Conserva una copia descargada.</p>
                 <button id="buscar-actualizacion" type="button">Buscar actualización</button>
                 <button id="proteger-almacenamiento" type="button">Solicitar conservación de datos</button>
-                <p id="mensaje-instalacion" role="status"></p>
+                <button id="comprobar-dispositivo" type="button">Comprobar este dispositivo</button>
+<ul id="diagnostico-dispositivo" class="diagnostico-dispositivo" aria-live="polite"></ul>
+<p><a href="./docs/guia-instalacion-y-pruebas.pdf" download>Descargar guía de instalación y pruebas (PDF)</a></p>
+<p class="ayuda">La guía se descarga con conexión. Guárdala para consultarla después.</p>
+<p id="mensaje-instalacion" role="status"></p>
             </details>
         </section>
         <button id="gestionar-datos" type="button" class="boton-secundario">Borrar datos anteriores</button>

@@ -19,8 +19,11 @@ function comprobarArchivosOffline() {
         const canal = new MessageChannel();
         const cerrar = listo => { clearTimeout(tiempo); canal.port1.close(); resolve(listo); };
         const tiempo = setTimeout(() => cerrar(false), 5000);
-        canal.port1.onmessage = evento => cerrar(evento.data?.listo === true);
-        controlador.postMessage({ tipo: "COMPROBAR_OFFLINE" }, [canal.port2]);
+        canal.port1.onmessage = evento => {
+ if(typeof evento.data?.version==="string")document.getElementById("version-app").textContent="Versión instalada: "+evento.data.version;
+ cerrar(evento.data?.listo === true);
+ };
+        try{controlador.postMessage({ tipo: "COMPROBAR_OFFLINE" }, [canal.port2]);}catch{cerrar(false);}
     });
 }
 async function actualizarEstadoOffline() {
@@ -135,3 +138,22 @@ async function prepararInstalacion() {
     } catch { estadoOffline.textContent = "No se pudo preparar el modo sin conexión. Reintenta con internet y revisa el almacenamiento disponible."; }
 }
 prepararInstalacion();
+
+//Comprobación sin modificar registros ni descargar datos
+async function comprobarDispositivo(){
+ const boton=document.getElementById("comprobar-dispositivo"),lista=document.getElementById("diagnostico-dispositivo");
+ boton.disabled=true;lista.replaceChildren();
+ const fila=(titulo,detalle)=>{const li=document.createElement("li");const b=document.createElement("strong");b.textContent=titulo+": ";li.append(b,document.createTextNode(detalle));lista.append(li);};
+ try{
+ fila("Conexión segura",window.isSecureContext?"Disponible":"Abre la dirección HTTPS publicada.");
+ await actualizarEstadoOffline();
+ fila("Sin conexión",estadoOffline.dataset.listo==="true"?"Archivos completos. Falta confirmar cierre y reapertura en tu teléfono.":"Preparación incompleta. Conéctate y vuelve a comprobar.");
+ fila("Instalación",matchMedia("(display-mode: standalone)").matches||navigator.standalone===true?"Abierta desde el icono de la aplicación.":"Abierta en navegador. Usa Instalar o Añadir a pantalla de inicio.");
+ try{crearCopiaLocal();fila("Datos y copia","Registros válidos para exportar. Comprueba por separado que el archivo JSON se descargó.");}
+ catch{fila("Datos y copia","No se pudo validar la copia. Revisa el estado de guardado antes de continuar.");}
+ let persistente=false;try{persistente=!!await navigator.storage?.persisted?.();}catch{}
+ fila("Conservación",persistente?"Concedida por el navegador. Mantén tus copias descargadas.":"No confirmada. Puedes solicitarla; no sustituye las copias.");
+ }catch{fila("Comprobación","No se pudo completar. Tus registros no se modificaron.");}
+ finally{boton.disabled=false;}
+}
+document.getElementById("comprobar-dispositivo").addEventListener("click",comprobarDispositivo);

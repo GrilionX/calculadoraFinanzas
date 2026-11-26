@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const tipos = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
-    '.js': 'text/javascript; charset=utf-8', '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
+    '.js': 'text/javascript; charset=utf-8', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.pdf': 'application/pdf' };
 
 //Servidor local
 const servidor = http.createServer((req, res) => {
@@ -11,7 +11,7 @@ const servidor = http.createServer((req, res) => {
     try { ruta = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
     catch { res.writeHead(400).end(); return; }
     if (ruta === '/') ruta = '/index.html';
-    if (!(['/index.html', '/sw.js', '/manifest.webmanifest'].includes(ruta) || /^\/icons\/icon-(192|512)\.png$/.test(ruta) || /^\/(css|js)\/[a-zA-Z0-9_.-]+\.(css|js)$/.test(ruta))) {
+    if (!(['/index.html', '/sw.js', '/manifest.webmanifest', '/docs/guia-instalacion-y-pruebas.pdf'].includes(ruta) || /^\/icons\/icon-(192|512)\.png$/.test(ruta) || /^\/(css|js)\/[a-zA-Z0-9_.-]+\.(css|js)$/.test(ruta))) {
         res.writeHead(404).end('Archivo no disponible'); return;
     }
     fs.readFile(path.join(root, ruta), (error, contenido) => {

@@ -5,3 +5,7 @@
 .panel-dispositivo summary { font-size: .875rem; min-height: 44px; }
 .panel-dispositivo button { min-height: 44px; }
 @media (max-width: 780px) { .panel-dispositivo .fila-botones { flex-direction: column; } }
+
+.diagnostico-dispositivo{display:grid;gap:10px;padding:0;list-style:none}.diagnostico-dispositivo li{padding:12px 14px;border:1px solid var(--linea,#ddd);border-radius:12px;background:#f7f5fc;overflow-wrap:anywhere}.diagnostico-dispositivo:empty{display:none}#version-app{font-variant-numeric:tabular-nums}
+
+#panel-dispositivo details>button{margin:6px 8px 6px 0}#comprobar-dispositivo{background:#7154c5;color:#fff}
