@@ -1,0 +1,12 @@
+/*Cuentas y movimientos*/
+.panel-cuentas{display:grid;gap:1.2rem}
+.lista-cuentas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:1rem}
+.tarjeta-cuenta{min-width:0;transition:transform .22s ease,box-shadow .22s ease}
+.tarjeta-cuenta h3,.movimientos-cuentas strong,.movimientos-cuentas span{overflow-wrap:anywhere}
+.acciones-cuenta{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
+.movimientos-cuentas{list-style:none;padding:0;display:grid;gap:.8rem}
+.movimientos-cuentas li{display:grid;gap:.5rem;padding:1rem;background:var(--superficie,#fff);border:1px solid #ddd7ef;border-radius:16px}
+.movimientos-cuentas li button{justify-self:start}
+.movimientos-cuentas span{font-size:.9rem;color:#655e78}
+@media(hover:hover){.tarjeta-cuenta:hover{transform:translateY(-3px);box-shadow:0 12px 28px #54428115}}
+@media(prefers-reduced-motion:reduce){.tarjeta-cuenta{transition:none}.tarjeta-cuenta:hover{transform:none}}

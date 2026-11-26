@@ -1,6 +1,6 @@
 //Tarjetas y apartados
 let gestion = gestionInicial();
-function gestionInicial() { return { version: 1, tarjetas: [], apartados: [] }; }
+function gestionInicial() { return { version: 1, tarjetas: [], apartados: [], cartera: carteraInicial() }; }
 function mesValido(m) { return typeof m === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(m) && +m.slice(0,4) >= 1900; }
 function mesNumero(m) { return +m.slice(0,4)*12 + +m.slice(5,7)-1; }
 function desplazarMes(m,n) { const v=mesNumero(m)+n; return String(Math.floor(v/12)).padStart(4,"0")+"-"+String(v%12+1).padStart(2,"0"); }
@@ -43,6 +43,8 @@ function limpiarGestion(valor,paquete) {
     const d=valor===undefined?gestionInicial():copiar(valor);
     try {
         exigirGestion(d&&d.version===1&&Array.isArray(d.tarjetas)&&Array.isArray(d.apartados));
+        d.cartera ??= carteraInicial();
+        comprobarCartera(d.cartera);
         const ids=new Set();
         const id=x=>{exigirGestion(idMejora(x)&&!ids.has(x));ids.add(x);};
         const dinero=x=>exigirGestion(Number.isSafeInteger(x)&&x>0);

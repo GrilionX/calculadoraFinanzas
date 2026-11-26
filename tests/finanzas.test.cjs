@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-preparacion-8', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-26-cuentas-9', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1599,7 +1599,7 @@ test('gestión: copia versión 9, recuperación y borrado total',async t=>{
     assert.deepEqual(await page.evaluate(()=>gestion),copia.datos.gestion);
     await (await controlPrueba(page,'#gestionar-datos')).click();
     await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
-    assert.deepEqual(await page.evaluate(()=>gestion),{version:1,tarjetas:[],apartados:[]});
+    assert.deepEqual(await page.evaluate(()=>gestion),{version:1,tarjetas:[],apartados:[],cartera:{version:1,cuentas:[],movimientos:[]}});
 });
 test('gestión: borrado Sí/No conserva o libera el saldo sin escribir',async t=>{
     const page=await prepararGestionPrueba(t);
@@ -1994,7 +1994,7 @@ test('instalación: diagnóstico de solo lectura muestra versión y validez de c
  await page.waitForFunction(()=>!document.getElementById('comprobar-dispositivo').disabled);
  assert.equal(await page.locator('#diagnostico-dispositivo li').count(),5);
  assert.match(await page.locator('#diagnostico-dispositivo').textContent(),/Registros válidos para exportar/);
- assert.match(await page.locator('#version-app').textContent(),/2026-11-25-preparacion-8/);
+ assert.match(await page.locator('#version-app').textContent(),/2026-11-26-cuentas-9/);
  assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),antes);
 });
 test('instalación: diagnóstico detecta archivos ausentes sin borrar registros',async t=>{
@@ -2013,4 +2013,85 @@ test('instalación: guía PDF enlazada y descarga identificable',async t=>{
  assert.match(await enlace.getAttribute('href'),/guia-instalacion-y-pruebas.pdf$/);
  const [descarga]=await Promise.all([page.waitForEvent('download'),enlace.click()]);
  assert.equal(descarga.suggestedFilename(),'guia-instalacion-y-pruebas.pdf');
+});
+
+
+test('cuentas: transferencia exacta, reversión única y recarga',async t=>{
+ const {page}=await abrir(t);
+ const result=await page.evaluate(()=>{
+  const fecha=fechaLocalGasto();crearCuentaLocal('Banco','debito','1000',fecha);crearCuentaLocal('Cartera','efectivo','0',fecha);
+  const [a,b]=gestion.cartera.cuentas,antes=JSON.stringify(nominas);
+  transferirCuentas(a.id,b.id,'250.01',fecha,'Retiro','operacion-1');
+  const saldos=[...saldosCuentas().values()];
+  let duplicado=false;try{transferirCuentas(a.id,b.id,'250.01',fecha,'Retiro','operacion-1');}catch{duplicado=true;}
+  revertirTransferencia('operacion-1');let dobleReversion=false;try{revertirTransferencia('operacion-1');}catch{dobleReversion=true;}
+  return {saldos,duplicado,dobleReversion,final:[...saldosCuentas().values()],sinIngresos:antes===JSON.stringify(nominas),movimientos:gestion.cartera.movimientos.length};
+ });
+ assert.deepEqual(result,{saldos:[74999,25001],duplicado:true,dobleReversion:true,final:[100000,0],sinIngresos:true,movimientos:2});
+ await page.reload();assert.deepEqual(await page.evaluate(()=>[...saldosCuentas().values()]),[100000,0]);
+});
+test('cuentas: bloquea sobregiro, misma cuenta, fecha futura y datos corruptos',async t=>{
+ const {page}=await abrir(t);
+ assert.equal(await page.evaluate(()=>{
+  const fecha=fechaLocalGasto();crearCuentaLocal('Banco','debito','100',fecha);crearCuentaLocal('Efectivo','efectivo','0',fecha);
+  const [a,b]=gestion.cartera.cuentas,antes=JSON.stringify(gestion);
+  const acciones=[()=>transferirCuentas(a.id,b.id,'101',fecha,'Exceso','exceso'),()=>transferirCuentas(a.id,a.id,'1',fecha,'Igual','igual'),()=>transferirCuentas(a.id,b.id,'1','2999-01-01','Futuro','futuro'),()=>crearCuentaLocal('banco','debito','0',fecha),()=>archivarCuentaLocal(a.id),()=>borrarCuentaLocal(a.id)];
+  for(const fn of acciones){let fallo=false;try{fn();}catch{fallo=true;}if(!fallo||JSON.stringify(gestion)!==antes)return false;}
+  const copia=crearCopiaLocal();copia.datos.gestion.cartera.cuentas[0].saldoInicialCentavos=-1;
+  return !aplicarDatos(copia.datos,true)&&JSON.stringify(gestion)===antes;
+ }),true);
+});
+test('cuentas: conciliación con saldo esperado, archivo y recuperación de copia',async t=>{
+ const {page}=await abrir(t);
+ const copia=await page.evaluate(()=>{
+  const fecha=fechaLocalGasto();crearCuentaLocal('Cartera','efectivo','10',fecha);
+  const id=gestion.cartera.cuentas[0].id;
+  conciliarCuenta(id,'0',fecha,'Conteo de efectivo',1000,'ajuste-1');
+  let desactualizado=false;try{conciliarCuenta(id,'8',fecha,'Borrador antiguo',1000,'ajuste-2');}catch{desactualizado=true;}
+  if(!desactualizado)throw Error('Aceptó saldo desactualizado');
+  archivarCuentaLocal(id);return crearCopiaLocal();
+ });
+ await page.evaluate(c=>restaurarCopiaLocal(c),copia);await page.reload();
+ assert.deepEqual(await page.evaluate(()=>gestion.cartera),copia.datos.gestion.cartera);
+});
+test('cuentas: escritura fallida conserva ambos saldos y el historial',async t=>{
+ const {page}=await abrir(t);
+ assert.equal(await page.evaluate(()=>{
+  const fecha=fechaLocalGasto();crearCuentaLocal('Banco','debito','100',fecha);crearCuentaLocal('Efectivo','efectivo','0',fecha);
+  const [a,b]=gestion.cartera.cuentas,antes=JSON.stringify(gestion),guardado=localStorage.getItem(CLAVE_GUARDADO),set=Storage.prototype.setItem;
+  Storage.prototype.setItem=()=>{throw Error('Sin espacio');};let fallo=false;
+  try{transferirCuentas(a.id,b.id,'10',fecha,'Retiro','fallida');}catch{fallo=true;}finally{Storage.prototype.setItem=set;}
+  return fallo&&JSON.stringify(gestion)===antes&&localStorage.getItem(CLAVE_GUARDADO)===guardado;
+ }),true);
+});
+test('cuentas: copia antigua inicia vacía sin convertir nóminas',async t=>{
+ const {page}=await abrir(t);
+ assert.equal(await page.evaluate(()=>{
+  const copia=crearCopiaLocal();delete copia.datos.gestion.cartera;
+  const ingresos=JSON.stringify(copia.datos.nominas);restaurarCopiaLocal(copia);
+  return gestion.cartera.cuentas.length===0&&gestion.cartera.movimientos.length===0&&JSON.stringify(nominas)===ingresos;
+ }),true);
+});
+test('cuentas: formulario móvil, transferencia y borrado total',async t=>{
+ const {page,errors}=await abrir(t);await page.setViewportSize({width:360,height:800});
+ await navegarPrueba(page,'cuentas');
+ await page.locator('#nueva-cuenta').evaluate(f=>f.closest('details').open=true);
+ await page.locator('#nueva-cuenta [name=nombre]').fill('Mi efectivo');
+ await page.locator('#nueva-cuenta [name=saldo]').fill('100');
+ await page.locator('#nueva-cuenta button[type=submit]').click();
+ await page.evaluate(()=>crearCuentaLocal('Banco','debito','0',fechaLocalGasto()));
+ await page.locator('#transferir-cuentas').evaluate(f=>{
+  f.closest('details').open=true;
+  f.elements.origen.value=gestion.cartera.cuentas[0].id;f.elements.destino.value=gestion.cartera.cuentas[1].id;
+  f.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await page.locator('#transferir-cuentas [name=monto]').fill('25');
+ await page.locator('#transferir-cuentas button[type=submit]').click();
+ assert.deepEqual(await page.evaluate(()=>[...saldosCuentas().values()]),[7500,2500]);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+ assert.equal(await page.locator('[data-pagina]:visible').count(),1);
+ await (await controlPrueba(page,'#gestionar-datos')).click();
+ await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
+ assert.deepEqual(await page.evaluate(()=>gestion.cartera),{version:1,cuentas:[],movimientos:[]});
+ assert.deepEqual(errors,[]);
 });

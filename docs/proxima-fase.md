@@ -1,3 +1,5 @@
+> Actualización: cuentas de efectivo/débito y transferencias ya tienen interfaz, persistencia y pruebas. Consulta [Cuentas y transferencias](cuentas-y-transferencias.md). Los contratos siguientes para compras, cashback y demás funciones siguen siendo preparación; todavía no actualizan las cuentas desde sus pantallas.
+
 # Próxima fase: base preparada, integración pendiente
 
 ## Alcance de esta entrega

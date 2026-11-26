@@ -109,8 +109,8 @@ Se ha añadido un módulo independiente en **js/dominio/base-financiera.mjs**, c
 
 | Función elegida | Base preparada | Siguiente implementación |
 | --- | --- | --- |
-| 1. Cuentas y efectivo | Tipos de cuenta, saldo y crédito disponible | Alta/edición, vinculación voluntaria de datos existentes |
-| 2. Transferencias | Salida y entrada vinculadas, sin ingreso ni gasto ficticio | Formulario y registro atómico |
+| 1. Cuentas y efectivo | Alta, nombres, saldos iniciales, conciliación y archivo disponibles | Vincular ingresos, compras y tarjetas |
+| 2. Transferencias | Formulario, vista previa, registro atómico, reversión e historial disponibles | Integración con los demás movimientos |
 | 3. Compras y tarjetas | Compra mixta y pago de tarjeta diferenciados | Vincular compras y pagos a la interfaz actual |
 | 4. Subpresupuestos | Límites y gasto por subcategoría | Editor por periodo y avisos |
 | 5. Calendario | Eventos ordenados por fecha y estado | Integrar recurrencias, deudas y tarjetas sin duplicados |
@@ -120,6 +120,12 @@ Se ha añadido un módulo independiente en **js/dominio/base-financiera.mjs**, c
 | 11. Proyección | Saldo estimado, trayectoria y mínimo previsto | Derivar eventos pendientes hasta el próximo ingreso |
 
 Consulta [el plan técnico y sus criterios de aceptación](docs/proxima-fase.md). No se reconstruyen cuentas ni fechas antiguas por suposición. Antes de integrar el módulo se añadirá una migración explícita, con vista previa, copia y posibilidad de cancelar.
+
+## Cuentas y efectivo: disponible
+
+Abre **Ingresos → Cuentas y efectivo** para registrar efectivo y débito, transferir y conciliar saldos. Se conservan en tus copias JSON y se borran con el restablecimiento total. Los saldos de cuentas no se suman de nuevo a ingresos o apartados. Los gastos y las nóminas todavía no actualizan estas cuentas automáticamente.
+
+[Uso, reglas y archivos que puedes ajustar](docs/cuentas-y-transferencias.md).
 
 ## Pruebas
 
@@ -147,4 +153,4 @@ La suite cubre cálculos, saldos, guardado fallido, copias, borrado, navegación
 La publicación sigue las [instrucciones de GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). La instalación depende del soporte del navegador descrito en la [guía de PWA de MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable).
 
 ### Verificación de esta entrega
-122 pruebas de integración y 17 pruebas unitarias superadas (139 en total). También se comprobó la entrega del PDF desde el servidor local y se revisaron visualmente sus siete páginas. Esto no sustituye la prueba de instalación en tu teléfono real.
+128 pruebas de integración y 17 pruebas unitarias superadas (145 en total). Se revisó la nueva vista en pantalla móvil simulada. El PDF existente cubre la instalación; las instrucciones nuevas de cuentas están en la guía enlazada arriba. Esto no sustituye la prueba de instalación en tu teléfono real.

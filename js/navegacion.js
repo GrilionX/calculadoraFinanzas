@@ -36,7 +36,7 @@ function rutaLateral(ruta) {
         return a?{vista:"ahorro",grupo:"ahorro",target:"fondo-"+id}:null;
     }
     return ({
- datos:{grupo:"",vista:"datos"},correcciones:{grupo:"",vista:"correcciones"},actividad:{grupo:"ingresos",vista:"reparto"},simulador:{grupo:"ingresos",vista:"reparto"},
+ cuentas:{grupo:"ingresos",vista:"reparto"},datos:{grupo:"",vista:"datos"},correcciones:{grupo:"",vista:"correcciones"},actividad:{grupo:"ingresos",vista:"reparto"},simulador:{grupo:"ingresos",vista:"reparto"},
         ingresos:{vista:"reparto",grupo:"ingresos",target:"titulo-nomina"},
         gastos:{vista:"gastos",grupo:"ingresos",target:"titulo-gastos"},
         destinos:{vista:"reparto",grupo:"ingresos",target:"apartados-basicos"},
