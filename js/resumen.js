@@ -17,7 +17,7 @@ function calcularResumenFinanciero(nominaId = "") {
     const ingresos = sumar(pagos.map(n => n.montoCentavos));
     const pagosTarjeta = gestion.tarjetas.flatMap(t => t.compras.flatMap(c => c.pagos)).filter(p => ids.has(p.nominaId));
     const gastos = sumar([...gastosBasicos.filter(g => !g.anulacion && ids.has(g.nominaId)).map(g => g.montoCentavos), ...pagosTarjeta.map(p => p.montoCentavos)]);
-    const destinadoBasicos = sumar(gestion.apartados.flatMap(a => a.aportes).filter(p => ids.has(p.nominaId)).map(p => p.montoCentavos));
+    const destinadoBasicos = sumar(gestion.apartados.flatMap(a => [...a.aportes,...(a.emergencia??[]).filter(m=>m.tipo==="aportacion")]).filter(p => ids.has(p.nominaId)).map(p => p.montoCentavos));
     const ahorroDestinado = sumar(compromisosAhorro().filter(m => ids.has(m.nominaId)).map(m => m.montoCentavos));
     const destinadoDeudas = sumar(obtenerApartadosNomina().filter(m => ids.has(m.nominaId)).map(m => m.montoCentavos));
     const filas = [];

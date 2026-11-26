@@ -32,7 +32,7 @@ panelNavegacion.addEventListener("keydown",e=>{
 });
 function rutaLateral(ruta) {
     if(ruta.startsWith("fondo:")) {
-        const id=ruta.slice(6),a=gestion.apartados.find(a=>a.id===id&&a.medio==="tarjeta");
+        const id=ruta.slice(6),a=gestion.apartados.find(a=>a.id===id);
         return a?{vista:"ahorro",grupo:"ahorro",target:"fondo-"+id}:null;
     }
     return ({
@@ -70,7 +70,7 @@ panelNavegacion.addEventListener("click",e=>{
 });
 function actualizarFondosLateral() {
     const contenedor=document.getElementById("enlaces-fondos");if(!contenedor)return;
-    const fondos=gestion.apartados.filter(a=>a.medio==="tarjeta");
+    const fondos=gestion.apartados;
     const firma=JSON.stringify(fondos.map(a=>[a.id,a.nombre]));
     actualizarVistaDinamica();
     if(contenedor.dataset.firma===firma)return;

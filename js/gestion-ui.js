@@ -23,7 +23,7 @@ function formularioGestion(id,titulo,construir,accion) {
     const d=nodoGestion("details",undefined,"accion-gestion"),summary=nodoGestion("summary",titulo),f=document.createElement("form");
     f.id=id;f.className="formulario-gestion";construir(f);
     const b=nodoGestion("button","Guardar","boton-principal");b.type="submit";f.append(b);
-    f.addEventListener("submit",e=>{e.preventDefault();try{accion(Object.fromEntries(new FormData(f)));const actual=document.getElementById(id);if(actual){actual.reset();actual.closest("details").open=false;}avisoGestion("Guardado.");}catch(err){avisoGestion(err.message,true);}});
+    f.addEventListener("submit",e=>{e.preventDefault();try{accion(Object.fromEntries(new FormData(f)));const actual=document.getElementById(id);if(actual){actual.reset();actual.dispatchEvent(new Event("change"));actual.closest("details").open=false;}avisoGestion("Guardado.");}catch(err){avisoGestion(err.message,true);}});
     d.append(summary,f);return d;
 }
 function resumenMoneda(titulo,monto,clave) {
@@ -77,7 +77,7 @@ function mostrarGestion() {
         else creditoUI.append(nodoGestion("p","Límite sin configurar","etiqueta"));
         card.append(creditoUI,nodoGestion("p","Corte: "+(fechas.corte||"Sin configurar")+" · Pago: "+(fechas.pago||"Sin configurar"),"fechas-credito"));
         if(credito.excedido)card.append(nodoGestion("p","Límite excedido: "+monedaGestion(credito.excedido),"aviso error"));
-        if(credito.limite>0){const barra=document.createElement("progress");barra.max=credito.limite;barra.value=Math.min(credito.utilizado,credito.limite);barra.setAttribute("aria-label","Crédito utilizado");card.append(barra);}
+        if(credito.limite>0){const barra=document.createElement("progress");barra.max=credito.limite;barra.value=Math.min(credito.utilizado,credito.limite);barra.setAttribute("aria-label","Crédito utilizado");card.append(barra);card.append(graficaPastel("Uso de crédito",[["Usado",credito.utilizado],["Disponible",credito.disponible]]));}
         card.append(formularioGestion("editar-tarjeta-"+t.id,"Editar límite y fechas",f=>camposCredito(f,t),v=>editarTarjeta(t.id,v.nombre,v.limite,v.corte,v.pago)));
         card.append(botonGestion("Eliminar tarjeta",()=>eliminarFilaGestion("tarjeta",t.id), "boton-peligro"));
         card.append(formularioGestion("compra-"+t.id,"＋ Compra o saldo",f=>{
@@ -144,15 +144,19 @@ function mostrarGestion() {
         card.append(historial,botonGestion("Eliminar apartado",()=>eliminarFilaGestion("apartado",a.id)));panelApartados.append(card);
     }
     const s=saldosApartados();panelAhorros.replaceChildren(nodoGestion("h2","Fondo de emergencia"));
-    const grid=nodoGestion("div",undefined,"saldos-gestion");grid.append(resumenMoneda("Fondo de emergencia",s.emergencia,"fondo-emergencia"),resumenMoneda("Ahorro en efectivo",s.efectivo,"ahorro-efectivo"));panelAhorros.append(grid);
-    for(const a of gestion.apartados.filter(a=>a.medio==="tarjeta")) {
+    const grid=nodoGestion("div",undefined,"saldos-gestion");grid.append(resumenMoneda("Apartado de emergencia general",sumaGestion([s.emergencia,s.efectivo]),"fondo-emergencia"),resumenMoneda("Del total: en efectivo",s.efectivo,"ahorro-efectivo"));panelAhorros.append(grid,controlesEmergencia("general"));
+    for(const a of gestion.apartados) {
         const fondo=nodoGestion("article",undefined,"fondo-emergencia");fondo.id="fondo-"+a.id;fondo.tabIndex=-1;
-        fondo.append(resumenMoneda("Fondo de emergencia "+a.nombre,sumaGestion(a.cierres.map(c=>c.excedente)),a.id+"fondo"));
-        panelAhorros.append(fondo);
+        fondo.append(resumenMoneda("Fondo de emergencia "+a.nombre,saldoEmergencia(a),a.id+"fondo"));
+        fondo.append(nodoGestion("p",a.medio==="efectivo"?"Guardado en efectivo":"Guardado en tarjeta / cuenta","etiqueta"),controlesEmergencia(a.id));
+        const historial=nodoGestion("details");historial.append(nodoGestion("summary","Historial del fondo"));
+        for(const c of a.cierres)historial.append(nodoGestion("p",c.fecha+" · Sobrante de "+c.mes+" · +"+monedaGestion(c.excedente)));
+        for(const m of a.emergencia??[])historial.append(nodoGestion("p",m.fecha+" · "+m.concepto+" · "+(m.tipo==="retiro"?"−":"+")+monedaGestion(m.montoCentavos)));
+        fondo.append(historial);panelAhorros.append(fondo);
     }
     panelAhorros.append(botonGestion("＋ Añadir fondo",()=>irSeccionLateral("nuevo-fondo")));
     if(typeof actualizarFondosLateral==="function")actualizarFondosLateral();
-    for(const [id,b]of borradores){const f=document.getElementById(id);if(!f)continue;f.closest("details").open=b.abierto;for(const [n,v]of b.datos){const el=f.elements.namedItem(n);if(el){el.value=v;if(n==="nomina")el.dispatchEvent(new Event("change"));}}}
+    for(const [id,b]of borradores){const f=document.getElementById(id);if(!f)continue;f.closest("details").open=b.abierto;for(const [n,v]of b.datos){const el=f.elements.namedItem(n);if(el){el.value=v;if(n==="nomina")el.dispatchEvent(new Event("change"));}}f.dispatchEvent(new Event("change"));}
 }
 const mostrarNominasAnterior=mostrarHistorialNominas;
 mostrarHistorialNominas=function(){mostrarNominasAnterior();mostrarGestion();};

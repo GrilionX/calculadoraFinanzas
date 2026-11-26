@@ -24,7 +24,7 @@ function saldosApartados(d=gestion) {
     let emergencia=0,efectivo=0,reservado=0;
     for(const a of d.apartados) {
         const cerrado=sumaGestion(a.cierres.map(c=>c.excedente));
-        if(a.medio==="efectivo")efectivo+=cerrado;else emergencia+=cerrado;
+        if(a.medio==="efectivo")efectivo=sumaGestion([efectivo,saldoEmergencia(a)]);else emergencia=sumaGestion([emergencia,saldoEmergencia(a)]);
         reservado+=sumaGestion(a.aportes.map(x=>x.montoCentavos))-sumaGestion(a.gastos.map(x=>x.montoCentavos))-cerrado;
     }
     return {emergencia,efectivo,reservado};
@@ -36,7 +36,7 @@ function proyectarApartado(centavos,tasa,meses=12) {
     return resultado;
 }
 function compromisosGestion(d=gestion) {
-    return [...d.apartados.flatMap(a=>a.aportes.map(x=>({id:x.id,nominaId:x.nominaId,categoriaId:"basicos",montoCentavos:x.montoCentavos}))),
+    return [...d.apartados.flatMap(a=>[...a.aportes,...(a.emergencia??[]).filter(x=>x.tipo==="aportacion")].map(x=>({id:x.id,nominaId:x.nominaId,categoriaId:"basicos",montoCentavos:x.montoCentavos}))),
         ...d.tarjetas.flatMap(t=>t.compras.flatMap(c=>c.pagos.map(p=>({id:p.id,nominaId:p.nominaId,categoriaId:p.categoriaId,montoCentavos:p.montoCentavos}))))];
 }
 function limpiarGestion(valor,paquete) {
@@ -61,6 +61,9 @@ function limpiarGestion(valor,paquete) {
         }
         for(const a of d.apartados) {
             id(a.id);dinero(a.porPeriodo);
+            a.emergencia ??= [];
+            exigirGestion(Array.isArray(a.emergencia));
+            for(const m of a.emergencia){id(m.id);dinero(m.montoCentavos);exigirGestion(["aportacion","retiro"].includes(m.tipo)&&fechaGastoValida(m.fecha)&&textoMejora(m.concepto,80));if(m.tipo==="aportacion")origen(m.nominaId,"basicos");else exigirGestion(m.nominaId===null);}
             exigirGestion(textoMejora(a.nombre,60)&&["efectivo","tarjeta"].includes(a.medio)&&Number.isFinite(a.tasa)&&a.tasa>=0&&a.tasa<=1000&&Array.isArray(a.aportes)&&Array.isArray(a.gastos)&&Array.isArray(a.cierres));
             for(const x of a.aportes){id(x.id);dinero(x.montoCentavos);origen(x.nominaId,"basicos");exigirGestion(mesValido(x.mes)&&fechaGastoValida(x.fecha));}
             for(const x of a.gastos){id(x.id);dinero(x.montoCentavos);exigirGestion(fechaGastoValida(x.fecha)&&textoMejora(x.concepto,80));}
@@ -68,6 +71,8 @@ function limpiarGestion(valor,paquete) {
             for(const m of meses)exigirGestion(resumenApartado(a,m).excedente>=0,"El gasto supera el apartado.");
             const cerrados=new Set();
             for(const c of a.cierres){exigirGestion(mesValido(c.mes)&&!cerrados.has(c.mes)&&fechaGastoValida(c.fecha)&&Number.isSafeInteger(c.excedente)&&c.excedente>=0&&c.excedente===resumenApartado(a,c.mes).excedente);cerrados.add(c.mes);}
+            let saldo=sumaGestion(a.cierres.map(c=>c.excedente));
+            for(const m of a.emergencia){saldo=sumaGestion([saldo,m.tipo==="retiro"?-m.montoCentavos:m.montoCentavos]);exigirGestion(saldo>=0,"El retiro supera el fondo individual.");}
         }
         saldosApartados(d);
         return d;
@@ -140,7 +145,7 @@ function borrarGestion(tipo,id,padre,abuelo) {
         if(tipo==="tarjeta")d.tarjetas=d.tarjetas.filter(t=>t.id!==id);
         if(tipo==="compra"){const t=d.tarjetas.find(t=>t.id===padre);exigirGestion(t);t.compras=t.compras.filter(c=>c.id!==id);}
         if(tipo==="pago"){const c=d.tarjetas.find(t=>t.id===abuelo)?.compras.find(c=>c.id===padre);exigirGestion(c);c.pagos=c.pagos.filter(p=>p.id!==id);}
-        if(tipo==="apartado")d.apartados=d.apartados.filter(a=>a.id!==id);
+        if(tipo==="apartado"){const a=d.apartados.find(a=>a.id===id);exigirGestion(a&&!a.cierres.length&&!(a.emergencia??[]).length,"Conserva este apartado: tiene historial de emergencia.");d.apartados=d.apartados.filter(a=>a.id!==id);}
         if(tipo==="aporte"||tipo==="gasto"){const a=d.apartados.find(a=>a.id===padre);exigirGestion(a);const campo=tipo==="aporte"?"aportes":"gastos";const x=a[campo].find(x=>x.id===id);exigirGestion(x);const mes=x.mes??x.fecha.slice(0,7);exigirGestion(!a.cierres.some(c=>c.mes===mes),"El mes ya está cerrado.");a[campo]=a[campo].filter(x=>x.id!==id);}
     });
 }

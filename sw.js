@@ -1,8 +1,9 @@
 //Solo archivos de la aplicación: nunca copias ni registros personales
-const VERSION = "2026-11-25-dashboard-5";
+const VERSION = "2026-11-25-emergencia-6";
 const PREFIJO = "mis-finanzas-app:" + self.registration.scope + ":";
 const CACHE = PREFIJO + VERSION;
 const ARCHIVOS = [
+    "js/emergencia.js","js/graficas.js","css/graficas.css",
     "js/espacio.js","js/controles.js","css/dashboard.css",
     "index.html",
     "manifest.webmanifest",

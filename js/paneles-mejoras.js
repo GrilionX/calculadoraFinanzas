@@ -139,6 +139,7 @@ function mostrarMetasAhorro() {
         tarjeta.append(elementoMejora("h4", m.nombre + (m.archivada ? " · Archivada" : "")),
             elementoMejora("p", formatoMoneda.format(saldo / 100) + " de " + formatoMoneda.format(m.objetivoCentavos / 100)), progreso,
             elementoMejora("p", saldo >= m.objetivoCentavos ? "Objetivo reunido" : "Faltan " + formatoMoneda.format((m.objetivoCentavos - saldo) / 100), "ayuda"));
+        tarjeta.append(graficaMeta(m,saldo));
         const editar = elementoMejora("button", "Editar meta"); editar.type = "button";
         editar.addEventListener("click", () => {
             uiMejora("editor-meta").open = true; uiMejora("meta-id").value = m.id;
@@ -237,7 +238,7 @@ function mostrarPanelesMejoras() {
     const cats = new Map(nominas.flatMap(n => n.reparto.map(c => [c.id, c.nombre])));
     opcionesMejora("actividad-categoria", [...cats], "Todas las categorías");
     const filas = movimientosUnificados();
-    mostrarResumenPeriodos(filas); mostrarActividad(filas); mostrarMetasAhorro(); mostrarVencimientos(); mostrarRecurrentes();
+    mostrarGraficasGastos(); mostrarResumenPeriodos(filas); mostrarActividad(filas); mostrarMetasAhorro(); mostrarVencimientos(); mostrarRecurrentes();
 }
 
 //Eventos de los paneles

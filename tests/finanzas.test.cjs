@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-dashboard-5', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-25-emergencia-6', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1854,4 +1854,120 @@ test('dashboard: selector obligatorio recibe foco y opciones dinámicas',async t
  await select.evaluate(s=>{s.disabled=true;});
  await page.waitForFunction(()=>document.querySelector('#nuevo-apartado [name=medio]').nextElementSibling.disabled);
  assert.equal(await boton.isDisabled(),true);
+});
+
+test('emergencia: saldo individual, operación global exacta y conservación del ingreso',async t=>{
+ const page=await prepararGestionPrueba(t);
+ const r=await page.evaluate(()=>{
+  crearApartado('Gas','tarjeta','150',0);crearApartado('Internet','efectivo','100',0);
+  const [gas,internet]=gestion.apartados.map(a=>a.id);
+  aportarBasico(gas,'n1','150','2026-11');gastarApartado(gas,'Recarga','100','2026-11-01');cerrarMesApartado(gas,'2026-11');
+  moverEmergencia(gas,'aportacion','10','n1','Extra gas');
+  const individual=gestion.apartados.map(saldoEmergencia);
+  moverEmergencia('general','aportacion','0.03','n1','Redondeo');
+  const antes=gestion.apartados.map(saldoEmergencia);
+  moverEmergencia('general','retiro','0.02',null,'Uso general');
+  const despues=gestion.apartados.map(saldoEmergencia);
+  const copia=crearCopiaLocal();
+  return {individual,antes,despues,saldo:calcularResumenFinanciero().ahorroActual,disponible:calcularResumenFinanciero().disponible,copia:!!copia.datos.gestion.apartados[0].emergencia};
+ });
+ assert.deepEqual(r,{individual:[6000,0],antes:[6002,1],despues:[6000,1],saldo:6001,disponible:183997,copia:true});
+ await page.reload();assert.equal(await page.evaluate(()=>calcularResumenFinanciero().ahorroActual),6001);
+});
+
+test('emergencia: rechaza sobregiro individual, importación inválida y borrado con historial',async t=>{
+ const page=await prepararGestionPrueba(t);
+ assert.equal(await page.evaluate(()=>{
+  crearApartado('Gas','tarjeta','10',0);crearApartado('Internet','tarjeta','10',0);
+  const id=gestion.apartados[0].id;moverEmergencia(id,'aportacion','10','n1','Extra');
+  const antes=localStorage.getItem(CLAVE_GUARDADO);let errores=0;
+  for(const accion of [()=>moverEmergencia(gestion.apartados[1].id,'retiro','1',null,'Uso'),()=>moverEmergencia('general','retiro','11',null,'Uso'),()=>moverEmergencia(id,'aportacion','2000','n1','Exceso'),()=>borrarGestion('apartado',id)])try{accion();}catch{errores++;}
+  const malo=copiar(construirPaquete());malo.gestion.apartados[0].emergencia.push({id:crypto.randomUUID(),tipo:'retiro',montoCentavos:1001,nominaId:null,concepto:'Inválido',fecha:fechaLocalGasto()});
+  return errores===4&&!aplicarDatos(malo,true)&&antes===localStorage.getItem(CLAVE_GUARDADO);
+ }),true);
+});
+
+test('emergencia: fallo de guardado revierte todos los fondos de la operación',async t=>{
+ const page=await prepararGestionPrueba(t);
+ assert.equal(await page.evaluate(()=>{
+  crearApartado('Gas','tarjeta','10',0);crearApartado('Internet','efectivo','10',0);
+  const antes=JSON.stringify(gestion),set=Storage.prototype.setItem;let error=false;
+  Storage.prototype.setItem=function(){throw new Error('Sin espacio');};
+  try{moverEmergencia('general','aportacion','10','n1','Extra');}catch{error=true;}finally{Storage.prototype.setItem=set;}
+  return error&&antes===JSON.stringify(gestion);
+ }),true);
+});
+
+test('emergencia: formulario individual oculta operaciones generales y permite retirar sin ingreso',async t=>{
+ const page=await prepararGestionPrueba(t);
+ const id=await page.evaluate(()=>{crearApartado('Gas','tarjeta','10',0);const id=gestion.apartados[0].id;moverEmergencia(id,'aportacion','10','n1','Extra');return id;});
+ await navegarPrueba(page,'fondo:'+id);
+ assert.equal(await page.locator('#movimiento-emergencia-general').isVisible(),false);
+ const form=page.locator('#movimiento-emergencia-'+id);await form.evaluate(f=>f.closest('details').open=true);
+ await form.locator('[name=tipo]').selectOption({value:'retiro'},{force:true});
+ await form.locator('[name=monto]').fill('3.50');await form.locator('[name=concepto]').fill('Reparación');
+ await form.locator('button[type=submit]').click();
+ assert.equal(await page.evaluate(()=>saldoEmergencia(gestion.apartados[0])),650);
+ await navegarPrueba(page,'emergencia');
+ assert.equal(await page.locator('#movimiento-emergencia-general').evaluate(f=>!f.closest('details').hidden),true);
+});
+
+test('gráficas: movimientos reales sin duplicar reservas ni compras a crédito',async t=>{
+ const page=await prepararGestionPrueba(t);
+ const r=await page.evaluate(()=>{
+  crearApartado('Gas','tarjeta','150',0);const id=gestion.apartados[0].id;
+  aportarBasico(id,'n1','150','2026-11');gastarApartado(id,'Gas','100','2026-11-01');cerrarMesApartado(id,'2026-11');
+  crearTarjeta('Banco','1000');const tarjeta=gestion.tarjetas[0].id;crearCompra(tarjeta,'Compra','500',1,'2026-11');pagarCompra(tarjeta,gestion.tarjetas[0].compras[0].id,'20','n1','basicos','2026-11-02');
+  const datos=datosGraficasGastos();return Object.fromEntries(Object.entries(datos).map(([k,v])=>[k,[...v.values()].reduce((a,b)=>a+b,0)]));
+ });
+ assert.deepEqual(r,{basicos:10000,ocio:0,deudas:2000,ahorro:5000,otros:0});
+ await navegarPrueba(page,'gastos');assert.equal(await page.locator('#graficas-gastos figure').count(),5);
+ await page.locator('#periodo-graficas').selectOption('2026-11',{force:true});
+ assert.match(await page.locator('#graficas-gastos').textContent(),/Gastos básicos/);
+});
+
+test('gráficas: móvil, estados vacíos, crédito y progreso de metas sin errores',async t=>{
+ const page=await prepararGestionPrueba(t);const errores=[];page.on('pageerror',e=>errores.push(e.message));
+ await page.evaluate(()=>{
+  crearApartado('Gas','tarjeta','150',0);crearApartado('Internet','efectivo','100',0);moverEmergencia('general','aportacion','300','n1','Reserva');
+  crearTarjeta('Banco','1000');crearCompra(gestion.tarjetas[0].id,'Equipo','250',1,'2026-11');
+  guardarMetaAhorro('','Viaje','500');mostrarPanelesMejoras();
+ });
+ fs.mkdirSync(path.resolve(__dirname,'../test-results'),{recursive:true});
+ for(const width of [360,390,1280]){
+  await page.setViewportSize({width,height:850});
+  for(const ruta of ['emergencia','gastos','tarjetas','ahorro']){
+   await navegarPrueba(page,ruta);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,ruta+' '+width);
+   if(width===390||width===1280)await page.screenshot({path:path.resolve(__dirname,`../test-results/${ruta}-${width}.png`),fullPage:true,animations:"disabled"});
+  }
+ }
+ assert.equal(await page.locator('#lista-metas svg').count(),1);
+ await page.emulateMedia({reducedMotion:'reduce'});assert.deepEqual(errores,[]);
+});
+
+test('gráficas: la meta refleja aportaciones y retiros, incluso por encima del objetivo',async t=>{
+ const {page}=await abrirGastosPrueba(t);
+ await page.evaluate(()=>{
+  guardarMetaAhorro('','Objetivo','100');const id=mejoras.metas[0].id;
+  registrarAhorroVinculado('aportacion','Aporte','200','n1',id,'2026-11-01');
+  registrarAhorroVinculado('retiro','Uso','50','',id,'2026-11-02');
+ });
+ assert.match(await page.locator('#lista-metas .grafica-meta').textContent(),/150.0%/);
+ const puntos=await page.locator('#lista-metas polyline').getAttribute('points');
+ assert.equal(puntos.split(' ').length,3);
+ await page.reload();assert.match(await page.locator('#lista-metas .grafica-meta').textContent(),/150.0%/);
+});
+
+test('emergencia: volver a abrir después de retirar restaura el ingreso obligatorio',async t=>{
+ const page=await prepararGestionPrueba(t);
+ const id=await page.evaluate(()=>{crearApartado('Gas','tarjeta','10',0);const id=gestion.apartados[0].id;moverEmergencia(id,'aportacion','10','n1','Extra');return id;});
+ await navegarPrueba(page,'fondo:'+id);
+ const form=page.locator('#movimiento-emergencia-'+id);await form.evaluate(f=>f.closest('details').open=true);
+ await form.locator('[name=tipo]').selectOption('retiro',{force:true});
+ await form.locator('[name=monto]').fill('1');await form.locator('[name=concepto]').fill('Uso');await form.locator('button[type=submit]').click();
+ await form.evaluate(f=>f.closest('details').open=true);
+ assert.equal(await form.locator('[name=nomina]').isDisabled(),false);
+ assert.equal(await form.locator('[name=nomina]').getAttribute('required'),'');
+ assert.equal(await form.locator('[name=nomina]').evaluate(e=>e.closest('label').hidden),false);
 });

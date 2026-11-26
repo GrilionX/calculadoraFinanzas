@@ -236,3 +236,16 @@ Esta revisión verificó 105 escenarios de integración, incluidos navegación l
 
 ## Diseño y navegación
 Menú izquierdo y vistas independientes, con selectores diseñados y animaciones adaptadas al dispositivo. Consulta [la guía del dashboard](docs/dashboard.md).
+
+
+## Fondos individuales y gráficas (noviembre de 2026)
+
+Cada cierre mensual mantiene su sobrante en el fondo del concepto original (Gas, Internet, etc.). El encabezado **Apartado de emergencia general** suma todos los fondos, incluidos los de efectivo; la cifra de efectivo es un desglose de ese total, no dinero adicional. Los registros antiguos se conservan automáticamente.
+
+- En un fondo individual puedes añadir o retirar dinero solo de ese concepto.
+- En **Todos mis fondos** puedes operar sobre el conjunto: las aportaciones se reparten por partes iguales; los retiros, proporcionalmente al saldo. La vista previa muestra el reparto exacto, incluidos centavos.
+- Las aportaciones adicionales usan el saldo disponible de Gastos básicos de un ingreso registrado. Retirar no vuelve a liberar ese ingreso. El historial conserva cierres y movimientos; los apartados con historial de emergencia no se eliminan.
+- **Mis gastos** incorpora una gráfica general y pasteles de básicos, ocio, tarjetas/deudas y ahorro, con filtro por mes. Los gastos de categorías personalizadas se incluyen en Otras categorías. Se cuentan pagos reales y aportaciones brutas al ahorro, no reservas de deudas ni compras a crédito pendientes. Los retiros se consultan en el historial y no se presentan como consumo.
+- Las metas muestran porcentaje y evolución por movimiento con una línea de objetivo. Las tarjetas comparan crédito usado y disponible. Las animaciones respetan la preferencia de movimiento reducido.
+
+La app sigue siendo instalable como PWA y no necesita dependencias gráficas externas. Actualiza desde **Datos y copias → Buscar actualización**. Esta entrega no incluye un APK; la prueba en el teléfono físico sigue siendo necesaria. Exporta/importa una copia si cambias de navegador o de dirección.
