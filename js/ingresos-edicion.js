@@ -17,7 +17,7 @@ function editarIngreso(id, campos, motivo, baseEsperada) {
         if (baseEsperada && JSON.stringify(n) !== baseEsperada) throw new Error("El ingreso cambió. Vuelve a seleccionarlo.");
         const monto = convertirPesosACentavos(campos.monto);
         if (monto === null) throw new Error("El importe debe ser positivo.");
-        const reparto = repartirNomina(monto, campos.reparto ?? n.reparto);
+        const reparto = (n.modalidad==="montos"?repartirNominaPorMontos:repartirNomina)(monto, campos.reparto ?? n.reparto);
         const cambiaDinero = monto !== n.montoCentavos || !estadosIguales(reparto, n.reparto);
         const dependencias = dependenciasIngreso(id, datos);
         if (cambiaDinero && dependencias.length) throw new Error("Este ingreso tiene " + dependencias.join(", ") +

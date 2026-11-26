@@ -218,14 +218,16 @@
                         <legend>Cómo repartir este pago</legend>
 
                         <p class="ayuda">
-                            Los porcentajes deben sumar 100%.
-                            Puedes cambiarlos para esta nómina.
+                            Elige porcentajes o montos. El total debe coincidir con tu pago.
                         </p>
 
-                        <div id="porcentajes-nomina"></div>
+                        <div class="modalidades-reparto" role="group" aria-label="Modalidad del reparto">
+<label><input type="radio" name="modalidad-nomina" value="porcentajes" checked> Por porcentajes</label>
+<label><input type="radio" name="modalidad-nomina" value="montos"> Por montos</label>
+</div><div id="porcentajes-nomina"></div>
 
                         <button id="usar-categorias-nomina" type="button" class="boton-secundario">
-                            Usar mis categorías actuales
+                            Restablecer mis porcentajes predeterminados
                         </button>
                     </fieldset>
 
@@ -821,6 +823,8 @@
             No es asesoría financiera.
         </p>
     </main>
+<footer class="pie-contacto"><span>Mis finanzas · versión 1.1.1</span>
+<a href="mailto:segundodiana37@gmail.com?subject=Reporte%20de%20error%20-%20Mis%20finanzas%201.1.1">Reportar un error: segundodiana37@gmail.com</a></footer>
 
     <script src="./js/calculos.js"></script>
     <script src="./js/nominas.js"></script>

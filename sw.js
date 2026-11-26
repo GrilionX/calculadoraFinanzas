@@ -1,5 +1,5 @@
 //Solo archivos de la aplicación: nunca copias ni registros personales
-const VERSION = "2026-11-26-cuentas-9";
+const VERSION = "2026-11-26-reparto-1.1.1";
 const PREFIJO = "mis-finanzas-app:" + self.registration.scope + ":";
 const CACHE = PREFIJO + VERSION;
 const ARCHIVOS = [

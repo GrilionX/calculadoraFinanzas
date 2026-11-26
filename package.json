@@ -1,6 +1,7 @@
 {
   "name": "calculadora-finanzas",
   "private": true,
+  "version": "1.1.1",
   "scripts": { "start": "node scripts/servir.cjs", "test": "node --test tests/*.test.cjs" },
   "devDependencies": { "playwright": "1.62.1" }
 }

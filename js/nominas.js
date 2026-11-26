@@ -8,6 +8,7 @@ const PERIODOS_NOMINA = {
 
 let nominas = [];
 let categoriasBorradorNomina = [];
+let modalidadNomina = "porcentajes";
 
 const formularioNomina = document.getElementById("formulario-nomina");
 const campoReferenciaNomina = document.getElementById("referencia-nomina");
@@ -38,6 +39,12 @@ function prepararCategoriasNomina() {
         };
     });
 
+    modalidadNomina="porcentajes";
+    dibujarCamposReparto();
+}
+
+function dibujarCamposReparto(){
+    document.querySelectorAll("[name=modalidad-nomina]").forEach(r=>r.checked=r.value===modalidadNomina);
     cajaPorcentajesNomina.replaceChildren();
 
     categoriasBorradorNomina.forEach(function (categoria, indice) {
@@ -46,19 +53,21 @@ function prepararCategoriasNomina() {
 
         const etiqueta = document.createElement("label");
         etiqueta.htmlFor = "porcentaje-nomina-" + indice;
-        etiqueta.textContent = categoria.nombre;
+        etiqueta.textContent = categoria.nombre + (modalidadNomina==="montos"?" ($)":" (%)");
 
         const campo = document.createElement("input");
         campo.id = "porcentaje-nomina-" + indice;
         campo.type = "number";
         campo.min = "0";
-        campo.max = "100";
+        if(modalidadNomina==="porcentajes")campo.max="100";
         campo.step = "0.01";
         campo.required = true;
-        campo.value = categoria.porcentaje;
+        campo.inputMode="decimal";
+        campo.value = modalidadNomina==="montos"?(categoria.montoTexto??"0"):categoria.porcentaje;
 
         campo.addEventListener("input", function () {
-            categoria.porcentaje = campo.value === ""
+            if(modalidadNomina==="montos")categoria.montoTexto=campo.value;
+            else categoria.porcentaje = campo.value === ""
                 ? NaN
                 : Number(campo.value);
 
@@ -86,13 +95,14 @@ function leerRepartoNomina() {
 
     return {
         montoCentavos: monto,
-        reparto: repartirNomina(monto, categoriasBorradorNomina)
+        reparto: modalidadNomina==="montos"?repartirNominaPorMontos(monto,categoriasBorradorNomina.map(c=>({...c,montoCentavos:centavosReparto(c.montoTexto)}))):repartirNomina(monto, categoriasBorradorNomina)
     };
 }
 
 function actualizarVistaPreviaNomina() {
     cuerpoVistaPreviaNomina.replaceChildren();
     totalNomina.textContent = "";
+    delete avisoNomina.dataset.diferencia;
     botonConfirmarNomina.disabled = true;
 
     try {
@@ -127,9 +137,11 @@ function actualizarVistaPreviaNomina() {
 
         botonConfirmarNomina.disabled = false;
     } catch (error) {
+        mostrarRepartoParcial();
         const sinEmpezar = campoNetoNomina.value === "" && campoPeriodoNomina.value === "";
         avisoNomina.className = sinEmpezar ? "ayuda" : "aviso error";
         avisoNomina.textContent = sinEmpezar ? "Introduce el importe y el periodo para ver tu reparto antes de guardarlo." : error.message;
+        if(avisoNomina.dataset.diferencia){const d=Number(avisoNomina.dataset.diferencia);avisoNomina.textContent=(d>0?"Por asignar: ":"Exceso: ")+formatoMoneda.format(Math.abs(d)/100);}
     }
 }
 
@@ -176,7 +188,8 @@ function registrarNomina(evento) {
             referencia: referencia,
             periodo: campoPeriodoNomina.value,
             montoCentavos: resultado.montoCentavos,
-            reparto: resultado.reparto
+            reparto: resultado.reparto,
+            ...(modalidadNomina==="montos"?{modalidad:"montos"}:{})
         });
 
         const guardada = guardar();
@@ -305,13 +318,15 @@ function limpiarNominas(lista) {
                 return null;
             }
 
-            const repartoComprobado = repartirNomina(
+            if(nomina.modalidad!==undefined&&nomina.modalidad!=="montos")return null;
+            const repartoComprobado = (nomina.modalidad==="montos"?repartirNominaPorMontos:repartirNomina)(
                 nomina.montoCentavos,
                 nomina.reparto
             );
 
             for (let i = 0; i < repartoComprobado.length; i++) {
                 if (
+                    (nomina.modalidad==="montos"&&repartoComprobado[i].porcentaje!==nomina.reparto[i].porcentaje)||
                     repartoComprobado[i].montoCentavos !==
                     nomina.reparto[i].montoCentavos
                 ) {
@@ -328,7 +343,8 @@ function limpiarNominas(lista) {
                 referencia: referencia,
                 periodo: nomina.periodo,
                 montoCentavos: nomina.montoCentavos,
-                reparto: repartoComprobado
+                reparto: repartoComprobado,
+                ...(nomina.modalidad==="montos"?{modalidad:"montos"}:{})
             });
         }
 
@@ -354,3 +370,26 @@ botonUsarCategoriasNomina.addEventListener(
     "click",
     prepararCategoriasNomina
 );
+//Vista parcial y cambio de modalidad
+function mostrarRepartoParcial(){
+ const total=convertirPesosACentavos(campoNetoNomina.value);if(total===null)return;
+ let asignado=0,valido=true;
+ for(const c of categoriasBorradorNomina){
+  const monto=modalidadNomina==="montos"?centavosReparto(c.montoTexto):Number.isFinite(c.porcentaje)&&c.porcentaje>=0&&c.porcentaje<=100?Math.round(total*c.porcentaje/100):null;
+  if(monto===null){valido=false;continue;}
+  asignado+=monto;
+  const tr=document.createElement("tr");
+  for(const texto of [c.nombre,(modalidadNomina==="montos"?monto/total*100:c.porcentaje).toFixed(2)+"%",formatoMoneda.format(monto/100)]){const td=document.createElement("td");td.textContent=texto;tr.append(td);}
+  cuerpoVistaPreviaNomina.append(tr);
+ }
+ totalNomina.textContent=valido?formatoMoneda.format(asignado/100):"Revisa los montos";
+ if(modalidadNomina==="montos"&&valido&&asignado!==total)avisoNomina.dataset.diferencia=String(total-asignado);
+}
+document.querySelectorAll("[name=modalidad-nomina]").forEach(r=>r.addEventListener("change",()=>{
+ if(!r.checked||r.value===modalidadNomina)return;
+ if(r.value==="montos"){
+  let reparto;try{reparto=leerRepartoNomina().reparto;}catch{}
+  categoriasBorradorNomina.forEach((c,i)=>{c.montoTexto??=String((reparto?.[i].montoCentavos??0)/100);});
+ }
+ modalidadNomina=r.value;dibujarCamposReparto();
+}));

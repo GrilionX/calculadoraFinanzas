@@ -42,13 +42,13 @@ function cargarEditorIngreso() {
     uiMejora("anular-ingreso").disabled = deps.length > 0;
     uiMejora("ayuda-editar-ingreso").textContent = deps.length
         ? "Vinculado a " + deps.join(", ") + ". Puedes cambiar referencia, fecha y periodo; importe, reparto y anulación están protegidos."
-        : "Sin movimientos relacionados. Puedes corregir importe y porcentajes o anularlo con motivo.";
+        : "Sin movimientos relacionados. Puedes corregir importe y reparto o anularlo con motivo.";
     for (const c of n.reparto) {
         const fila = elementoMejora("div", undefined, "porcentaje-nomina");
-        const label = elementoMejora("label", c.nombre);
+        const label = elementoMejora("label", c.nombre+(n.modalidad==="montos"?" ($)":" (%)"));
         const input = document.createElement("input");
-        input.id = "editar-porcentaje-" + c.id; input.type = "number"; input.min = "0"; input.max = "100";
-        input.step = ".01"; input.required = true; input.value = c.porcentaje; input.readOnly = deps.length > 0;
+        input.id = "editar-porcentaje-" + c.id; input.type = "number"; input.min = "0"; if(n.modalidad!=="montos")input.max = "100";
+        input.step = ".01"; input.required = true; input.value = n.modalidad==="montos"?c.montoCentavos/100:c.porcentaje; input.readOnly = deps.length > 0;
         input.dataset.categoria = c.id; label.htmlFor = input.id;
         fila.append(label, input); lista.append(fila);
     }
@@ -248,7 +248,7 @@ uiMejora("formulario-editar-ingreso").addEventListener("submit", e => {
     const id = uiMejora("editar-ingreso-id").value, n = nominas.find(n => n.id === id);
     if (!n || !confirm("¿Guardar esta corrección del ingreso? Se conservará el motivo y el estado anterior.")) return;
     informarMejora("mensaje-editar-ingreso", () => {
-        const reparto = n.reparto.map(c => ({ ...c, porcentaje: Number(uiMejora("editar-porcentaje-" + c.id).value) }));
+        const reparto = n.reparto.map(c => ({ ...c, ...(n.modalidad==="montos"?{montoCentavos:centavosReparto(uiMejora("editar-porcentaje-"+c.id).value)}:{porcentaje:Number(uiMejora("editar-porcentaje-"+c.id).value)}) }));
         editarIngreso(id, { referencia: uiMejora("editar-ingreso-nombre").value, monto: uiMejora("editar-ingreso-importe").value,
             periodo: uiMejora("editar-ingreso-periodo").value, fecha: uiMejora("editar-ingreso-fecha").value, reparto },
             uiMejora("editar-ingreso-motivo").value, baseEditorIngreso);

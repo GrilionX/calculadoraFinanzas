@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-26-cuentas-9', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-26-reparto-1.1.1', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1994,7 +1994,7 @@ test('instalación: diagnóstico de solo lectura muestra versión y validez de c
  await page.waitForFunction(()=>!document.getElementById('comprobar-dispositivo').disabled);
  assert.equal(await page.locator('#diagnostico-dispositivo li').count(),5);
  assert.match(await page.locator('#diagnostico-dispositivo').textContent(),/Registros válidos para exportar/);
- assert.match(await page.locator('#version-app').textContent(),/2026-11-26-cuentas-9/);
+ assert.match(await page.locator('#version-app').textContent(),/2026-11-26-reparto-1.1.1/);
  assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),antes);
 });
 test('instalación: diagnóstico detecta archivos ausentes sin borrar registros',async t=>{
@@ -2094,4 +2094,72 @@ test('cuentas: formulario móvil, transferencia y borrado total',async t=>{
  await Promise.all([page.waitForEvent('load'),borrarTodoEnPrueba(page)]);
  assert.deepEqual(await page.evaluate(()=>gestion.cartera),{version:1,cuentas:[],movimientos:[]});
  assert.deepEqual(errors,[]);
+});
+
+
+async function prepararMontosPrueba(page,total='123456.78'){
+ await page.evaluate(total=>{
+  campoReferenciaNomina.value='Recibo por montos';campoNetoNomina.value=total;campoPeriodoNomina.value='quincenal';
+  document.getElementById('fecha-nomina').value=fechaLocalGasto();
+  actualizarVistaPreviaNomina();const r=document.querySelector('[name=modalidad-nomina][value=montos]');r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}));
+  document.querySelectorAll('#porcentajes-nomina input').forEach((el,i)=>{el.value=i===0?'123450':i===1?'6.78':'0';el.dispatchEvent(new Event('input',{bubbles:true}));});
+ },total);
+}
+test('reparto 1.1.1: montos exactos, porcentajes y copia tras recarga',async t=>{
+ const {page,errors}=await abrir(t);await prepararMontosPrueba(page);
+ assert.equal(await page.locator('#confirmar-nomina').isDisabled(),false);
+ const datos=await page.evaluate(()=>{
+  const antes=leerRepartoNomina();registrarNomina({preventDefault(){}});
+  return {antes,n:nominas.at(-1),copia:crearCopiaLocal()};
+ });
+ assert.deepEqual(datos.n.reparto.map(c=>c.montoCentavos),[12345000,678,0,0]);
+ assert.equal(datos.n.modalidad,'montos');assert.equal(datos.n.reparto.reduce((s,c)=>s+Math.round(c.porcentaje*100),0),10000);
+ await page.reload();assert.deepEqual(await page.evaluate(()=>nominas.at(-1)),datos.n);
+ await page.evaluate(c=>restaurarCopiaLocal(c),datos.copia);
+ assert.deepEqual(await page.evaluate(()=>nominas.at(-1)),datos.n);assert.deepEqual(errors,[]);
+});
+test('reparto 1.1.1: vista parcial y exceso bloquean registro',async t=>{
+ const {page}=await abrir(t);await prepararMontosPrueba(page,'200000');
+ assert.equal(await page.locator('#confirmar-nomina').isDisabled(),true);
+ assert.equal(await page.locator('#vista-previa-nomina tr').count(),4);
+ assert.match(await page.locator('#aviso-nomina').textContent(),/Por asignar/);
+ await page.locator('#neto-nomina').fill('100000');
+ assert.match(await page.locator('#aviso-nomina').textContent(),/Exceso/);
+ assert.equal(await page.locator('#confirmar-nomina').isDisabled(),true);
+ await page.locator('#porcentaje-nomina-0').fill('-1');
+ assert.equal(await page.locator('#confirmar-nomina').isDisabled(),true);
+});
+test('reparto 1.1.1: alternar conserva borradores y restablece porcentajes',async t=>{
+ const {page}=await abrir(t);await prepararMontosPrueba(page);
+ const antes=await page.locator('#porcentaje-nomina-0').inputValue();
+ await page.locator('[name=modalidad-nomina][value=porcentajes]').check();
+ assert.equal(await page.locator('#confirmar-nomina').isDisabled(),false);
+ await page.locator('[name=modalidad-nomina][value=montos]').check();
+ assert.equal(await page.locator('#porcentaje-nomina-0').inputValue(),antes);
+ await page.locator('#usar-categorias-nomina').click();
+ assert.equal(await page.evaluate(()=>modalidadNomina),'porcentajes');
+});
+test('reparto 1.1.1: corrección conserva montos y rechaza copia alterada',async t=>{
+ const {page}=await abrir(t);await prepararMontosPrueba(page);
+ assert.equal(await page.evaluate(()=>{
+  registrarNomina({preventDefault(){}});const n=nominas.at(-1),antes=JSON.stringify(n.reparto);
+  editarIngreso(n.id,{referencia:'Referencia corregida',monto:'123456.78',fecha:fechaLocalGasto(),periodo:'mensual'},'Corrección de referencia',JSON.stringify(n));
+  const nuevo=nominas.at(-1);if(JSON.stringify(nuevo.reparto)!==antes||nuevo.modalidad!=='montos')return false;
+  const copia=crearCopiaLocal();copia.datos.nominas.at(-1).reparto[0].montoCentavos++;
+  return !aplicarDatos(copia.datos,true);
+ }),true);
+});
+test('reparto 1.1.1: fallo de guardado conserva el borrador por montos',async t=>{
+ const {page}=await abrir(t);await prepararMontosPrueba(page);
+ assert.equal(await page.evaluate(()=>{
+  const cuantos=nominas.length,set=Storage.prototype.setItem;
+  Storage.prototype.setItem=()=>{throw Error('Sin espacio');};try{registrarNomina({preventDefault(){}});}finally{Storage.prototype.setItem=set;}
+  return nominas.length===cuantos&&modalidadNomina==='montos'&&document.getElementById('porcentaje-nomina-0').value==='123450';
+ }),true);
+});
+test('reparto 1.1.1: móvil y contacto visible',async t=>{
+ const {page}=await abrir(t);await page.setViewportSize({width:360,height:800});await prepararMontosPrueba(page);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+ assert.match(await page.locator('.pie-contacto').textContent(),/1.1.1/);
+ assert.equal(await page.locator('.pie-contacto a').getAttribute('href'),'mailto:segundodiana37@gmail.com?subject=Reporte%20de%20error%20-%20Mis%20finanzas%201.1.1');
 });

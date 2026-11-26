@@ -533,3 +533,23 @@ function proyectarHorizonte(objetivos, presupuestoSemanalCentavos) {
         }
     };
 }
+//Reparto por importes exactos
+function centavosReparto(valor){
+ const texto=String(valor).trim();
+ return /^0(?:\.0{1,2})?$/.test(texto)?0:convertirPesosACentavos(texto);
+}
+function repartirNominaPorMontos(total,lista){
+ if(!Number.isSafeInteger(total)||total<=0||total>Math.floor(Number.MAX_SAFE_INTEGER/10000)||!Array.isArray(lista)||!lista.length)throw Error("Revisa el importe y las categorías.");
+ const ids=new Set();let suma=0;
+ const filas=lista.map(c=>{
+  if(!c||typeof c.id!=="string"||!c.id.trim()||ids.has(c.id)||typeof c.nombre!=="string"||!c.nombre.trim()||!Number.isSafeInteger(c.montoCentavos)||c.montoCentavos<0)throw Error("Revisa los montos de cada categoría.");
+  ids.add(c.id);suma+=c.montoCentavos;if(!Number.isSafeInteger(suma))throw Error("Importe fuera de rango.");
+  const producto=BigInt(c.montoCentavos)*10000n;
+  return {id:c.id,nombre:c.nombre.trim(),montoCentavos:c.montoCentavos,puntos:Number(producto/BigInt(total)),resto:producto%BigInt(total)};
+ });
+ if(suma!==total)throw Error(suma<total?"Falta dinero por asignar.":"Los montos superan el neto recibido.");
+ const orden=filas.map((f,i)=>({i,resto:f.resto})).sort((a,b)=>a.resto===b.resto?a.i-b.i:a.resto>b.resto?-1:1);
+ const faltan=10000-filas.reduce((s,f)=>s+f.puntos,0);
+ for(let i=0;i<faltan;i++)filas[orden[i].i].puntos++;
+ return filas.map(f=>({id:f.id,nombre:f.nombre,porcentaje:f.puntos/100,montoCentavos:f.montoCentavos}));
+}

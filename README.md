@@ -121,6 +121,16 @@ Se ha añadido un módulo independiente en **js/dominio/base-financiera.mjs**, c
 
 Consulta [el plan técnico y sus criterios de aceptación](docs/proxima-fase.md). No se reconstruyen cuentas ni fechas antiguas por suposición. Antes de integrar el módulo se añadirá una migración explícita, con vista previa, copia y posibilidad de cancelar.
 
+## Versión 1.1.1: reparto por porcentajes o montos
+
+En **Ingresos y reparto**, elige **Por porcentajes** para usar y ajustar tus porcentajes predeterminados, o **Por montos** para indicar cuánto asignar a cada categoría. Ambas modalidades muestran importes y porcentajes en tiempo real.
+
+El modo por montos conserva exactamente los centavos indicados. Los porcentajes se muestran redondeados a dos decimales y se ajustan para sumar 100%; no se usan para recalcular esos importes. Si falta o sobra dinero, el registro se bloquea y se muestra la diferencia. Cambiar el neto conserva los montos escritos y recalcula su proporción.
+
+Puedes alternar entre los dos borradores o restablecer los porcentajes predeterminados. Las copias y el editor de ingresos conservan la modalidad de cada recibo; los recibos anteriores siguen siendo válidos.
+
+Reportes de errores: [segundodiana37@gmail.com](mailto:segundodiana37@gmail.com). El enlace abre el correo; no envía información financiera automáticamente.
+
 ## Cuentas y efectivo: disponible
 
 Abre **Ingresos → Cuentas y efectivo** para registrar efectivo y débito, transferir y conciliar saldos. Se conservan en tus copias JSON y se borran con el restablecimiento total. Los saldos de cuentas no se suman de nuevo a ingresos o apartados. Los gastos y las nóminas todavía no actualizan estas cuentas automáticamente.
@@ -153,4 +163,4 @@ La suite cubre cálculos, saldos, guardado fallido, copias, borrado, navegación
 La publicación sigue las [instrucciones de GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). La instalación depende del soporte del navegador descrito en la [guía de PWA de MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable).
 
 ### Verificación de esta entrega
-128 pruebas de integración y 17 pruebas unitarias superadas (145 en total). Se revisó la nueva vista en pantalla móvil simulada. El PDF existente cubre la instalación; las instrucciones nuevas de cuentas están en la guía enlazada arriba. Esto no sustituye la prueba de instalación en tu teléfono real.
+134 pruebas de integración y 17 pruebas unitarias superadas (151 en total). Se revisó la nueva vista en pantalla móvil simulada. El PDF existente cubre la instalación; las instrucciones nuevas de cuentas están en la guía enlazada arriba. Esto no sustituye la prueba de instalación en tu teléfono real.
