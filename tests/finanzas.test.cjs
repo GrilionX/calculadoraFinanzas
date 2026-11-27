@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-27-noche-1.1.3', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-27-registro-apk-1.1.3', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1994,7 +1994,7 @@ test('instalación: diagnóstico de solo lectura muestra versión y validez de c
  await page.waitForFunction(()=>!document.getElementById('comprobar-dispositivo').disabled);
  assert.equal(await page.locator('#diagnostico-dispositivo li').count(),5);
  assert.match(await page.locator('#diagnostico-dispositivo').textContent(),/Registros válidos para exportar/);
- assert.match(await page.locator('#version-app').textContent(),/2026-11-27-noche-1.1.3/);
+ assert.match(await page.locator('#version-app').textContent(),/2026-11-27-registro-apk-1.1.3/);
  assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),antes);
 });
 test('instalación: diagnóstico detecta archivos ausentes sin borrar registros',async t=>{
@@ -2232,4 +2232,60 @@ test('devolución: confirmar Sí/No y mantener el saldo en móvil',async t=>{
  await page.getByRole('button',{name:'Devolver al disponible',exact:true}).click();await page.getByRole('button',{name:'Sí',exact:true}).click();
  await page.waitForFunction(()=>calcularResumenFinanciero().disponible===97000);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);assert.deepEqual(errors,[]);
+});
+
+
+//Registro mediante el botón real: validación visible en móvil
+for (const modalidad of ['montos', 'porcentajes']) {
+ test('registro móvil: campos incompletos y guardado real por ' + modalidad, async t => {
+  const { page, errors } = await abrir(t);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await navegarPrueba(page, 'ingresos');
+  await prepararMontosPrueba(page);
+  if (modalidad === 'porcentajes') await page.locator('[name=modalidad-nomina][value=porcentajes]').check();
+  const inicial = await page.evaluate(() => nominas.length);
+  await page.locator('#referencia-nomina').fill('');
+  await page.locator('#confirmar-nomina').click();
+  assert.equal(await page.evaluate(() => nominas.length), inicial);
+  assert.match(await page.locator('#mensaje-nomina').textContent(), /referencia.*Completa/i);
+  assert.equal(await page.locator('#referencia-nomina').getAttribute('aria-invalid'), 'true');
+  assert.equal(await page.locator('#mensaje-nomina').isVisible(), true);
+  await page.locator('#referencia-nomina').fill('Registro real ' + modalidad);
+  await page.locator('#fecha-nomina').fill('');
+  await page.locator('#confirmar-nomina').click();
+  assert.equal(await page.evaluate(() => nominas.length), inicial);
+  assert.match(await page.locator('#mensaje-nomina').textContent(), /Fecha.*Completa/i);
+  await page.locator('#fecha-nomina').fill('2026-11-27');
+  await page.locator('#confirmar-nomina').click();
+  assert.match(await page.locator('#mensaje-nomina').textContent(), /Pago y reparto registrados/);
+  assert.equal(await page.evaluate(() => nominas.length), inicial + 1);
+  const guardado = await page.evaluate(() => nominas.at(-1));
+  assert.equal(guardado.montoCentavos, 12345678);
+  assert.equal(guardado.reparto.reduce((s, c) => s + c.montoCentavos, 0), 12345678);
+  if (modalidad === 'montos') assert.deepEqual(guardado.reparto.map(c => c.montoCentavos), [12345000, 678, 0, 0]);
+  await page.reload();
+  assert.deepEqual(await page.evaluate(() => nominas.at(-1)), guardado);
+  assert.equal(await page.evaluate(() => guardadoHabilitado), true);
+  assert.deepEqual(errors, []);
+ });
+}
+
+test('registro por montos: el botón informa de un guardado fallido y permite reintentar', async t => {
+ const { page, errors } = await abrir(t);
+ await prepararMontosPrueba(page);
+ await page.evaluate(() => {
+  window.setItemPrueba = Storage.prototype.setItem;
+  Storage.prototype.setItem = function () { throw new DOMException('Sin espacio', 'QuotaExceededError'); };
+ });
+ await page.locator('#confirmar-nomina').click();
+ assert.match(await page.locator('#mensaje-nomina').textContent(), /No se pudo guardar el ingreso/);
+ assert.equal(await page.evaluate(() => nominas.length), 1);
+ assert.equal(await page.locator('#porcentaje-nomina-0').inputValue(), '123450');
+ await page.evaluate(() => { Storage.prototype.setItem = window.setItemPrueba; });
+ await page.locator('#confirmar-nomina').click();
+ assert.match(await page.locator('#mensaje-nomina').textContent(), /Pago y reparto registrados/);
+ assert.equal(await page.evaluate(() => nominas.length), 2);
+ await page.reload();
+ assert.equal(await page.evaluate(() => nominas.length), 2);
+ assert.deepEqual(errors, []);
 });

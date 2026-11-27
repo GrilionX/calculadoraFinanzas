@@ -145,17 +145,42 @@ function actualizarVistaPreviaNomina() {
     }
 }
 
+//Validación visible también dentro de la APK
+function validarCamposNomina() {
+    for (const campo of formularioNomina.elements) {
+        campo.removeAttribute("aria-invalid");
+    }
+    for (const campo of formularioNomina.elements) {
+        if (!campo.willValidate || campo.validity.valid) continue;
+        campo.setAttribute("aria-invalid", "true");
+        const nombre = campo.labels?.[0]?.textContent.trim() || "Campo";
+        let motivo = "Revisa el valor.";
+        if (campo.validity.valueMissing) motivo = "Completa este campo.";
+        else if (campo.validity.badInput) motivo = "Escribe un número válido.";
+        else if (campo.validity.stepMismatch) motivo = "Usa como máximo dos decimales.";
+        else if (campo.validity.rangeUnderflow || campo.validity.rangeOverflow) motivo = "El valor está fuera del rango permitido.";
+        throw new Error(nombre + ": " + motivo);
+    }
+}
+
+function mostrarMensajeNomina(texto, correcto = false) {
+    mensajeNomina.className = correcto ? "aviso ok" : "aviso error";
+    mensajeNomina.textContent = texto;
+    mensajeNomina.tabIndex = -1;
+    mensajeNomina.focus({ preventScroll: true });
+    mensajeNomina.scrollIntoView({ block: "nearest", behavior: "auto" });
+}
+
 function registrarNomina(evento) {
     evento.preventDefault();
 
     if (!guardadoHabilitado) {
-        mensajeNomina.className = "aviso error";
-        mensajeNomina.textContent =
-            "Recupera una copia válida antes de registrar pagos.";
+        mostrarMensajeNomina("Recupera una copia válida antes de registrar pagos.");
         return;
     }
 
     try {
+        validarCamposNomina();
         const referencia = campoReferenciaNomina.value.trim();
 
         if (referencia === "" || referencia.length > 80) {
@@ -203,16 +228,9 @@ function registrarNomina(evento) {
         prepararCategoriasNomina();
         mostrarHistorialNominas();
 
-        mensajeNomina.className = guardada
-            ? "aviso ok"
-            : "aviso error";
-
-        mensajeNomina.textContent = guardada
-            ? "Pago y reparto registrados."
-            : "Pago registrado en memoria. Descarga una copia antes de cerrar.";
+        mostrarMensajeNomina("Pago y reparto registrados.", true);
     } catch (error) {
-        mensajeNomina.className = "aviso error";
-        mensajeNomina.textContent = error.message;
+        mostrarMensajeNomina(error.message);
     }
 }
 
