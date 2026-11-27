@@ -1,0 +1,138 @@
+/*Noche: superficies oscuras, violeta y azul*/
+:root{
+ color-scheme:dark;
+ --fondo:#090d18;--superficie:#141a2b;--tinta:#f0f2fc;--secundario:#a8b3cc;
+ --linea:#2b3550;--acento:#ae91ff;--acento-fuerte:#d0bdff;--acento-suave:#24203e;
+ --error:#ff9aaf;--ahorro-primario:#a68bfa;--ahorro-oscuro:#171e35;--ahorro-texto:var(--tinta);--ahorro-borde:var(--linea);
+ --panel-bajo:#101625;--panel-alto:#1a2238;--azul:#67c8ff;--verde:#6ce0b9;
+}
+body{background:radial-gradient(ellipse at 90% 0,#192b514d,transparent 42%),radial-gradient(ellipse at 25% 35%,#43245325,transparent 44%),var(--fondo);color:var(--tinta);font-family:"Segoe UI",system-ui,sans-serif}
+::selection{background:#7657bd;color:#fff}
+a{color:#b8a2ff;text-underline-offset:4px}
+main{padding-top:20px}
+h1,h2,h3,h4{color:var(--tinta)}
+.titulo-app{font-weight:750;letter-spacing:-.04em}
+.ruta-espacio,.sobretitulo,.etiqueta-gastos{color:#b59bff;letter-spacing:.13em}
+.ayuda,.nota,.marca-app,.nomina-periodo,caption,.leyenda-distribucion{color:var(--secundario)}
+.cabecera-app{border-color:#29345188}
+#estado-guardado{background:#142e2b;color:#9ee8cb;border:1px solid #295549;font-size:.875rem}
+#panel-navegacion{background:linear-gradient(180deg,#101426,#0d1220);border-right:1px solid #2d3450;box-shadow:8px 0 40px #0002}
+.cabecera-lateral strong::before{background:linear-gradient(140deg,#6653dd,#b57ee8);box-shadow:0 0 28px #9b70fc28;border:1px solid #c0a8ff55}
+#panel-navegacion button[aria-current=page]{background:linear-gradient(110deg,#6544b8,#4c57ac);border:1px solid #ae8fff50;color:#fff;box-shadow:0 5px 24px #7754e52a}
+#panel-navegacion button:hover,#panel-navegacion summary:hover{background:#242b44}
+#panel-navegacion .herramientas-laterales p{font-size:.8rem;color:#aab3cc}
+#abrir-navegacion{background:#202440;border-color:#63558d;color:#f5f1ff}
+#fondo-navegacion{background:#030611b8}
+.tarjeta,.panel-gestion,.panel-correcciones,.panel-dispositivo,.tarjeta-gestion,.fondo-emergencia,.grafica-pastel{
+ background:linear-gradient(145deg,#171d30,#111726);border-color:var(--linea);
+ box-shadow:0 12px 35px #0003,inset 0 1px #ffffff05;border-radius:20px;
+}
+#vista-ahorro,#vista-deudas,#vista-gastos{background:transparent}
+#vista-deudas{--deuda-fondo:#141a2b;--deuda-borde:#303a55;--deuda-acento:#9c7ced}
+main details,.nomina-registrada,.simulador-anterior{background:var(--panel-bajo);border-color:var(--linea)}
+main details>summary{color:#d9ddf0}
+main details>summary::after{border-color:#b29aee}
+main details[open]{border-color:#544672}
+main details>summary:hover{color:#fff}
+body input,body textarea,body select,#formulario-ahorro input,#formulario-ahorro select,.porcentaje-nomina input{
+ background-color:#0c1220;color:#eef1ff;border-color:#3a4562;box-shadow:inset 0 2px 5px #0002;
+}
+input::placeholder,textarea::placeholder{color:#8c9ab8}
+input[readonly]{background:#1d2538;color:#bfc9de}
+input:focus,textarea:focus{border-color:#ab8af4;outline:3px solid #9874ef25}
+body button.boton-select{background:#0c1220;color:#e4eafa;border-color:#3a4562;box-shadow:inset 0 2px 5px #0002}
+body button.boton-select[aria-expanded=true]{background:#181f34;border-color:#aa8df1;box-shadow:0 0 0 3px #a281ef20}
+.boton-select::after{border-color:#bfa8f8}
+.lista-select{background:#171e32;border-color:#5a4d7e;box-shadow:0 18px 55px #0009}
+.opcion-select{color:#dce4f6}
+.opcion-select:hover,.opcion-activa{background:#273351}
+.opcion-select[aria-selected=true]{background:#403063;color:#f2eaff}
+body button,body #formulario-ahorro button{background:#252d46;color:#e7e9f8;border-color:#424e6f}
+body button:hover{background:#333d5c}
+body button[type=submit],body .boton-principal,#formulario-ahorro button[type=submit]{
+ background:linear-gradient(115deg,#7550c7,#535bc1);color:#fff;border-color:#b09aff55;box-shadow:0 5px 20px #7653dc25;
+}
+body button[type=submit]:hover,body .boton-principal:hover{background:linear-gradient(115deg,#8962df,#636fd5);box-shadow:0 8px 25px #8c62e940}
+body .boton-secundario,#agregar-categoria,#agregar-extra,#exportar-copia,#importar-copia,#restablecer,#respaldo-antes-borrar,.acceso-gastos button{background:#242b42;color:#d4c7ff;border-color:#54476c}
+body button.boton-peligro{background:#632e43;color:#ffe0e7;border-color:#a6506a}
+body button.boton-peligro:hover{background:#7d354e}
+body button:disabled,body .boton-principal:disabled,.panel-correcciones button:disabled{background:#1b2336!important;color:#8c98b3!important;border-color:#303b53!important;box-shadow:none!important;opacity:1}
+body :where(input,select,button,summary,a):focus-visible{outline:3px solid #83cfff!important;outline-offset:3px!important}
+input[type=checkbox],input[type=radio]{accent-color:#ad8bff}
+#resumen-financiero{position:relative;overflow:hidden;border-color:#3b3b65;background:radial-gradient(ellipse at 95% 0,#5c348235,transparent 55%),linear-gradient(125deg,#151b30,#101827)}
+#resumen-financiero::before{content:"";display:block;position:absolute;top:0;left:24px;right:24px;height:1px;background:linear-gradient(90deg,transparent,#b38cff88,#5bc8ff66,transparent)}
+#resumen-financiero .metricas-nominas>div{background:#1a2338;border:1px solid #35415c;min-height:140px}
+#resumen-financiero .metricas-nominas>div:nth-child(3){background:#152b31;border-color:#27505b}
+#resumen-financiero .metricas-nominas>div:nth-child(4){background:#29233a;border-color:#4b3c62}
+#resumen-financiero .metricas-nominas>div:nth-child(5){background:#2b2135;border-color:#53394f}
+#resumen-financiero .metrica-disponible{background:radial-gradient(ellipse at 100% 0,#9e75dc66,transparent 70%),linear-gradient(130deg,#392f70,#273b68);border:1px solid #9b86ed70;box-shadow:0 12px 30px #060a1850}
+.metricas-nominas>div>span{color:#bbc6dd}
+.metricas-nominas strong,.saldo-gestion strong,.metricas-mejora strong,.actividad-importe,.grafica-meta>strong{color:#eee9ff;font-variant-numeric:tabular-nums}
+.cabecera-resumen>.tarjeta-resumen{background:#1b243b;border:1px solid #3a4664;color:#c6d2e9}
+.barra-distribucion{height:11px;background:#25304a;box-shadow:0 0 16px #8565cb12}
+.segmento-gastos{background:#f4af7a}.segmento-ahorro{background:#6caeff}.segmento-deudas{background:#b693fa}.segmento-disponible{background:#68dfbc}
+.acceso-gastos{background:linear-gradient(110deg,#1d2340,#162b3b);border-color:#394b70}
+.reparto-nomina{background:#121a2c;border-color:#384661}
+.porcentaje-nomina{border-color:#2b3651}
+.reparto-nomina legend{color:#d3c4fa}
+.modalidades-reparto label{border-color:#3c4868;background:#10182a;color:#b8c4dd}
+.modalidades-reparto label:has(input:checked){background:#34274f;color:#f1e7ff;border-color:#a286dc;box-shadow:0 0 18px #9974e714}
+#historial-nominas>.ayuda,.estado-vacio{background:#121a2c;border-color:#445071;color:#a9b8d3}
+.saldo-gestion,.saldo-general,.metricas-mejora>div,.resumen-gastos>div,.tarjetas-financieras>div{background:#1a2439;border:1px solid #354361;color:#cad5eb}
+.saldo-gestion span{color:#b7c5dc}
+#ahorros-apartados>.saldos-gestion>.saldo-gestion:first-child,.resumen-ahorro{background:linear-gradient(120deg,#403074,#263f67);border:1px solid #816db1;color:#fff}
+#formulario-ahorro{background:#131c2d;border-color:var(--linea)}
+.historial-ahorro li,.movimiento-unificado,.vencimiento-fila,.movimientos-cuentas li,.meta-tarjeta,.recurrente-tarjeta,.deuda{background:var(--superficie);border-color:var(--linea);color:var(--tinta)}
+.movimientos-cuentas span{color:var(--secundario)}
+.grupo-deudas__encabezado,.fondo-grupo,.deudas-registro,.origen-apartados,.simulador-deudas,.editor-deuda,.administrador-grupos{background:#121b2d;border-color:var(--linea)}
+.grupo-deudas__encabezado:hover{background:#202b43}
+.grupo-deudas__totales,.deuda__estado,.deuda__cifras{color:#b9c6e0}
+.deuda[data-estado=lista]{background:#162b30;border-color:#40816d}
+.deuda[data-estado=liquidada]{background:#17242b;border-color:#3d5e5f}
+.fechas-credito,.formulario-gestion output,#lista-avanzada:not(:empty),.diagnostico-dispositivo li{background:#22263f;color:#d4c6f2;border-color:#40375c}
+.etiqueta,.insignia-mejora,.etiqueta-movimiento{background:#203a3c;color:#a1e4d3}
+.estado-fecha{background:#27334c;color:#d8e3fa}
+.estado-fecha.urgente{background:#452735;color:#ffb0bd}
+.estado-fecha.proxima{background:#423721;color:#f7d68b}
+.aviso:not(:empty){background:#1c293d;color:#c5d3e9;border:1px solid #394d67}
+.aviso.ok:not(:empty){background:#17332d;color:#a3e5ca;border-color:#2c6051}
+.aviso.error:not(:empty){background:#3b2330;color:#ffbbcb;border-color:#764154}
+.zona-borrado{background:#241c2b;border-color:#6a3b50}
+.dialogo-borrado{background:#1b2237;color:#f1edf9;border:1px solid #74608b;box-shadow:0 25px 90px #000a}
+.dialogo-borrado::backdrop{background:#030713cc}
+body table,body tbody,body td{background:transparent;color:var(--tinta)}
+body th,body tfoot{background:#1a253b;color:#bbcae5}
+body th,body td{border-color:#303b55}
+.tabla-scroll{border-color:#35415e}
+.grafica-pastel{background:linear-gradient(135deg,#171e33,#111a2a)}
+.grafica-disco{position:relative;box-shadow:0 0 24px #9473ee22;border:1px solid #c0a7ff38}
+.grafica-disco::after{content:"";position:absolute;inset:24%;border-radius:50%;background:#151d30;box-shadow:0 0 0 1px #c1aaff22}
+.grafica-meta svg{filter:drop-shadow(0 0 6px #a788f544)}
+.grafica-meta polyline{stroke:#b391fa}
+.grafica-meta line{stroke:#687b9e}
+progress,progress::-webkit-progress-bar{background:#28324a}
+progress::-webkit-progress-value{background:linear-gradient(90deg,#7166db,#c389e5);box-shadow:0 0 12px #bc85e65c}
+progress::-moz-progress-bar{background:linear-gradient(90deg,#7166db,#c389e5)}
+.compra-gestion,.movimiento-gestion{border-color:#303b53}
+.pie-contacto{margin-left:0;color:#a3b0cb;border-top:1px solid #2b3450;padding:24px}
+.pie-contacto a{color:#c2adff}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .tarjeta-gestion:hover,.grafica-pastel:hover,.meta-tarjeta:hover,.tarjeta-cuenta:hover{border-color:#67548e;box-shadow:0 14px 40px #0004;transform:translateY(-2px)}
+ .tarjeta-gestion,.grafica-pastel,.meta-tarjeta{transition:border-color .25s,box-shadow .25s,transform .25s}
+}
+@media(max-width:600px){
+ .cabecera-app{gap:12px;min-height:70px}#estado-guardado{font-size:.8rem;max-width:220px}
+ .titulo-app{font-size:1.9rem}.tarjeta,.panel-gestion{border-radius:18px}
+ .grafica-disco{width:126px}.grafica-cuerpo{gap:18px}
+ #resumen-financiero .metricas-nominas>div{min-height:114px}
+}
+@media(prefers-reduced-motion:reduce){.grafica-disco,.grafica-meta svg{filter:none}.tarjeta-gestion,.grafica-pastel,.meta-tarjeta{transform:none!important}}
+
+/*Saldo principal y lectura numérica*/
+#resumen-financiero .metricas-nominas>.metrica-disponible{background:radial-gradient(ellipse at 100% 0,#9e75dc66,transparent 70%),linear-gradient(130deg,#392f70,#273b68);border-color:#9b86ed70}
+.metricas-nominas strong,.saldo-gestion strong,.tarjetas-financieras strong,.metricas-mejora strong{font-family:"Segoe UI",system-ui,sans-serif}
+#vista-gastos .saldo-gastos{background:#17352f;border-color:#356757;color:#b1ead1}
+
+.panel-correcciones{color:var(--tinta)}.panel-correcciones p:not(.aviso),#disponible-origen-apartado{color:var(--secundario)}.panel-gestion output{color:#cfc0f5}
+
+.segmento-apartados{background:#67c8ff}.pie-contacto{font-size:.875rem}

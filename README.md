@@ -121,7 +121,15 @@ Se ha añadido un módulo independiente en **js/dominio/base-financiera.mjs**, c
 
 Consulta [el plan técnico y sus criterios de aceptación](docs/proxima-fase.md). No se reconstruyen cuentas ni fechas antiguas por suposición. Antes de integrar el módulo se añadirá una migración explícita, con vista previa, copia y posibilidad de cancelar.
 
-## Versión 1.1.2: liquidación y devolución de apartados
+## Versión 1.1.3: diseño oscuro
+
+Tema oscuro con acentos violeta y azul, superficies con profundidad, gráficas de anillo, menús desplegables y confirmaciones adaptados. Conserva la navegación lateral izquierda y las vistas independientes.
+
+Los estilos del tema están en **css/noche.css**, cargado al final para mantener separados los ajustes visuales. No se han modificado los cálculos ni el almacenamiento. Las transiciones respetan la preferencia de movimiento reducido y no requieren imágenes ni fuentes externas.
+
+La APK actualizable recibe este tema desde **Datos y copias → Buscar cambios de GitHub → Aplicar**. La barra de sistema de Android conserva la apariencia de su contenedor nativo.
+
+## Liquidación y devolución de apartados
 
 En **Deudas generales → Liquidar una deuda**, selecciona el acreedor y confirma que ya pagaste. La deuda queda liquidada y se conserva en el historial. Si el dinero está en un fondo compartido completo, primero pulsa **Asignar fondo completo del grupo**; asignarlo todavía no registra un pago.
 
@@ -173,4 +181,4 @@ La suite cubre cálculos, saldos, guardado fallido, copias, borrado, navegación
 La publicación sigue las [instrucciones de GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). La instalación depende del soporte del navegador descrito en la [guía de PWA de MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable).
 
 ### Verificación de esta entrega
-140 pruebas de integración y 17 pruebas unitarias superadas (157 en total). Se revisó la nueva vista en pantalla móvil simulada. El PDF existente cubre la instalación; las instrucciones nuevas de cuentas están en la guía enlazada arriba. Esto no sustituye la prueba de instalación en tu teléfono real.
+Para la versión visual 1.1.3 se ejecutaron 24 pruebas existentes de interfaz: formularios, navegación, pantallas pequeñas, texto ampliado, movimiento reducido y actualización sin conexión. Todas pasaron. Se revisaron visualmente escritorio y móvil y los colores de las distintas secciones. Falta comprobar el resultado en el teléfono real.

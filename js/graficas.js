@@ -7,7 +7,7 @@ function graficaPastel(titulo,datos) {
     figura.append(nodoGrafica("figcaption",titulo));
     const valores=datos.filter(([,n])=>n>0),total=sumarCentavosResumen(valores.map(([,n])=>n));
     if(!total){figura.append(nodoGrafica("p","Sin movimientos para este periodo.","estado-vacio"));return figura;}
-    const colores=["#7656cb","#198578","#cc8541","#547cc3","#b45785","#7e8438","#72527e","#687b8c"];
+    const colores=["#ad8bf5","#61d4c0","#f2b278","#73b6ff","#ea91c4","#c3d879","#948ee5","#86b8cf"];
     const cuerpo=nodoGrafica("div",undefined,"grafica-cuerpo"),disco=nodoGrafica("div",undefined,"grafica-disco"),lista=nodoGrafica("ul");
     let acumulado=0;const segmentos=[];
     valores.forEach(([nombre,n],i)=>{

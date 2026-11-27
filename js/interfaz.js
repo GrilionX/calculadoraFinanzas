@@ -13,11 +13,11 @@ function actualizarDistribucionVisual() {
             return;
         }
         const datos = [
-            ["Apartados", r.destinadoBasicos, "apartados", "#248d98"],
-            ["Gastos", r.gastos, "gastos", "#b55e31"],
-            ["Ahorro", r.ahorroDestinado, "ahorro", "#5268ad"],
-            ["Deudas", r.destinadoDeudas, "deudas", "#947224"],
-            ["Disponible", r.disponible, "disponible", "#08786f"]
+            ["Apartados", r.destinadoBasicos, "apartados", "#67c8ff"],
+            ["Gastos", r.gastos, "gastos", "#f4af7a"],
+            ["Ahorro", r.ahorroDestinado, "ahorro", "#6caeff"],
+            ["Deudas", r.destinadoDeudas, "deudas", "#b693fa"],
+            ["Disponible", r.disponible, "disponible", "#68dfbc"]
         ];
         const descripciones = [];
         for (const [nombre, monto, clase, color] of datos) {
