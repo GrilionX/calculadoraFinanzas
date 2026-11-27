@@ -45,7 +45,7 @@ function informarDeudas(texto, esError) {
 }
 
 function puedeModificarDeudas() {
-    if (!guardadoHabilitado) {
+    if (!guardadoHabilitado || reinicioDetectado) {
         informarDeudas(
             "Recupera una copia válida antes de modificar las deudas.",
             true
@@ -57,6 +57,7 @@ function puedeModificarDeudas() {
 
 function completarCambioDeudas(texto) {
     const guardadoCorrecto = guardar();
+    if(!guardadoCorrecto){deudas=copiar(estadoDeudasGuardado.deudas);gruposDeudas=copiar(estadoDeudasGuardado.gruposDeudas);}
     mostrarDeudas();
     mostrarHistorialNominas();
     invalidarProyeccionDeudas();
@@ -426,7 +427,8 @@ function crearTarjetaDeuda(deuda) {
         const botonPagar = document.createElement("button");
         botonPagar.type = "button";
         botonPagar.className = "boton-principal";
-        botonPagar.textContent = "Confirmar pago realizado";
+        botonPagar.textContent = "Liquidar deuda";
+        botonPagar.title = resumen.faltaCentavos!==0?"Primero completa el apartado individual de esta deuda.":"Confirmar que ya realizaste el pago.";
         botonPagar.disabled = resumen.faltaCentavos !== 0;
 
         botonPagar.addEventListener("click", function () {

@@ -18,7 +18,7 @@ before(async () => {
             if (error) { res.writeHead(404).end(); return; }
             res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' :
                 file.endsWith('.css') ? 'text/css' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html');
-            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-26-reparto-1.1.1', '2026-11-23-prueba-' + versionWorkerPrueba));
+            if (file.endsWith('sw.js') && versionWorkerPrueba) data = Buffer.from(data.toString().replace('2026-11-26-deudas-1.1.2', '2026-11-23-prueba-' + versionWorkerPrueba));
             res.end(data);
         });
     });
@@ -1994,7 +1994,7 @@ test('instalación: diagnóstico de solo lectura muestra versión y validez de c
  await page.waitForFunction(()=>!document.getElementById('comprobar-dispositivo').disabled);
  assert.equal(await page.locator('#diagnostico-dispositivo li').count(),5);
  assert.match(await page.locator('#diagnostico-dispositivo').textContent(),/Registros válidos para exportar/);
- assert.match(await page.locator('#version-app').textContent(),/2026-11-26-reparto-1.1.1/);
+ assert.match(await page.locator('#version-app').textContent(),/2026-11-26-deudas-1.1.2/);
  assert.equal(await page.evaluate(()=>localStorage.getItem(CLAVE_GUARDADO)),antes);
 });
 test('instalación: diagnóstico detecta archivos ausentes sin borrar registros',async t=>{
@@ -2105,7 +2105,7 @@ async function prepararMontosPrueba(page,total='123456.78'){
   document.querySelectorAll('#porcentajes-nomina input').forEach((el,i)=>{el.value=i===0?'123450':i===1?'6.78':'0';el.dispatchEvent(new Event('input',{bubbles:true}));});
  },total);
 }
-test('reparto 1.1.1: montos exactos, porcentajes y copia tras recarga',async t=>{
+test('reparto 1.1.2: montos exactos, porcentajes y copia tras recarga',async t=>{
  const {page,errors}=await abrir(t);await prepararMontosPrueba(page);
  assert.equal(await page.locator('#confirmar-nomina').isDisabled(),false);
  const datos=await page.evaluate(()=>{
@@ -2118,7 +2118,7 @@ test('reparto 1.1.1: montos exactos, porcentajes y copia tras recarga',async t=>
  await page.evaluate(c=>restaurarCopiaLocal(c),datos.copia);
  assert.deepEqual(await page.evaluate(()=>nominas.at(-1)),datos.n);assert.deepEqual(errors,[]);
 });
-test('reparto 1.1.1: vista parcial y exceso bloquean registro',async t=>{
+test('reparto 1.1.2: vista parcial y exceso bloquean registro',async t=>{
  const {page}=await abrir(t);await prepararMontosPrueba(page,'200000');
  assert.equal(await page.locator('#confirmar-nomina').isDisabled(),true);
  assert.equal(await page.locator('#vista-previa-nomina tr').count(),4);
@@ -2129,7 +2129,7 @@ test('reparto 1.1.1: vista parcial y exceso bloquean registro',async t=>{
  await page.locator('#porcentaje-nomina-0').fill('-1');
  assert.equal(await page.locator('#confirmar-nomina').isDisabled(),true);
 });
-test('reparto 1.1.1: alternar conserva borradores y restablece porcentajes',async t=>{
+test('reparto 1.1.2: alternar conserva borradores y restablece porcentajes',async t=>{
  const {page}=await abrir(t);await prepararMontosPrueba(page);
  const antes=await page.locator('#porcentaje-nomina-0').inputValue();
  await page.locator('[name=modalidad-nomina][value=porcentajes]').check();
@@ -2139,7 +2139,7 @@ test('reparto 1.1.1: alternar conserva borradores y restablece porcentajes',asyn
  await page.locator('#usar-categorias-nomina').click();
  assert.equal(await page.evaluate(()=>modalidadNomina),'porcentajes');
 });
-test('reparto 1.1.1: corrección conserva montos y rechaza copia alterada',async t=>{
+test('reparto 1.1.2: corrección conserva montos y rechaza copia alterada',async t=>{
  const {page}=await abrir(t);await prepararMontosPrueba(page);
  assert.equal(await page.evaluate(()=>{
   registrarNomina({preventDefault(){}});const n=nominas.at(-1),antes=JSON.stringify(n.reparto);
@@ -2149,7 +2149,7 @@ test('reparto 1.1.1: corrección conserva montos y rechaza copia alterada',async
   return !aplicarDatos(copia.datos,true);
  }),true);
 });
-test('reparto 1.1.1: fallo de guardado conserva el borrador por montos',async t=>{
+test('reparto 1.1.2: fallo de guardado conserva el borrador por montos',async t=>{
  const {page}=await abrir(t);await prepararMontosPrueba(page);
  assert.equal(await page.evaluate(()=>{
   const cuantos=nominas.length,set=Storage.prototype.setItem;
@@ -2157,9 +2157,79 @@ test('reparto 1.1.1: fallo de guardado conserva el borrador por montos',async t=
   return nominas.length===cuantos&&modalidadNomina==='montos'&&document.getElementById('porcentaje-nomina-0').value==='123450';
  }),true);
 });
-test('reparto 1.1.1: móvil y contacto visible',async t=>{
+test('reparto 1.1.2: móvil y contacto visible',async t=>{
  const {page}=await abrir(t);await page.setViewportSize({width:360,height:800});await prepararMontosPrueba(page);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
- assert.match(await page.locator('.pie-contacto').textContent(),/1.1.1/);
- assert.equal(await page.locator('.pie-contacto a').getAttribute('href'),'mailto:segundodiana37@gmail.com?subject=Reporte%20de%20error%20-%20Mis%20finanzas%201.1.1');
+ assert.match(await page.locator('.pie-contacto').textContent(),/1.1.2/);
+ assert.equal(await page.locator('.pie-contacto a').getAttribute('href'),'mailto:segundodiana37@gmail.com?subject=Reporte%20de%20error%20-%20Mis%20finanzas%201.1.2');
+});
+
+
+test('pagos: liquidar desde Deudas generales conserva el estado tras recarga',async t=>{
+ const {page}=await abrir(t);
+ await page.evaluate(()=>registrarApartadoConNomina('deuda','d1','100'));
+ await navegarPrueba(page,'deudas');
+ await page.locator('#deuda-para-liquidar').selectOption('d1',{force:true});
+ await page.locator('#pagos-deudas').getByRole('button',{name:'Liquidar deuda',exact:true}).click();
+ assert.equal(await page.evaluate(()=>deudas[0].liquidada),true);
+ assert.match(await page.locator('#detalle-pago-deuda').textContent(),/Liquidada/);
+ const before=await page.evaluate(()=>historialCorrecciones.length);
+ await page.evaluate(()=>liquidarDeuda('d1'));
+ assert.equal(await page.evaluate(()=>historialCorrecciones.length),before);
+ assert.equal(await page.evaluate(()=>calcularResumenFinanciero().disponible),90000);
+ await page.reload();assert.equal(await page.evaluate(()=>deudas[0].liquidada),true);
+});
+test('pagos: fondo completo se asigna antes de liquidar',async t=>{
+ const {page}=await abrir(t,true);await page.evaluate(()=>registrarApartadoGrupo('g1','100'));
+ await navegarPrueba(page,'deudas');await page.locator('#deuda-para-liquidar').selectOption('d1',{force:true});
+ const pagar=page.locator('#pagos-deudas').getByRole('button',{name:'Liquidar deuda',exact:true});
+ assert.equal(await pagar.isDisabled(),true);
+ await page.getByRole('button',{name:'Asignar fondo completo del grupo',exact:true}).click();
+ assert.equal(await pagar.isDisabled(),false);await pagar.click();
+ await page.reload();assert.equal(await page.evaluate(()=>deudas[0].liquidada),true);
+});
+test('devolución: parcial devuelve al disponible y permite reasignar',async t=>{
+ const {page}=await abrir(t);
+ const result=await page.evaluate(()=>{
+  registrarApartadoConNomina('deuda','d1','50');
+  const id=deudas[0].aportacionesNomina[0].id;
+  const ok=devolverApartadoDisponible(id,'20');
+  const disponible=calcularResumenFinanciero().disponible,visible=disponibleOrigen.textContent,reserva=calcularReservaDeuda(deudas[0]);
+  registrarApartadoConNomina('deuda','d1','20');
+  return {ok,disponible,visible,reserva,final:calcularResumenFinanciero().disponible};
+ });
+ assert.equal(result.ok,true);assert.equal(result.disponible,97000);assert.equal(result.reserva,3000);assert.match(result.visible,/970/);assert.equal(result.final,95000);
+ await page.reload();assert.equal(await page.evaluate(()=>calcularResumenFinanciero().disponible),95000);
+});
+test('devolución: exceso, pago confirmado y fallo de escritura no liberan dinero',async t=>{
+ const {page}=await abrir(t);
+ assert.equal(await page.evaluate(()=>{
+  registrarApartadoConNomina('deuda','d1','100');const id=deudas[0].aportacionesNomina[0].id,antes=JSON.stringify(deudas);
+  if(devolverApartadoDisponible(id,'101')||JSON.stringify(deudas)!==antes)return false;
+  const set=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw Error('Sin espacio');};let ok;
+  try{ok=devolverApartadoDisponible(id,'25');}finally{Storage.prototype.setItem=set;}
+  if(ok||JSON.stringify(deudas)!==antes)return false;
+  liquidarDeuda('d1');return !devolverApartadoDisponible(id,'25')&&calcularResumenFinanciero().disponible===90000;
+ }),true);
+});
+test('devolución: gastos básicos solo permite devolver lo no gastado',async t=>{
+ const page=await prepararGestionPrueba(t);
+ assert.equal(await page.evaluate(()=>{
+  crearApartado('Gas','tarjeta','150',0);const id=gestion.apartados[0].id;
+  aportarBasico(id,'n1','150','2026-11');gastarApartado(id,'Gas','50','2026-11-26');
+  const aporte=gestion.apartados[0].aportes[0].id;let rechazado=false;try{devolverBasicoDisponible(id,aporte,'101');}catch{rechazado=true;}
+  if(!rechazado)return false;devolverBasicoDisponible(id,aporte,'100');
+  return gestion.apartados[0].aportes[0].montoCentavos===5000&&calcularResumenFinanciero().disponible===195000;
+ }),true);
+ await page.reload();assert.equal(await page.evaluate(()=>calcularResumenFinanciero().disponible),195000);
+});
+test('devolución: confirmar Sí/No y mantener el saldo en móvil',async t=>{
+ const {page,errors}=await abrir(t);await page.evaluate(()=>registrarApartadoConNomina('deuda','d1','50'));await page.setViewportSize({width:360,height:800});await navegarPrueba(page,'deudas');
+ const clave=await page.evaluate(()=>'deuda:'+deudas[0].aportacionesNomina[0].id);
+ await page.locator('#apartado-devolver').selectOption(clave,{force:true});await page.locator('#monto-devolver').fill('20');
+ await page.getByRole('button',{name:'Devolver al disponible',exact:true}).click();await page.getByRole('button',{name:'No',exact:true}).click();
+ assert.equal(await page.evaluate(()=>calcularResumenFinanciero().disponible),95000);
+ await page.getByRole('button',{name:'Devolver al disponible',exact:true}).click();await page.getByRole('button',{name:'Sí',exact:true}).click();
+ await page.waitForFunction(()=>calcularResumenFinanciero().disponible===97000);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);assert.deepEqual(errors,[]);
 });

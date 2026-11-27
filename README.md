@@ -121,7 +121,17 @@ Se ha añadido un módulo independiente en **js/dominio/base-financiera.mjs**, c
 
 Consulta [el plan técnico y sus criterios de aceptación](docs/proxima-fase.md). No se reconstruyen cuentas ni fechas antiguas por suposición. Antes de integrar el módulo se añadirá una migración explícita, con vista previa, copia y posibilidad de cancelar.
 
-## Versión 1.1.1: reparto por porcentajes o montos
+## Versión 1.1.2: liquidación y devolución de apartados
+
+En **Deudas generales → Liquidar una deuda**, selecciona el acreedor y confirma que ya pagaste. La deuda queda liquidada y se conserva en el historial. Si el dinero está en un fondo compartido completo, primero pulsa **Asignar fondo completo del grupo**; asignarlo todavía no registra un pago.
+
+En **Deudas generales → Devolver dinero al disponible**, selecciona el apartado y cuánto quieres devolver. También hay acceso desde **Mis apartados**. La devolución regresa al disponible del ingreso y categoría originales; no se registra como gasto ni se asigna a otra deuda automáticamente. El disponible se actualiza inmediatamente.
+
+Se admiten apartados de deuda todavía corregibles y aportes de gastos básicos no gastados de meses abiertos. Los pagos confirmados, los meses cerrados y los apartados ya transferidos mantienen su protección. Para reconstruir un apartado transferido, usa la vista previa de Correcciones; no se revierten pagos automáticamente.
+
+La APK actualizable recibe esta corrección desde **Datos y copias → Buscar cambios de GitHub → Aplicar**. No necesitas desinstalarla.
+
+## Reparto por porcentajes o montos
 
 En **Ingresos y reparto**, elige **Por porcentajes** para usar y ajustar tus porcentajes predeterminados, o **Por montos** para indicar cuánto asignar a cada categoría. Ambas modalidades muestran importes y porcentajes en tiempo real.
 
@@ -163,4 +173,4 @@ La suite cubre cálculos, saldos, guardado fallido, copias, borrado, navegación
 La publicación sigue las [instrucciones de GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). La instalación depende del soporte del navegador descrito en la [guía de PWA de MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable).
 
 ### Verificación de esta entrega
-134 pruebas de integración y 17 pruebas unitarias superadas (151 en total). Se revisó la nueva vista en pantalla móvil simulada. El PDF existente cubre la instalación; las instrucciones nuevas de cuentas están en la guía enlazada arriba. Esto no sustituye la prueba de instalación en tu teléfono real.
+140 pruebas de integración y 17 pruebas unitarias superadas (157 en total). Se revisó la nueva vista en pantalla móvil simulada. El PDF existente cubre la instalación; las instrucciones nuevas de cuentas están en la guía enlazada arriba. Esto no sustituye la prueba de instalación en tu teléfono real.

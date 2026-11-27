@@ -472,6 +472,7 @@ function guardar() {
         if (typeof mostrarApartadosAvanzados === 'function') mostrarApartadosAvanzados();
         mostrarAdministradorGrupos();
         mostrarResumenFinanciero();
+        mostrarDisponibleOrigen();
         if (typeof mostrarPanelesMejoras === 'function') mostrarPanelesMejoras();
         return true;
     } catch (error) {

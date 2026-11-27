@@ -165,3 +165,14 @@ function reasignarPendiente(nominaId,destino) {
         p.mejoras.cambiosIngresos.push({id:idGestion(),fecha:fechaLocalGasto(),motivo:"Reasignación de saldo pendiente",antes,despues:copiar(n)});
     });
 }
+
+function devolverBasicoDisponible(apartadoId,aporteId,textoMonto){
+ const monto=convertirPesosACentavos(textoMonto);exigirGestion(monto!==null,"Escribe un monto positivo.");
+ return operarGestion(d=>{
+  const a=d.apartados.find(a=>a.id===apartadoId),aporte=a?.aportes.find(x=>x.id===aporteId);
+  exigirGestion(a&&aporte,"Selecciona un aporte.");const r=resumenApartado(a,aporte.mes);
+  exigirGestion(!r.cerrado,"El mes está cerrado; ese dinero ya pasó al fondo.");
+  exigirGestion(monto<=aporte.montoCentavos&&monto<=r.excedente,"Solo puedes devolver el dinero que sigue sin gastarse.");
+  aporte.montoCentavos-=monto;if(aporte.montoCentavos===0)a.aportes=a.aportes.filter(x=>x.id!==aporteId);
+ });
+}

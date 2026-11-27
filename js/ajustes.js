@@ -117,3 +117,10 @@ document.getElementById("formulario-ajuste-apartado").addEventListener("submit",
     informarAjuste(corregirApartadoConcreto(document.getElementById("ajuste-apartado").value,
         document.getElementById("ajuste-importe").value, document.getElementById("motivo-apartado").value));
 });
+
+//Devolver una parte al disponible del ingreso de origen
+function devolverApartadoDisponible(id,textoMonto){
+ const fila=apartadosCorregibles().find(f=>f.id===id),monto=convertirPesosACentavos(textoMonto);
+ if(!fila||monto===null||monto>fila.montoCentavos)return false;
+ return corregirApartadoConcreto(id,((fila.montoCentavos-monto)/100).toFixed(2),"Devolución al disponible: "+formatoMoneda.format(monto/100));
+}
